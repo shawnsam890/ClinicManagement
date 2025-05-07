@@ -775,8 +775,15 @@ export default function AppointmentsPage() {
                       patientId={form.getValues("patientId")}
                       readOnly={readOnly}
                     />
+                  ) : readOnly ? (
+                    // In view mode with no invoice
+                    <div className="bg-muted/20 p-4 rounded-md text-center">
+                      <p className="text-sm text-muted-foreground">
+                        No invoice has been created for this appointment yet.
+                      </p>
+                    </div>
                   ) : (
-                    // New invoice form
+                    // New invoice form - only show in edit mode
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
