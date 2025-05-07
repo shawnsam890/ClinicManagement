@@ -475,6 +475,16 @@ export default function AppointmentsPage() {
                       )}
                     />
                   </div>
+                  
+                  {/* Additional Treatment Input */}
+                  <div className="md:col-span-3 mt-2">
+                    <Label htmlFor="additionalTreatment">Additional Treatment Details</Label>
+                    <Textarea
+                      id="additionalTreatment"
+                      placeholder="Enter any additional treatment details"
+                      className="min-h-[60px]"
+                    />
+                  </div>
                 </div>
 
                 {/* Notes Section */}
@@ -530,10 +540,36 @@ export default function AppointmentsPage() {
                 
                 {/* Invoice Section */}
                 <h3 className="text-lg font-semibold border-b pb-2 mb-2 mt-4">Invoice & Billing</h3>
-                <div className="bg-muted/20 p-4 rounded-md">
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Invoices can be created after the appointment is saved.
-                  </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="invoiceAmount">Invoice Amount</Label>
+                    <Input
+                      id="invoiceAmount"
+                      type="number"
+                      placeholder="Enter amount"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="paymentStatus">Payment Status</Label>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="paid">Paid</SelectItem>
+                        <SelectItem value="partial">Partially Paid</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label htmlFor="invoiceNotes">Invoice Notes</Label>
+                    <Textarea
+                      id="invoiceNotes"
+                      placeholder="Enter any notes about the invoice"
+                      className="min-h-[60px]"
+                    />
+                  </div>
                 </div>
               </div>
 
