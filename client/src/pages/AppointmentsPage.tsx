@@ -60,7 +60,8 @@ import {
   Paperclip, 
   FileCheck, 
   Receipt, 
-  Plus 
+  Plus,
+  Trash
 } from "lucide-react";
 import PrescriptionForm from "@/components/PrescriptionForm";
 
@@ -169,6 +170,33 @@ export default function AppointmentsPage() {
       });
     },
   });
+  
+  // Delete appointment mutation
+  const deleteAppointmentMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("DELETE", `/api/appointments/${id}`);
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Failed to delete appointment");
+      }
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      toast({
+        title: "Success",
+        description: "Appointment deleted successfully",
+      });
+      setIsViewDialogOpen(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   // Get patient name by ID
   const getPatientName = (patientId: string) => {
@@ -199,6 +227,13 @@ export default function AppointmentsPage() {
     // Close view dialog and open edit dialog
     setIsViewDialogOpen(false);
     setIsDialogOpen(true);
+  };
+  
+  // Handle deleting an appointment
+  const handleDeleteAppointment = (id: number) => {
+    if (window.confirm("Are you sure you want to delete this appointment? This action cannot be undone.")) {
+      deleteAppointmentMutation.mutate(id);
+    }
   };
 
   // Create patient visit and link to appointment
@@ -810,14 +845,25 @@ export default function AppointmentsPage() {
                         : appointment.notes || ""}
                     </TableCell>
                     <TableCell>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleViewAppointment(appointment)}
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        View
-                      </Button>
+                      <div className="flex space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleViewAppointment(appointment)}
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          View
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => handleDeleteAppointment(appointment.id)}
+                        >
+                          <Trash className="h-4 w-4 mr-2" />
+                          Delete
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
