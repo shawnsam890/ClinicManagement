@@ -262,6 +262,9 @@ export default function AppointmentsPage() {
     form.setValue("visitId", selectedAppointment.visitId || null);
     form.setValue("invoiceId", selectedAppointment.invoiceId || null);
     
+    // Set the form ID for update instead of create
+    form.setValue("id", selectedAppointment.id);
+    
     // Close view dialog and open edit dialog
     setIsViewDialogOpen(false);
     setIsDialogOpen(true);
@@ -437,7 +440,13 @@ export default function AppointmentsPage() {
   });
 
   const onSubmit = (data: AppointmentFormValues) => {
-    createAppointmentMutation.mutate(data);
+    // If id exists, it's an update
+    if (data.id) {
+      updateAppointmentMutation.mutate(data);
+    } else {
+      // It's a new appointment
+      createAppointmentMutation.mutate(data);
+    }
   };
 
   // Filter patients by search term

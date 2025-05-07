@@ -137,8 +137,9 @@ export const invoices = pgTable("invoices", {
 export const invoiceItems = pgTable("invoice_items", {
   id: serial("id").primaryKey(),
   invoiceId: integer("invoice_id").notNull(),
-  item: text("item").notNull(),
-  description: text("description"),
+  description: text("description").notNull(),
+  quantity: integer("quantity").notNull().default(1),
+  rate: real("rate").notNull(),
   amount: real("amount").notNull(),
 });
 
