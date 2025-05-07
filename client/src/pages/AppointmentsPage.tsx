@@ -64,6 +64,7 @@ import {
   Trash
 } from "lucide-react";
 import PrescriptionForm from "@/components/PrescriptionForm";
+import InvoiceDetails from "@/components/InvoiceDetails";
 
 // Extended schema with validation
 const appointmentFormSchema = insertAppointmentSchema.extend({
@@ -809,18 +810,21 @@ export default function AppointmentsPage() {
 
                 <TabsContent value="invoice" className="space-y-4 mt-4">
                   {selectedAppointment.invoiceId ? (
-                    <div className="border rounded-md p-4">
-                      <div className="flex justify-between mb-4">
-                        <h3 className="text-lg font-medium">Invoice #{selectedAppointment.invoiceId}</h3>
-                        <Button variant="outline" size="sm">
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Invoice
+                    <>
+                      <InvoiceDetails 
+                        invoiceId={selectedAppointment.invoiceId} 
+                        patientId={selectedAppointment.patientId} 
+                      />
+                      <div className="flex justify-end mt-4">
+                        <Button variant="outline" onClick={() => setIsViewDialogOpen(false)} className="mr-2">
+                          Close
+                        </Button>
+                        <Button variant="outline" onClick={handleEditAppointment}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit Invoice
                         </Button>
                       </div>
-                      <div className="text-muted-foreground">
-                        This appointment has an associated invoice.
-                      </div>
-                    </div>
+                    </>
                   ) : (
                     <div className="border border-muted rounded-md p-6 text-center">
                       <div className="mb-4 text-muted-foreground">

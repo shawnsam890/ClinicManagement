@@ -1,0 +1,197 @@
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Label } from "@/components/ui/label";
+import { Receipt, Calendar, User, Phone, RefreshCcw, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+
+interface InvoiceDetailsProps {
+  invoiceId: number;
+  patientId: string;
+}
+
+export default function InvoiceDetails({ invoiceId, patientId }: InvoiceDetailsProps) {
+  // Fetch invoice details
+  const { data: invoice, isLoading: isLoadingInvoice } = useQuery({
+    queryKey: [`/api/invoices/${invoiceId}`],
+    queryFn: async () => {
+      const res = await fetch(`/api/invoices/${invoiceId}`);
+      if (!res.ok) throw new Error("Failed to load invoice");
+      return await res.json();
+    }
+  });
+
+  // Fetch patient details for the invoice
+  const { data: patient, isLoading: isLoadingPatient } = useQuery({
+    queryKey: [`/api/patients/id/${patientId}`],
+    queryFn: async () => {
+      const res = await fetch(`/api/patients/id/${patientId}`);
+      if (!res.ok) throw new Error("Failed to load patient");
+      return await res.json();
+    }
+  });
+
+  // Fetch invoice items
+  const { data: invoiceItems = [], isLoading: isLoadingItems } = useQuery({
+    queryKey: [`/api/invoices/${invoiceId}/items`],
+    queryFn: async () => {
+      const res = await fetch(`/api/invoices/${invoiceId}/items`);
+      if (!res.ok) throw new Error("Failed to load invoice items");
+      return await res.json();
+    },
+    onError: (error) => {
+      console.error("Error fetching invoice items:", error);
+      return [];
+    }
+  });
+
+  const isLoading = isLoadingInvoice || isLoadingPatient || isLoadingItems;
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-40">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!invoice) {
+    return (
+      <div className="text-center py-6 text-gray-500">
+        <p>Invoice not found or could not be loaded.</p>
+      </div>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="text-2xl flex items-center">
+              <Receipt className="mr-2 h-6 w-6" /> Invoice #{invoice.id}
+            </CardTitle>
+            <CardDescription className="mt-1">
+              <div className="flex items-center">
+                <Calendar className="h-4 w-4 mr-1" /> {invoice.date}
+              </div>
+              <Badge 
+                className="mt-2" 
+                variant={invoice.status === "paid" ? "success" : "destructive"}
+              >
+                {invoice.status.toUpperCase()}
+              </Badge>
+            </CardDescription>
+          </div>
+          <div className="text-right">
+            <h3 className="font-semibold">Total Amount</h3>
+            <p className="text-2xl font-bold text-primary">
+              ₹{invoice.totalAmount?.toFixed(2) || "0.00"}
+            </p>
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent>
+        <div className="grid md:grid-cols-2 gap-6">
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Patient Information</h3>
+            {patient ? (
+              <div className="space-y-2">
+                <div className="flex items-center">
+                  <User className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <span className="font-medium">{patient.name}</span>
+                </div>
+                <div className="flex items-center">
+                  <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <span>{patient.phoneNumber || "No phone number"}</span>
+                </div>
+                <div className="text-sm">
+                  Patient ID: {patient.patientId}
+                </div>
+              </div>
+            ) : (
+              <p className="text-muted-foreground">Patient information not available</p>
+            )}
+          </div>
+
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Payment Details</h3>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Status</span>
+                <span className="font-medium">{invoice.status}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Date</span>
+                <span>{invoice.date}</span>
+              </div>
+              {invoice.paymentMethod && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Payment Method</span>
+                  <span>{invoice.paymentMethod}</span>
+                </div>
+              )}
+              {invoice.paymentDate && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Payment Date</span>
+                  <span>{invoice.paymentDate}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <Separator className="my-6" />
+
+        <div>
+          <h3 className="text-lg font-semibold mb-4">Invoice Items</h3>
+          {invoiceItems && invoiceItems.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Description</TableHead>
+                  <TableHead className="text-right">Quantity</TableHead>
+                  <TableHead className="text-right">Rate</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {invoiceItems.map((item: any) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium">{item.description}</TableCell>
+                    <TableCell className="text-right">{item.quantity}</TableCell>
+                    <TableCell className="text-right">₹{item.rate?.toFixed(2) || "0.00"}</TableCell>
+                    <TableCell className="text-right">₹{item.amount?.toFixed(2) || "0.00"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="text-center py-4 border rounded-md">
+              <p className="text-muted-foreground">No invoice items found</p>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-6 border-t pt-4">
+          <div className="flex justify-between font-medium">
+            <span>Total</span>
+            <span>₹{invoice.totalAmount?.toFixed(2) || "0.00"}</span>
+          </div>
+        </div>
+
+        {invoice.notes && (
+          <div className="mt-6">
+            <Label>Notes</Label>
+            <div className="mt-1 p-3 bg-muted/30 rounded-md text-sm">
+              {invoice.notes}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
