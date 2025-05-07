@@ -155,7 +155,8 @@ export default function InvoiceDetails({ invoiceId, patientId, readOnly = false 
         <div className="flex justify-between items-start">
           <div>
             <CardTitle className="text-2xl flex items-center">
-              <Receipt className="mr-2 h-6 w-6" /> Invoice #{invoice.id}
+              <Receipt className="mr-2 h-6 w-6" /> 
+              Invoice {invoice.patientId}/{invoice.id}
               <Button 
                 variant="ghost" 
                 size="sm" 
@@ -166,6 +167,9 @@ export default function InvoiceDetails({ invoiceId, patientId, readOnly = false 
                 <RefreshCcw className="h-4 w-4" />
               </Button>
             </CardTitle>
+            <div className="text-sm text-muted-foreground ml-8 mt-1">
+              Internal ID: INV-{invoice.id}
+            </div>
             <CardDescription className="mt-1">
               <div className="flex items-center">
                 <Calendar className="h-4 w-4 mr-1" /> {invoice.date}
