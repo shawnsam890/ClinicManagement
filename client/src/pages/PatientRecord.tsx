@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import Layout from "@/components/Layout";
 import ConsentForm from "@/components/ConsentForm";
 import Invoice from "@/components/Invoice";
+import PrescriptionForm from "@/components/PrescriptionForm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -557,35 +558,19 @@ export default function PatientRecord() {
                     />
                     
                     {/* RX (Prescription) */}
-                    <FormField
-                      control={form.control}
-                      name="prescription"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>RX (Prescription)</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            value={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select medication" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="none">Select medication</SelectItem>
-                              {getDropdownOptions("prescription").map((option: string) => (
-                                <SelectItem key={option} value={option.toLowerCase().replace(/\s+/g, "_")}>
-                                  {option}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
+                    <div className="space-y-2">
+                      <FormLabel>RX (Prescription)</FormLabel>
+                      {visitId ? (
+                        <PrescriptionForm 
+                          visitId={visitId} 
+                          readOnly={false}
+                        />
+                      ) : (
+                        <div className="text-muted-foreground italic text-sm p-4 border rounded-md">
+                          Save the patient record first to add prescriptions
+                        </div>
                       )}
-                    />
+                    </div>
                     
                     {/* Treatment Done */}
                     <FormField

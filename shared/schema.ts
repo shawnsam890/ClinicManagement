@@ -38,13 +38,7 @@ export const prescriptions = pgTable("prescriptions", {
   id: serial("id").primaryKey(),
   visitId: integer("visit_id").notNull(),
   medicationId: integer("medication_id").notNull(),
-  slNo: integer("sl_no").notNull(),
-  beforeAfterFood: text("before_after_food").default("after"),
-  morning: text("morning").default("-"),
-  afternoon: text("afternoon").default("-"),
-  evening: text("evening").default("-"),
-  night: text("night").default("-"),
-  duration: text("duration"),
+  timing: text("timing").default("0-0-0"),
   notes: text("notes"),
 });
 

@@ -1,26 +1,20 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { PlusCircle, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
+import { Trash2, Plus, AlertCircle } from "lucide-react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface PrescriptionItem {
   id?: number;
-  serialNumber: number;
+  visitId: number;
   medicationId: number;
-  medicationName: string;
+  medicationName?: string;
   timing: string;
   notes?: string;
 }
@@ -34,276 +28,338 @@ interface PrescriptionFormProps {
 
 export default function PrescriptionForm({
   visitId,
-  existingPrescriptions = [],
+  existingPrescriptions,
   onSave,
   readOnly = false,
 }: PrescriptionFormProps) {
   const { toast } = useToast();
   const [prescriptions, setPrescriptions] = useState<PrescriptionItem[]>([]);
-  
-  // Fetch available medications
-  const { data: medications, isLoading: isLoadingMedications } = useQuery({
-    queryKey: ["/api/medications"],
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch medications for dropdown
+  const { data: medications } = useQuery({
+    queryKey: ['/api/medications'],
   });
-  
-  // Fetch existing prescriptions if any
-  const { data: savedPrescriptions, isLoading: isLoadingPrescriptions } = useQuery({
-    queryKey: ["/api/visits", visitId, "prescriptions"],
-    enabled: visitId > 0,
+
+  // Fetch existing prescriptions for this visit
+  const { data: fetchedPrescriptions, isLoading: isFetchingPrescriptions } = useQuery({
+    queryKey: [`/api/visits/${visitId}/prescriptions`],
+    enabled: !!visitId,
   });
-  
-  // Mutations
-  const createPrescriptionMutation = useMutation({
-    mutationFn: async (data: { visitId: number; prescriptions: PrescriptionItem[] }) => {
-      return apiRequest("POST", "/api/prescriptions", data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/visits", visitId, "prescriptions"] });
-      toast({
-        title: "Success",
-        description: "Prescriptions saved successfully",
-      });
-      if (onSave) {
-        onSave(prescriptions);
-      }
-    },
-    onError: (error) => {
-      console.error("Error saving prescriptions:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save prescriptions",
-        variant: "destructive",
-      });
-    },
-  });
-  
-  // Initialize with existing prescriptions or an empty one
+
+  // Initialize prescriptions state when data is loaded
   useEffect(() => {
     if (existingPrescriptions && existingPrescriptions.length > 0) {
       setPrescriptions(existingPrescriptions);
-    } else if (savedPrescriptions && savedPrescriptions.length > 0) {
-      setPrescriptions(
-        savedPrescriptions.map((prescription: any, index: number) => ({
-          id: prescription.id,
-          serialNumber: index + 1,
-          medicationId: prescription.medicationId,
-          medicationName: medications?.find((m: any) => m.id === prescription.medicationId)?.name || "",
-          timing: prescription.timing,
-          notes: prescription.notes,
-        }))
-      );
-    } else if (prescriptions.length === 0) {
-      setPrescriptions([
-        {
-          serialNumber: 1,
+      setIsLoading(false);
+    } else if (fetchedPrescriptions && fetchedPrescriptions.length > 0) {
+      // Map fetched prescriptions with medication names from medications data
+      const mappedPrescriptions = fetchedPrescriptions.map((prescription: PrescriptionItem) => {
+        const medication = medications?.find((med: any) => med.id === prescription.medicationId);
+        return {
+          ...prescription,
+          medicationName: medication?.name || 'Unknown'
+        };
+      });
+      setPrescriptions(mappedPrescriptions);
+      setIsLoading(false);
+    } else if (!isFetchingPrescriptions) {
+      // If no prescriptions, start with an empty row
+      if (!readOnly) {
+        setPrescriptions([{
+          visitId,
           medicationId: 0,
-          medicationName: "",
           timing: "0-0-0",
-          notes: "",
-        },
-      ]);
+          notes: ""
+        }]);
+      }
+      setIsLoading(false);
     }
-  }, [existingPrescriptions, savedPrescriptions, medications]);
-  
-  const handleAddPrescription = () => {
+  }, [existingPrescriptions, fetchedPrescriptions, medications, visitId, isFetchingPrescriptions, readOnly]);
+
+  // Add new prescription row
+  const addPrescriptionRow = () => {
     setPrescriptions([
       ...prescriptions,
       {
-        serialNumber: prescriptions.length + 1,
+        visitId,
         medicationId: 0,
-        medicationName: "",
         timing: "0-0-0",
-        notes: "",
-      },
+        notes: ""
+      }
     ]);
   };
-  
-  const handleRemovePrescription = (index: number) => {
+
+  // Remove prescription row
+  const removePrescriptionRow = (index: number) => {
     const updatedPrescriptions = [...prescriptions];
-    updatedPrescriptions.splice(index, 1);
+    const removedItem = updatedPrescriptions.splice(index, 1)[0];
     
-    // Update serial numbers
-    updatedPrescriptions.forEach((prescription, idx) => {
-      prescription.serialNumber = idx + 1;
-    });
-    
-    setPrescriptions(updatedPrescriptions);
+    // If item has an ID, call API to delete it
+    if (removedItem.id) {
+      deletePrescription(removedItem.id);
+    } else {
+      setPrescriptions(updatedPrescriptions);
+    }
   };
-  
-  const handleMedicationChange = (index: number, medicationId: number) => {
-    const updatedPrescriptions = [...prescriptions];
-    const selectedMedication = medications?.find((m: any) => m.id === Number(medicationId));
-    
-    updatedPrescriptions[index] = {
-      ...updatedPrescriptions[index],
-      medicationId: Number(medicationId),
-      medicationName: selectedMedication?.name || "",
-    };
-    
-    setPrescriptions(updatedPrescriptions);
-  };
-  
-  const handleTimingChange = (index: number, value: string) => {
-    // Format as X-X-X
-    const digits = value.replace(/[^0-9]/g, "").slice(0, 3);
-    const formattedTiming = digits.split("").join("-");
-    
+
+  // Update prescription field
+  const updatePrescription = (index: number, field: keyof PrescriptionItem, value: any) => {
     const updatedPrescriptions = [...prescriptions];
     updatedPrescriptions[index] = {
       ...updatedPrescriptions[index],
-      timing: formattedTiming,
+      [field]: value
     };
-    
+
+    // If medication ID is updated, also update name
+    if (field === 'medicationId' && medications) {
+      const medication = medications.find((med: any) => med.id === value);
+      updatedPrescriptions[index].medicationName = medication?.name || 'Unknown';
+    }
+
     setPrescriptions(updatedPrescriptions);
+    
+    // If onSave callback is provided, invoke it
+    if (onSave) {
+      onSave(updatedPrescriptions);
+    }
   };
-  
-  const handleNotesChange = (index: number, value: string) => {
+
+  // Update timing digit
+  const updateTimingDigit = (index: number, position: number, value: string) => {
     const updatedPrescriptions = [...prescriptions];
-    updatedPrescriptions[index] = {
-      ...updatedPrescriptions[index],
-      notes: value,
-    };
+    const timingParts = updatedPrescriptions[index].timing.split('-');
+    
+    // Validate input to only allow digits, S, or empty
+    if (!/^[0-9Ss]?$/.test(value)) {
+      return;
+    }
+    
+    // Convert to uppercase if 's' is entered
+    if (value.toLowerCase() === 's') {
+      value = 'S';
+    }
+    
+    timingParts[position] = value || '0';
+    updatedPrescriptions[index].timing = timingParts.join('-');
     
     setPrescriptions(updatedPrescriptions);
+    
+    // If onSave callback is provided, invoke it
+    if (onSave) {
+      onSave(updatedPrescriptions);
+    }
   };
-  
-  const handleSave = () => {
-    if (prescriptions.some(p => !p.medicationId || p.medicationId === 0)) {
+
+  // Save prescription mutation
+  const savePrescription = useMutation({
+    mutationFn: async (prescription: PrescriptionItem) => {
+      if (prescription.id) {
+        const response = await apiRequest('PUT', `/api/prescriptions/${prescription.id}`, prescription);
+        return response.json();
+      } else {
+        const response = await apiRequest('POST', '/api/prescriptions', prescription);
+        return response.json();
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/visits/${visitId}/prescriptions`] });
+      toast({
+        title: "Success",
+        description: "Prescription saved successfully",
+      });
+    },
+    onError: (error) => {
       toast({
         title: "Error",
-        description: "Please select a medication for all prescription items",
+        description: "Failed to save prescription",
+        variant: "destructive",
+      });
+      console.error("Error saving prescription:", error);
+    }
+  });
+
+  // Delete prescription mutation
+  const deletePrescription = async (id: number) => {
+    try {
+      await apiRequest('DELETE', `/api/prescriptions/${id}`);
+      queryClient.invalidateQueries({ queryKey: [`/api/visits/${visitId}/prescriptions`] });
+      toast({
+        title: "Success",
+        description: "Prescription deleted successfully",
+      });
+      // Refresh prescriptions list
+      const updatedPrescriptions = prescriptions.filter(p => p.id !== id);
+      setPrescriptions(updatedPrescriptions);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete prescription",
+        variant: "destructive",
+      });
+      console.error("Error deleting prescription:", error);
+    }
+  };
+
+  // Save all prescriptions
+  const saveAllPrescriptions = async () => {
+    // Validate that medications are selected
+    const invalidPrescriptions = prescriptions.filter(p => !p.medicationId || p.medicationId === 0);
+    if (invalidPrescriptions.length > 0) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a medication for all prescriptions",
         variant: "destructive",
       });
       return;
     }
-    
-    createPrescriptionMutation.mutate({
-      visitId,
-      prescriptions: prescriptions.map(p => ({
-        ...p,
-        visitId,
-      })),
-    });
+
+    // Save all prescriptions
+    for (const prescription of prescriptions) {
+      await savePrescription.mutateAsync(prescription);
+    }
   };
-  
-  const formatTimingInput = (timing: string) => {
-    const parts = timing.split("-");
-    const formatted = parts.map(p => p || "0").join("-");
-    return formatted.length === 3 ? `${formatted[0]}-${formatted[1]}-${formatted[2]}` : formatted;
-  };
-  
-  if (isLoadingMedications || isLoadingPrescriptions) {
-    return <div className="text-center py-4">Loading prescription data...</div>;
+
+  if (isLoading) {
+    return <div className="py-4">Loading prescriptions...</div>;
   }
-  
+
   return (
-    <Card className="mt-4">
-      <CardContent className="pt-4">
-        <div className="space-y-4">
-          <div className="grid grid-cols-12 gap-4 font-semibold text-sm">
-            <div className="col-span-1">Sl. No.</div>
-            <div className="col-span-5">Medication</div>
-            <div className="col-span-3">Timing</div>
-            <div className="col-span-2">Notes</div>
-            <div className="col-span-1"></div>
-          </div>
-          
-          {prescriptions.map((prescription, index) => (
-            <div key={index} className="grid grid-cols-12 gap-4 items-center">
-              <div className="col-span-1 text-center">
-                {prescription.serialNumber}
-              </div>
-              
-              <div className="col-span-5">
-                {readOnly ? (
-                  <div>{prescription.medicationName}</div>
-                ) : (
-                  <Select
-                    value={prescription.medicationId.toString()}
-                    onValueChange={(value) => handleMedicationChange(index, Number(value))}
-                    disabled={readOnly}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select medication" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {medications?.map((medication: any) => (
-                        <SelectItem key={medication.id} value={medication.id.toString()}>
-                          {medication.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+    <div className="space-y-4">
+      <div className="border rounded-md overflow-hidden">
+        <Table>
+          <TableHeader className="bg-muted/50">
+            <TableRow>
+              <TableHead className="w-16 text-center">Sl No</TableHead>
+              <TableHead>Medication</TableHead>
+              <TableHead className="w-48 text-center">Timing</TableHead>
+              <TableHead className="w-48">Notes</TableHead>
+              {!readOnly && <TableHead className="w-16"></TableHead>}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {prescriptions.map((prescription, index) => (
+              <TableRow key={index}>
+                <TableCell className="text-center">{index + 1}</TableCell>
+                <TableCell>
+                  {readOnly ? (
+                    prescription.medicationName || 'Unknown'
+                  ) : (
+                    <Select
+                      value={prescription.medicationId.toString()}
+                      onValueChange={(value) => updatePrescription(index, 'medicationId', parseInt(value))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select medication" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0" disabled>Select medication</SelectItem>
+                        {medications && medications.map((med: any) => (
+                          <SelectItem key={med.id} value={med.id.toString()}>
+                            {med.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center justify-center space-x-1">
+                    {readOnly ? (
+                      <div className="text-center">{prescription.timing}</div>
+                    ) : (
+                      <>
+                        <Input
+                          type="text"
+                          value={prescription.timing.split('-')[0]}
+                          onChange={(e) => updateTimingDigit(index, 0, e.target.value)}
+                          className="w-8 h-8 text-center p-0"
+                          maxLength={1}
+                        />
+                        <span>-</span>
+                        <Input
+                          type="text"
+                          value={prescription.timing.split('-')[1]}
+                          onChange={(e) => updateTimingDigit(index, 1, e.target.value)}
+                          className="w-8 h-8 text-center p-0"
+                          maxLength={1}
+                        />
+                        <span>-</span>
+                        <Input
+                          type="text"
+                          value={prescription.timing.split('-')[2]}
+                          onChange={(e) => updateTimingDigit(index, 2, e.target.value)}
+                          className="w-8 h-8 text-center p-0"
+                          maxLength={1}
+                        />
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="ml-2">
+                                <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Enter 0-5 for number of tablets or S for SOS</p>
+                              <p>Format: Morning-Afternoon-Night</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {readOnly ? (
+                    prescription.notes || ''
+                  ) : (
+                    <Input
+                      value={prescription.notes || ''}
+                      onChange={(e) => updatePrescription(index, 'notes', e.target.value)}
+                      placeholder="Before/after meals, etc."
+                    />
+                  )}
+                </TableCell>
+                {!readOnly && (
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removePrescriptionRow(index)}
+                      disabled={prescriptions.length === 1}
+                    >
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
+                  </TableCell>
                 )}
-              </div>
-              
-              <div className="col-span-3">
-                {readOnly ? (
-                  <div>{prescription.timing}</div>
-                ) : (
-                  <Input
-                    value={formatTimingInput(prescription.timing)}
-                    onChange={(e) => handleTimingChange(index, e.target.value)}
-                    placeholder="0-0-0"
-                    maxLength={5}
-                    className="font-mono"
-                    disabled={readOnly}
-                  />
-                )}
-              </div>
-              
-              <div className="col-span-2">
-                {readOnly ? (
-                  <div>{prescription.notes}</div>
-                ) : (
-                  <Input
-                    value={prescription.notes || ""}
-                    onChange={(e) => handleNotesChange(index, e.target.value)}
-                    placeholder="SOS, After meals, etc."
-                    disabled={readOnly}
-                  />
-                )}
-              </div>
-              
-              <div className="col-span-1 text-right">
-                {!readOnly && prescriptions.length > 1 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleRemovePrescription(index)}
-                  >
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  </Button>
-                )}
-              </div>
-            </div>
-          ))}
-          
-          {!readOnly && (
-            <div className="flex flex-col gap-4 mt-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleAddPrescription}
-                className="w-full"
-              >
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add Another Medication
-              </Button>
-              
-              <Button
-                onClick={handleSave}
-                disabled={createPrescriptionMutation.isPending}
-                className="w-full"
-              >
-                {createPrescriptionMutation.isPending
-                  ? "Saving Prescription..."
-                  : "Save Prescription"}
-              </Button>
-            </div>
-          )}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      {!readOnly && (
+        <div className="flex justify-between">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={addPrescriptionRow}
+            className="flex items-center"
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            Add Medication
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            onClick={saveAllPrescriptions}
+            disabled={prescriptions.some(p => !p.medicationId || p.medicationId === 0)}
+          >
+            Save Prescriptions
+          </Button>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 }
