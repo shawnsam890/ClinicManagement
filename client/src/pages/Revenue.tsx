@@ -35,7 +35,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import { Download, Printer, Search, Filter, Calendar } from "lucide-react";
+import { Download, Printer, Search, Filter, Calendar, Trash2, Loader2 } from "lucide-react";
 
 // Generate financial year options
 const currentYear = new Date().getFullYear();
@@ -386,6 +386,7 @@ export default function Revenue() {
                         <TableHead>Status</TableHead>
                         <TableHead>Payment Method</TableHead>
                         <TableHead className="text-right">Amount</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -407,6 +408,25 @@ export default function Revenue() {
                           </TableCell>
                           <TableCell>{invoice.paymentMethod || "—"}</TableCell>
                           <TableCell className="text-right">₹{invoice.totalAmount.toLocaleString()}</TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                if (window.confirm(`Are you sure you want to delete invoice #${invoice.id}?`)) {
+                                  deleteInvoiceMutation.mutate(invoice.id);
+                                }
+                              }}
+                              disabled={deleteInvoiceMutation.isPending}
+                              title="Delete Invoice"
+                            >
+                              {deleteInvoiceMutation.isPending && deleteInvoiceMutation.variables === invoice.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin text-destructive" />
+                              ) : (
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              )}
+                            </Button>
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
