@@ -19,7 +19,6 @@ interface InvoiceDetailsProps {
 
 export default function InvoiceDetails({ invoiceId, patientId, readOnly = false }: InvoiceDetailsProps) {
   const queryClient = useQueryClient();
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isEditingStatus, setIsEditingStatus] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<string>("");
   const { toast } = useToast();
@@ -29,7 +28,7 @@ export default function InvoiceDetails({ invoiceId, patientId, readOnly = false 
     // Force refresh all related queries
     queryClient.invalidateQueries({ queryKey: [`/api/invoices/${invoiceId}`] });
     queryClient.invalidateQueries({ queryKey: [`/api/invoices/${invoiceId}/items`] });
-    setRefreshTrigger(prev => prev + 1);
+    queryClient.invalidateQueries({ queryKey: [`/api/patients/id/${patientId}`] });
   };
   
   // Update invoice status mutation
@@ -62,7 +61,7 @@ export default function InvoiceDetails({ invoiceId, patientId, readOnly = false 
   
   // Fetch invoice details
   const { data: invoice, isLoading: isLoadingInvoice } = useQuery({
-    queryKey: [`/api/invoices/${invoiceId}`, refreshTrigger],
+    queryKey: [`/api/invoices/${invoiceId}`],  // Removed refreshTrigger
     queryFn: async () => {
       const res = await fetch(`/api/invoices/${invoiceId}`);
       if (!res.ok) throw new Error("Failed to load invoice");
@@ -72,7 +71,7 @@ export default function InvoiceDetails({ invoiceId, patientId, readOnly = false 
 
   // Fetch patient details for the invoice
   const { data: patient, isLoading: isLoadingPatient } = useQuery({
-    queryKey: [`/api/patients/id/${patientId}`, refreshTrigger],
+    queryKey: [`/api/patients/id/${patientId}`],  // Removed refreshTrigger
     queryFn: async () => {
       const res = await fetch(`/api/patients/id/${patientId}`);
       if (!res.ok) throw new Error("Failed to load patient");
@@ -82,7 +81,7 @@ export default function InvoiceDetails({ invoiceId, patientId, readOnly = false 
 
   // Fetch invoice items
   const { data: invoiceItems = [], isLoading: isLoadingItems } = useQuery({
-    queryKey: [`/api/invoices/${invoiceId}/items`, refreshTrigger],
+    queryKey: [`/api/invoices/${invoiceId}/items`],  // Removed refreshTrigger
     queryFn: async () => {
       try {
         const res = await fetch(`/api/invoices/${invoiceId}/items`);
@@ -95,13 +94,18 @@ export default function InvoiceDetails({ invoiceId, patientId, readOnly = false 
     }
   });
 
-  // UseEffect to force refresh on first mount
+  // UseEffect to initialize the component only when invoiceId changes
   useEffect(() => {
+    // Only refresh once when the component mounts or invoiceId changes
     refreshData();
+  }, [invoiceId]); // Only re-run when invoiceId changes
+  
+  // Separate useEffect to update selectedStatus when invoice data is loaded
+  useEffect(() => {
     if (invoice && !selectedStatus) {
       setSelectedStatus(invoice.status);
     }
-  }, [invoiceId, invoice]); // Re-run when invoiceId changes
+  }, [invoice, selectedStatus]);
   
   const isLoading = isLoadingInvoice || isLoadingPatient || isLoadingItems;
 
