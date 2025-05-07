@@ -74,9 +74,13 @@ export default function Revenue() {
           // Update any appointments that reference this invoice to remove the reference
           for (const appointment of appointments) {
             if (appointment.invoiceId === invoiceId) {
-              await apiRequest("PATCH", `/api/appointments/${appointment.id}`, {
-                invoiceId: null
-              });
+              // We need to use PUT for appointments since there's no PATCH endpoint
+              // First get the full appointment data
+              const appointmentData = { ...appointment };
+              // Then update just the invoiceId field
+              appointmentData.invoiceId = null;
+              // Send the full object with PUT request
+              await apiRequest("PUT", `/api/appointments/${appointment.id}`, appointmentData);
             }
           }
         }
