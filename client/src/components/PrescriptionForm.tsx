@@ -193,8 +193,34 @@ export default function PrescriptionForm({
         return response.json();
       }
     },
-    onSuccess: () => {
+    onSuccess: (savedPrescription) => {
       queryClient.invalidateQueries({ queryKey: [`/api/visits/${visitId}/prescriptions`] });
+      
+      // Update the local prescriptions state to include the newly saved prescription
+      // This ensures immediate UI update without waiting for the query to refresh
+      if (!savedPrescription.id) return; // Safety check
+      
+      const updatedPrescriptions = [...prescriptions];
+      const existingIndex = updatedPrescriptions.findIndex(p => 
+        p.id === savedPrescription.id || 
+        (p.medicationId === savedPrescription.medicationId && !p.id)
+      );
+      
+      if (existingIndex >= 0) {
+        updatedPrescriptions[existingIndex] = {
+          ...savedPrescription,
+          medicationName: medications.find(m => m.id === savedPrescription.medicationId)?.name || 'Unknown'
+        };
+      } else {
+        // Add to the prescriptions array if it's new
+        updatedPrescriptions.push({
+          ...savedPrescription,
+          medicationName: medications.find(m => m.id === savedPrescription.medicationId)?.name || 'Unknown'
+        });
+      }
+      
+      setPrescriptions(updatedPrescriptions);
+      
       toast({
         title: "Success",
         description: "Prescription saved successfully",

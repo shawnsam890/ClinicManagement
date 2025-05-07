@@ -11,9 +11,10 @@ import { Button } from "@/components/ui/button";
 interface InvoiceDetailsProps {
   invoiceId: number;
   patientId: string;
+  readOnly?: boolean;
 }
 
-export default function InvoiceDetails({ invoiceId, patientId }: InvoiceDetailsProps) {
+export default function InvoiceDetails({ invoiceId, patientId, readOnly = false }: InvoiceDetailsProps) {
   const queryClient = useQueryClient();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   

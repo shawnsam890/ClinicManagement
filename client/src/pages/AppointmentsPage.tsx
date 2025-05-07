@@ -753,6 +753,7 @@ export default function AppointmentsPage() {
                     <PrescriptionForm
                       visitId={form.getValues("visitId") as number}
                       patientId={form.getValues("patientId")}
+                      readOnly={readOnly}
                     />
                   ) : (
                     // For new appointments or those without a visit ID
@@ -772,6 +773,7 @@ export default function AppointmentsPage() {
                     <InvoiceDetails 
                       invoiceId={form.getValues("invoiceId") as number}
                       patientId={form.getValues("patientId")}
+                      readOnly={readOnly}
                     />
                   ) : (
                     // New invoice form
