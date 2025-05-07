@@ -66,7 +66,22 @@ export default function Revenue() {
   const deleteInvoiceMutation = useMutation({
     mutationFn: async (invoiceId: number) => {
       try {
-        // Delete invoice items first
+        // First, find any appointments referencing this invoice
+        const appointmentsRes = await fetch(`/api/appointments`);
+        if (appointmentsRes.ok) {
+          const appointments = await appointmentsRes.json();
+          
+          // Update any appointments that reference this invoice to remove the reference
+          for (const appointment of appointments) {
+            if (appointment.invoiceId === invoiceId) {
+              await apiRequest("PATCH", `/api/appointments/${appointment.id}`, {
+                invoiceId: null
+              });
+            }
+          }
+        }
+        
+        // Delete invoice items
         const itemsRes = await fetch(`/api/invoices/${invoiceId}/items`);
         if (itemsRes.ok) {
           const items = await itemsRes.json();
@@ -85,7 +100,9 @@ export default function Revenue() {
       }
     },
     onSuccess: () => {
+      // Invalidate both invoices and appointments queries since we're updating both
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
       toast({
         title: "Success",
         description: "Invoice deleted successfully",
