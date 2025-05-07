@@ -41,9 +41,12 @@ export default function InvoiceDetails({ invoiceId, patientId, readOnly = false 
         paymentDate: status === 'paid' ? new Date().toISOString().split('T')[0] : null
       };
       
-      // Add payment method if provided (for paid status)
-      if (status === 'paid' && paymentMethod) {
-        updateData.paymentMethod = paymentMethod;
+      // Add payment method for paid status (default to cash if none selected)
+      if (status === 'paid') {
+        updateData.paymentMethod = paymentMethod || 'cash';
+      } else {
+        // Clear payment method and date if not paid
+        updateData.paymentMethod = null;
       }
       
       const response = await apiRequest('PATCH', `/api/invoices/${invoiceId}`, updateData);
@@ -216,7 +219,13 @@ export default function InvoiceDetails({ invoiceId, patientId, readOnly = false 
                   <div className="flex items-center space-x-2">
                     <Select
                       value={selectedStatus}
-                      onValueChange={setSelectedStatus}
+                      onValueChange={(value) => {
+                        setSelectedStatus(value);
+                        // Initialize payment method when changing to paid status
+                        if (value === 'paid' && !selectedPaymentMethod) {
+                          setSelectedPaymentMethod('cash');
+                        }
+                      }}
                     >
                       <SelectTrigger className="w-[130px]">
                         <SelectValue placeholder="Status" />
@@ -227,10 +236,29 @@ export default function InvoiceDetails({ invoiceId, patientId, readOnly = false 
                         <SelectItem value="cancelled">Cancelled</SelectItem>
                       </SelectContent>
                     </Select>
+                    
+                    {/* Show payment method selector when status is set to paid */}
+                    {selectedStatus === 'paid' && (
+                      <Select
+                        value={selectedPaymentMethod}
+                        onValueChange={setSelectedPaymentMethod}
+                      >
+                        <SelectTrigger className="w-[130px]">
+                          <SelectValue placeholder="Payment Method" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="cash">Cash</SelectItem>
+                          <SelectItem value="card">Card</SelectItem>
+                          <SelectItem value="upi">UPI</SelectItem>
+                          <SelectItem value="cheque">Cheque</SelectItem>
+                          <SelectItem value="netbanking">Net Banking</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
                     <Button 
                       size="sm" 
                       className="h-8 w-8 p-0" 
-                      onClick={() => updateInvoiceStatus.mutate(selectedStatus)}
+                      onClick={() => updateInvoiceStatus.mutate({ status: selectedStatus, paymentMethod: selectedPaymentMethod })}
                       disabled={updateInvoiceStatus.isPending}
                     >
                       {updateInvoiceStatus.isPending ? (
@@ -246,6 +274,8 @@ export default function InvoiceDetails({ invoiceId, patientId, readOnly = false 
                       onClick={() => {
                         setIsEditingStatus(false);
                         setSelectedStatus(invoice.status);
+                        // Reset payment method to match invoice
+                        setSelectedPaymentMethod(invoice.paymentMethod || '');
                       }}
                     >
                       ✕
