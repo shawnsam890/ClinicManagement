@@ -382,7 +382,7 @@ export default function PrescriptionForm({
             type="button"
             size="sm"
             onClick={saveAllPrescriptions}
-            disabled={prescriptions.some(p => !p.medicationId || p.medicationId === 0)}
+            disabled={prescriptions.some(p => !p.medication_id || p.medication_id === 0)}
           >
             Save Prescriptions
           </Button>
