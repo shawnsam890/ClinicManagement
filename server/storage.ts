@@ -495,7 +495,8 @@ import { db } from "./db";
 import { eq, and, asc } from "drizzle-orm";
 import { pool } from "./db";
 import { users, patients, patientVisits, labWorks, labInventory, staff, 
-  staffAttendance, staffSalary, invoices, invoiceItems, settings } from "@shared/schema";
+  staffAttendance, staffSalary, invoices, invoiceItems, settings,
+  medications, prescriptions } from "@shared/schema";
 
 const PostgresSessionStore = connectPg(session);
 
@@ -806,6 +807,69 @@ export class DatabaseStorage implements IStorage {
   
   async deleteSetting(id: number): Promise<boolean> {
     await db.delete(settings).where(eq(settings.id, id));
+    return true;
+  }
+  
+  // Medication management
+  async getMedications(): Promise<Medication[]> {
+    return await db.select().from(medications);
+  }
+  
+  async getMedicationById(id: number): Promise<Medication | undefined> {
+    const result = await db.select().from(medications).where(eq(medications.id, id));
+    return result[0];
+  }
+  
+  async getMedicationByName(name: string): Promise<Medication | undefined> {
+    const result = await db.select().from(medications).where(eq(medications.name, name));
+    return result[0];
+  }
+  
+  async createMedication(medication: InsertMedication): Promise<Medication> {
+    const result = await db.insert(medications).values(medication).returning();
+    return result[0];
+  }
+  
+  async updateMedication(id: number, medication: Partial<InsertMedication>): Promise<Medication | undefined> {
+    const result = await db.update(medications)
+      .set(medication)
+      .where(eq(medications.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  async deleteMedication(id: number): Promise<boolean> {
+    await db.delete(medications).where(eq(medications.id, id));
+    return true;
+  }
+  
+  // Prescription management
+  async getPrescriptions(visitId: number): Promise<Prescription[]> {
+    return await db.select().from(prescriptions)
+      .where(eq(prescriptions.visitId, visitId))
+      .orderBy(asc(prescriptions.slNo));
+  }
+  
+  async getPrescriptionById(id: number): Promise<Prescription | undefined> {
+    const result = await db.select().from(prescriptions).where(eq(prescriptions.id, id));
+    return result[0];
+  }
+  
+  async createPrescription(prescription: InsertPrescription): Promise<Prescription> {
+    const result = await db.insert(prescriptions).values(prescription).returning();
+    return result[0];
+  }
+  
+  async updatePrescription(id: number, prescription: Partial<InsertPrescription>): Promise<Prescription | undefined> {
+    const result = await db.update(prescriptions)
+      .set(prescription)
+      .where(eq(prescriptions.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  async deletePrescription(id: number): Promise<boolean> {
+    await db.delete(prescriptions).where(eq(prescriptions.id, id));
     return true;
   }
 

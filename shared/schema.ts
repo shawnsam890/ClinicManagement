@@ -24,6 +24,30 @@ export const patients = pgTable("patients", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Medications table
+export const medications = pgTable("medications", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  quantity: integer("quantity").default(0),
+  threshold: integer("threshold").default(10),
+  notes: text("notes"),
+});
+
+// Prescriptions table to store medication prescriptions
+export const prescriptions = pgTable("prescriptions", {
+  id: serial("id").primaryKey(),
+  visitId: integer("visit_id").notNull(),
+  medicationId: integer("medication_id").notNull(),
+  slNo: integer("sl_no").notNull(),
+  beforeAfterFood: text("before_after_food").default("after"),
+  morning: text("morning").default("-"),
+  afternoon: text("afternoon").default("-"),
+  evening: text("evening").default("-"),
+  night: text("night").default("-"),
+  duration: text("duration"),
+  notes: text("notes"),
+});
+
 export const patientVisits = pgTable("patient_visits", {
   id: serial("id").primaryKey(),
   patientId: text("patient_id").notNull(),
@@ -35,7 +59,7 @@ export const patientVisits = pgTable("patient_visits", {
   oralExamination: text("oral_examination"),
   investigation: text("investigation"),
   treatmentPlan: text("treatment_plan"),
-  prescription: text("prescription"),
+  prescription: text("prescription"), // Legacy field, will eventually store a reference to prescriptions table
   treatmentDone: text("treatment_done"),
   advice: text("advice"),
   notes: text("notes"),
@@ -143,6 +167,8 @@ export const insertStaffSalarySchema = createInsertSchema(staffSalary).omit({ id
 export const insertInvoiceSchema = createInsertSchema(invoices).omit({ id: true });
 export const insertInvoiceItemSchema = createInsertSchema(invoiceItems).omit({ id: true });
 export const insertSettingSchema = createInsertSchema(settings).omit({ id: true });
+export const insertMedicationSchema = createInsertSchema(medications).omit({ id: true });
+export const insertPrescriptionSchema = createInsertSchema(prescriptions).omit({ id: true });
 
 // Export types
 export type User = typeof users.$inferSelect;
@@ -177,3 +203,9 @@ export type InsertInvoiceItem = z.infer<typeof insertInvoiceItemSchema>;
 
 export type Setting = typeof settings.$inferSelect;
 export type InsertSetting = z.infer<typeof insertSettingSchema>;
+
+export type Medication = typeof medications.$inferSelect;
+export type InsertMedication = z.infer<typeof insertMedicationSchema>;
+
+export type Prescription = typeof prescriptions.$inferSelect;
+export type InsertPrescription = z.infer<typeof insertPrescriptionSchema>;
