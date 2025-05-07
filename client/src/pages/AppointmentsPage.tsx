@@ -232,21 +232,72 @@ export default function AppointmentsPage() {
     },
   });
   
-  // Delete appointment mutation
+  // Delete appointment mutation (with cascading deletes for invoice and visit)
   const deleteAppointmentMutation = useMutation({
     mutationFn: async (id: number) => {
+      // First, fetch the appointment to get the associated visitId and invoiceId
+      const appointmentRes = await fetch(`/api/appointments/${id}`);
+      if (!appointmentRes.ok) {
+        throw new Error("Failed to fetch appointment details");
+      }
+      
+      const appointment = await appointmentRes.json();
+      const { visitId, invoiceId } = appointment;
+      
+      // Delete invoice if it exists
+      if (invoiceId) {
+        try {
+          // Delete invoice items first
+          const itemsRes = await fetch(`/api/invoices/${invoiceId}/items`);
+          if (itemsRes.ok) {
+            const items = await itemsRes.json();
+            for (const item of items) {
+              await apiRequest("DELETE", `/api/invoice-items/${item.id}`);
+            }
+          }
+          
+          // Then delete the invoice
+          await apiRequest("DELETE", `/api/invoices/${invoiceId}`);
+        } catch (error) {
+          console.error("Error deleting invoice:", error);
+        }
+      }
+      
+      // Delete visit if it exists
+      if (visitId) {
+        try {
+          // Delete prescriptions first
+          const prescriptionsRes = await fetch(`/api/visits/${visitId}/prescriptions`);
+          if (prescriptionsRes.ok) {
+            const prescriptions = await prescriptionsRes.json();
+            for (const prescription of prescriptions) {
+              await apiRequest("DELETE", `/api/prescriptions/${prescription.id}`);
+            }
+          }
+          
+          // Then delete the visit
+          await apiRequest("DELETE", `/api/visits/${visitId}`);
+        } catch (error) {
+          console.error("Error deleting visit:", error);
+        }
+      }
+      
+      // Finally delete the appointment
       const res = await apiRequest("DELETE", `/api/appointments/${id}`);
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.message || "Failed to delete appointment");
       }
+      
       return id;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/visits"] });
       toast({
         title: "Success",
-        description: "Appointment deleted successfully",
+        description: "Appointment and related data deleted successfully",
       });
     },
     onError: (error) => {
