@@ -10,6 +10,7 @@ import path from 'path';
 import fs from 'fs';
 import multer from 'multer';
 import { format } from 'date-fns';
+import { setupAuth } from "./auth";
 
 // Configure multer for file uploads
 const upload = multer({
@@ -20,6 +21,16 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup authentication
+  setupAuth(app);
+  
+  // Initialize database settings
+  try {
+    await (storage as any).initializeDefaultSettings();
+  } catch (error) {
+    console.error('Error initializing default settings:', error);
+  }
+  
   // Generate patient ID based on format in settings
   async function generatePatientId(): Promise<string> {
     const patientIdFormatSetting = await storage.getSettingByKey('patient_id_format');

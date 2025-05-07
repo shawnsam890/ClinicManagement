@@ -494,6 +494,8 @@ import connectPg from "connect-pg-simple";
 import { db } from "./db";
 import { eq, and, asc } from "drizzle-orm";
 import { pool } from "./db";
+import { users, patients, patientVisits, labWorks, labInventory, staff, 
+  staffAttendance, staffSalary, invoices, invoiceItems, settings } from "@shared/schema";
 
 const PostgresSessionStore = connectPg(session);
 

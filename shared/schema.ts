@@ -145,6 +145,9 @@ export const insertInvoiceItemSchema = createInsertSchema(invoiceItems).omit({ i
 export const insertSettingSchema = createInsertSchema(settings).omit({ id: true });
 
 // Export types
+export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+
 export type Patient = typeof patients.$inferSelect;
 export type InsertPatient = z.infer<typeof insertPatientSchema>;
 
