@@ -15,6 +15,7 @@ import LabWorks from "@/pages/LabWorks";
 import Revenue from "@/pages/Revenue";
 import StaffManagement from "@/pages/StaffManagement";
 import Settings from "@/pages/Settings";
+import AppointmentsPage from "@/pages/AppointmentsPage";
 import AuthPage from "@/pages/auth-page";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
@@ -32,6 +33,7 @@ function Router() {
       <ProtectedRoute path="/revenue" component={Revenue} />
       <ProtectedRoute path="/staff" component={StaffManagement} />
       <ProtectedRoute path="/settings" component={Settings} />
+      <ProtectedRoute path="/appointments" component={AppointmentsPage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>

@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import Layout from "@/components/Layout";
 import DashboardTile from "@/components/DashboardTile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, FlaskRound, BarChart4, Settings, UserCog } from "lucide-react";
+import { Users, FlaskRound, BarChart4, Settings, UserCog, Calendar } from "lucide-react";
 
 export default function Dashboard() {
   const { data: patients } = useQuery({
@@ -17,12 +17,21 @@ export default function Dashboard() {
     queryKey: ["/api/invoices"],
   });
 
+  const { data: appointments } = useQuery({
+    queryKey: ["/api/appointments"],
+  });
+
   const { data: clinicInfo } = useQuery({
     queryKey: ["/api/settings/key/clinic_info"],
   });
 
-  // Calculate today's appointments (placeholder for now)
-  const todayAppointmentsCount = 0;
+  // Get today's date in YYYY-MM-DD format
+  const today = new Date().toISOString().split('T')[0];
+  
+  // Calculate today's appointments
+  const todayAppointmentsCount = appointments?.filter((appointment: any) => 
+    appointment.date === today
+  )?.length || 0;
 
   // Calculate pending lab works
   const pendingLabWorksCount = labWorks?.filter((lab: any) => 
@@ -30,7 +39,6 @@ export default function Dashboard() {
   )?.length || 0;
 
   // Calculate today's revenue
-  const today = new Date().toISOString().split('T')[0];
   const todayRevenue = invoices?.filter((invoice: any) => 
     invoice.date === today
   )?.reduce((sum: number, invoice: any) => sum + invoice.totalAmount, 0) || 0;
@@ -71,6 +79,14 @@ export default function Dashboard() {
           imageSrc="https://images.unsplash.com/photo-1582750433449-648ed127bb54?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=300"
           icon={<UserCog />}
           href="/staff"
+        />
+        
+        <DashboardTile
+          title="Appointments"
+          description="Manage patient appointments and scheduling"
+          imageSrc="https://images.unsplash.com/photo-1606800052052-a08af7148866?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=300"
+          icon={<Calendar />}
+          href="/appointments"
         />
         
         <DashboardTile
