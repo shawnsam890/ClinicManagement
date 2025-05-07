@@ -68,6 +68,7 @@ import InvoiceDetails from "@/components/InvoiceDetails";
 
 // Extended schema with validation
 const appointmentFormSchema = insertAppointmentSchema.extend({
+  id: z.number().optional(),
   patientId: z.string().min(1, { message: "Patient ID is required" }),
   date: z.string().min(1, { message: "Date is required" }),
   doctorName: z.string().min(1, { message: "Doctor name is required" }),
@@ -427,6 +428,7 @@ export default function AppointmentsPage() {
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentFormSchema),
     defaultValues: {
+      id: undefined,
       patientId: "",
       date: format(new Date(), "yyyy-MM-dd"),
       doctorName: "",
