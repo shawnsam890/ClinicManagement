@@ -614,6 +614,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Invoice items endpoint is below around line 670
+  
   app.post('/api/invoices', async (req, res) => {
     try {
       const validatedData = insertInvoiceSchema.parse(req.body);
