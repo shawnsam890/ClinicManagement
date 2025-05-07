@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
-import { Receipt, Calendar, User, Phone, RefreshCcw, Loader2 } from "lucide-react";
+import { Receipt, Calendar, User, Phone, RefreshCcw, Loader2, Save, Edit } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 interface InvoiceDetailsProps {
   invoiceId: number;
@@ -17,6 +20,9 @@ interface InvoiceDetailsProps {
 export default function InvoiceDetails({ invoiceId, patientId, readOnly = false }: InvoiceDetailsProps) {
   const queryClient = useQueryClient();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [isEditingStatus, setIsEditingStatus] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<string>("");
+  const { toast } = useToast();
   
   // Refresh function
   const refreshData = () => {
@@ -25,6 +31,33 @@ export default function InvoiceDetails({ invoiceId, patientId, readOnly = false 
     queryClient.invalidateQueries({ queryKey: [`/api/invoices/${invoiceId}/items`] });
     setRefreshTrigger(prev => prev + 1);
   };
+  
+  // Update invoice status mutation
+  const updateInvoiceStatus = useMutation({
+    mutationFn: async (status: string) => {
+      const response = await apiRequest('PATCH', `/api/invoices/${invoiceId}`, { 
+        status,
+        paymentDate: status === 'paid' ? new Date().toISOString().split('T')[0] : null 
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      refreshData();
+      setIsEditingStatus(false);
+      toast({
+        title: "Success",
+        description: "Invoice status updated successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update invoice status",
+        variant: "destructive",
+      });
+      console.error("Error updating invoice status:", error);
+    }
+  });
   
   // Fetch invoice details
   const { data: invoice, isLoading: isLoadingInvoice } = useQuery({
@@ -64,7 +97,10 @@ export default function InvoiceDetails({ invoiceId, patientId, readOnly = false 
   // UseEffect to force refresh on first mount
   useEffect(() => {
     refreshData();
-  }, [invoiceId]); // Re-run when invoiceId changes
+    if (invoice && !selectedStatus) {
+      setSelectedStatus(invoice.status);
+    }
+  }, [invoiceId, invoice]); // Re-run when invoiceId changes
   
   const isLoading = isLoadingInvoice || isLoadingPatient || isLoadingItems;
 
@@ -156,9 +192,70 @@ export default function InvoiceDetails({ invoiceId, patientId, readOnly = false 
           <div>
             <h3 className="text-lg font-semibold mb-2">Payment Details</h3>
             <div className="space-y-2">
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Status</span>
-                <span className="font-medium">{invoice.status}</span>
+                {!readOnly && isEditingStatus ? (
+                  <div className="flex items-center space-x-2">
+                    <Select
+                      value={selectedStatus}
+                      onValueChange={setSelectedStatus}
+                    >
+                      <SelectTrigger className="w-[130px]">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="paid">Paid</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button 
+                      size="sm" 
+                      className="h-8 w-8 p-0" 
+                      onClick={() => updateInvoiceStatus.mutate(selectedStatus)}
+                      disabled={updateInvoiceStatus.isPending}
+                    >
+                      {updateInvoiceStatus.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Save className="h-4 w-4" />
+                      )}
+                    </Button>
+                    <Button 
+                      size="sm"
+                      variant="ghost" 
+                      className="h-8 w-8 p-0" 
+                      onClick={() => {
+                        setIsEditingStatus(false);
+                        setSelectedStatus(invoice.status);
+                      }}
+                    >
+                      ✕
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <Badge 
+                      className={invoice.status === "paid" ? "bg-green-600" : 
+                               invoice.status === "cancelled" ? "bg-gray-500" : "bg-amber-500"}
+                    >
+                      {invoice.status.toUpperCase()}
+                    </Badge>
+                    {!readOnly && (
+                      <Button 
+                        size="sm" 
+                        variant="ghost"
+                        className="h-6 w-6 p-0" 
+                        onClick={() => {
+                          setSelectedStatus(invoice.status);
+                          setIsEditingStatus(true);
+                        }}
+                      >
+                        <Edit className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Date</span>
