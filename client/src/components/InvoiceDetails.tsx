@@ -35,6 +35,7 @@ export default function InvoiceDetails({ invoiceId, patientId, readOnly = false 
   // Update invoice status mutation
   const updateInvoiceStatus = useMutation({
     mutationFn: async (status: string) => {
+      // Use PATCH endpoint for partial updates
       const response = await apiRequest('PATCH', `/api/invoices/${invoiceId}`, { 
         status,
         paymentDate: status === 'paid' ? new Date().toISOString().split('T')[0] : null 

@@ -647,6 +647,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Add PATCH endpoint for partial invoice updates (like status changes)
+  app.patch('/api/invoices/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid ID' });
+      }
+      
+      // Get the current invoice first
+      const currentInvoice = await storage.getInvoiceById(id);
+      if (!currentInvoice) {
+        return res.status(404).json({ message: 'Invoice not found' });
+      }
+      
+      // Merge the current invoice with the updates
+      const updatedData = { ...currentInvoice, ...req.body };
+      
+      const updatedInvoice = await storage.updateInvoice(id, updatedData);
+      if (!updatedInvoice) {
+        return res.status(404).json({ message: 'Invoice update failed' });
+      }
+      
+      res.json(updatedInvoice);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
   // Invoice items routes
   app.get('/api/invoices/:invoiceId/items', async (req, res) => {
     try {
