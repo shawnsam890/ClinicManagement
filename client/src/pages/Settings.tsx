@@ -550,12 +550,12 @@ export default function Settings() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {Object.entries(dropdownOptions || {}).map(([category, options]) => 
-                      options.map((option: string, index: number) => (
-                        <TableRow key={`${category}-${index}`}>
-                          <TableCell>{getCategoryLabel(category)}</TableCell>
+                    {dropdownOptions && dropdownOptions[newOptionCategory] ? 
+                      dropdownOptions[newOptionCategory].map((option: string, index: number) => (
+                        <TableRow key={`${newOptionCategory}-${index}`}>
+                          <TableCell>{getCategoryLabel(newOptionCategory)}</TableCell>
                           <TableCell>
-                            {editingOption === `${category}-${option}` ? (
+                            {editingOption === `${newOptionCategory}-${option}` ? (
                               <Input
                                 value={newOptionValue}
                                 onChange={(e) => setNewOptionValue(e.target.value)}
@@ -566,13 +566,13 @@ export default function Settings() {
                             )}
                           </TableCell>
                           <TableCell className="text-right">
-                            {editingOption === `${category}-${option}` ? (
+                            {editingOption === `${newOptionCategory}-${option}` ? (
                               <div className="flex justify-end space-x-2">
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => {
-                                    handleUpdateOption(category, option, newOptionValue);
+                                    handleUpdateOption(newOptionCategory, option, newOptionValue);
                                   }}
                                 >
                                   <Check className="h-4 w-4 text-green-500" />
@@ -591,7 +591,7 @@ export default function Settings() {
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => {
-                                    setEditingOption(`${category}-${option}`);
+                                    setEditingOption(`${newOptionCategory}-${option}`);
                                     setNewOptionValue(option);
                                   }}
                                 >
@@ -614,7 +614,7 @@ export default function Settings() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => handleDeleteOption(category, option)}
+                                  onClick={() => handleDeleteOption(newOptionCategory, option)}
                                 >
                                   <Trash2 className="h-4 w-4 text-red-500" />
                                 </Button>
@@ -622,8 +622,8 @@ export default function Settings() {
                             )}
                           </TableCell>
                         </TableRow>
-                      ))
-                    )}
+                      )) : <TableRow><TableCell colSpan={3} className="text-center">No options found for this category</TableCell></TableRow>
+                    }
                     
                     {isAddingOption && (
                       <TableRow>
