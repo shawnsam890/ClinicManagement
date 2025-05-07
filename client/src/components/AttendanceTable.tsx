@@ -204,7 +204,7 @@ export default function AttendanceTable({ staffMembers, singleStaffView = false 
   };
 
   const getAttendanceForDay = (staffId: number, date: string) => {
-    if (!staffAttendance) return null;
+    if (!staffAttendance || !Array.isArray(staffAttendance)) return null;
     
     return staffAttendance.find(
       (a: any) => a.staffId === staffId && a.date === date
@@ -320,14 +320,14 @@ export default function AttendanceTable({ staffMembers, singleStaffView = false 
 
         {!singleStaffView && staffMembers.length > 0 && (
           <Select
-            value={selectedStaff ? selectedStaff.toString() : ""}
-            onValueChange={(value) => setSelectedStaff(parseInt(value))}
+            value={selectedStaff ? selectedStaff.toString() : "none"}
+            onValueChange={(value) => setSelectedStaff(value === "none" ? null : parseInt(value))}
           >
             <SelectTrigger className="w-[250px]">
               <SelectValue placeholder="Select staff member to view attendance" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Staff</SelectItem>
+              <SelectItem value="none">All Staff</SelectItem>
               {staffMembers.map((staff) => (
                 <SelectItem key={staff.id} value={staff.id.toString()}>
                   {staff.name} - {staff.role}
