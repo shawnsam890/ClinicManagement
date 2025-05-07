@@ -489,4 +489,375 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+import session from "express-session";
+import connectPg from "connect-pg-simple";
+import { db } from "./db";
+import { eq, and, asc } from "drizzle-orm";
+import { pool } from "./db";
+
+const PostgresSessionStore = connectPg(session);
+
+export class DatabaseStorage implements IStorage {
+  sessionStore: session.SessionStore;
+
+  constructor() {
+    this.sessionStore = new PostgresSessionStore({ 
+      pool, 
+      createTableIfMissing: true 
+    });
+  }
+  
+  // Patient management
+  async getPatients(): Promise<Patient[]> {
+    return await db.select().from(patients).orderBy(asc(patients.id));
+  }
+  
+  async getPatientById(id: number): Promise<Patient | undefined> {
+    const result = await db.select().from(patients).where(eq(patients.id, id));
+    return result[0];
+  }
+  
+  async getPatientByPatientId(patientId: string): Promise<Patient | undefined> {
+    const result = await db.select().from(patients).where(eq(patients.patientId, patientId));
+    return result[0];
+  }
+  
+  async createPatient(patient: InsertPatient): Promise<Patient> {
+    const result = await db.insert(patients).values({
+      ...patient,
+      createdAt: new Date()
+    }).returning();
+    return result[0];
+  }
+  
+  async updatePatient(id: number, patient: Partial<InsertPatient>): Promise<Patient | undefined> {
+    const result = await db.update(patients)
+      .set(patient)
+      .where(eq(patients.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  async deletePatient(id: number): Promise<boolean> {
+    const result = await db.delete(patients).where(eq(patients.id, id));
+    return true;
+  }
+  
+  // Patient visits
+  async getPatientVisits(patientId: string): Promise<PatientVisit[]> {
+    return await db.select().from(patientVisits).where(eq(patientVisits.patientId, patientId));
+  }
+  
+  async getPatientVisitById(id: number): Promise<PatientVisit | undefined> {
+    const result = await db.select().from(patientVisits).where(eq(patientVisits.id, id));
+    return result[0];
+  }
+  
+  async createPatientVisit(visit: InsertPatientVisit): Promise<PatientVisit> {
+    const result = await db.insert(patientVisits).values(visit).returning();
+    return result[0];
+  }
+  
+  async updatePatientVisit(id: number, visit: Partial<InsertPatientVisit>): Promise<PatientVisit | undefined> {
+    const result = await db.update(patientVisits)
+      .set(visit)
+      .where(eq(patientVisits.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  async deletePatientVisit(id: number): Promise<boolean> {
+    await db.delete(patientVisits).where(eq(patientVisits.id, id));
+    return true;
+  }
+  
+  // Lab management
+  async getLabWorks(): Promise<LabWork[]> {
+    return await db.select().from(labWorks);
+  }
+  
+  async getLabWorkById(id: number): Promise<LabWork | undefined> {
+    const result = await db.select().from(labWorks).where(eq(labWorks.id, id));
+    return result[0];
+  }
+  
+  async getLabWorksByPatientId(patientId: string): Promise<LabWork[]> {
+    return await db.select().from(labWorks).where(eq(labWorks.patientId, patientId));
+  }
+  
+  async createLabWork(labWork: InsertLabWork): Promise<LabWork> {
+    const result = await db.insert(labWorks).values(labWork).returning();
+    return result[0];
+  }
+  
+  async updateLabWork(id: number, labWork: Partial<InsertLabWork>): Promise<LabWork | undefined> {
+    const result = await db.update(labWorks)
+      .set(labWork)
+      .where(eq(labWorks.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  async deleteLabWork(id: number): Promise<boolean> {
+    await db.delete(labWorks).where(eq(labWorks.id, id));
+    return true;
+  }
+  
+  // Lab inventory
+  async getLabInventory(): Promise<LabInventoryItem[]> {
+    return await db.select().from(labInventory);
+  }
+  
+  async getLabInventoryItemById(id: number): Promise<LabInventoryItem | undefined> {
+    const result = await db.select().from(labInventory).where(eq(labInventory.id, id));
+    return result[0];
+  }
+  
+  async createLabInventoryItem(item: InsertLabInventoryItem): Promise<LabInventoryItem> {
+    const result = await db.insert(labInventory).values(item).returning();
+    return result[0];
+  }
+  
+  async updateLabInventoryItem(id: number, item: Partial<InsertLabInventoryItem>): Promise<LabInventoryItem | undefined> {
+    const result = await db.update(labInventory)
+      .set(item)
+      .where(eq(labInventory.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  async deleteLabInventoryItem(id: number): Promise<boolean> {
+    await db.delete(labInventory).where(eq(labInventory.id, id));
+    return true;
+  }
+  
+  // Staff management
+  async getStaff(): Promise<Staff[]> {
+    return await db.select().from(staff);
+  }
+  
+  async getStaffById(id: number): Promise<Staff | undefined> {
+    const result = await db.select().from(staff).where(eq(staff.id, id));
+    return result[0];
+  }
+  
+  async createStaff(staffMember: InsertStaff): Promise<Staff> {
+    const result = await db.insert(staff).values(staffMember).returning();
+    return result[0];
+  }
+  
+  async updateStaff(id: number, staffMember: Partial<InsertStaff>): Promise<Staff | undefined> {
+    const result = await db.update(staff)
+      .set(staffMember)
+      .where(eq(staff.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  async deleteStaff(id: number): Promise<boolean> {
+    await db.delete(staff).where(eq(staff.id, id));
+    return true;
+  }
+  
+  // Staff attendance
+  async getStaffAttendance(staffId: number): Promise<StaffAttendance[]> {
+    return await db.select().from(staffAttendance).where(eq(staffAttendance.staffId, staffId));
+  }
+  
+  async getStaffAttendanceById(id: number): Promise<StaffAttendance | undefined> {
+    const result = await db.select().from(staffAttendance).where(eq(staffAttendance.id, id));
+    return result[0];
+  }
+  
+  async createStaffAttendance(attendance: InsertStaffAttendance): Promise<StaffAttendance> {
+    const result = await db.insert(staffAttendance).values(attendance).returning();
+    return result[0];
+  }
+  
+  async updateStaffAttendance(id: number, attendance: Partial<InsertStaffAttendance>): Promise<StaffAttendance | undefined> {
+    const result = await db.update(staffAttendance)
+      .set(attendance)
+      .where(eq(staffAttendance.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  async deleteStaffAttendance(id: number): Promise<boolean> {
+    await db.delete(staffAttendance).where(eq(staffAttendance.id, id));
+    return true;
+  }
+  
+  // Staff salary
+  async getStaffSalary(staffId: number): Promise<StaffSalary[]> {
+    return await db.select().from(staffSalary).where(eq(staffSalary.staffId, staffId));
+  }
+  
+  async getStaffSalaryById(id: number): Promise<StaffSalary | undefined> {
+    const result = await db.select().from(staffSalary).where(eq(staffSalary.id, id));
+    return result[0];
+  }
+  
+  async createStaffSalary(salary: InsertStaffSalary): Promise<StaffSalary> {
+    const result = await db.insert(staffSalary).values(salary).returning();
+    return result[0];
+  }
+  
+  async updateStaffSalary(id: number, salary: Partial<InsertStaffSalary>): Promise<StaffSalary | undefined> {
+    const result = await db.update(staffSalary)
+      .set(salary)
+      .where(eq(staffSalary.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  async deleteStaffSalary(id: number): Promise<boolean> {
+    await db.delete(staffSalary).where(eq(staffSalary.id, id));
+    return true;
+  }
+  
+  // Invoice management
+  async getInvoices(): Promise<Invoice[]> {
+    return await db.select().from(invoices);
+  }
+  
+  async getInvoiceById(id: number): Promise<Invoice | undefined> {
+    const result = await db.select().from(invoices).where(eq(invoices.id, id));
+    return result[0];
+  }
+  
+  async getInvoicesByPatientId(patientId: string): Promise<Invoice[]> {
+    return await db.select().from(invoices).where(eq(invoices.patientId, patientId));
+  }
+  
+  async createInvoice(invoice: InsertInvoice): Promise<Invoice> {
+    const result = await db.insert(invoices).values(invoice).returning();
+    return result[0];
+  }
+  
+  async updateInvoice(id: number, invoice: Partial<InsertInvoice>): Promise<Invoice | undefined> {
+    const result = await db.update(invoices)
+      .set(invoice)
+      .where(eq(invoices.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  async deleteInvoice(id: number): Promise<boolean> {
+    await db.delete(invoices).where(eq(invoices.id, id));
+    return true;
+  }
+  
+  // Invoice items
+  async getInvoiceItems(invoiceId: number): Promise<InvoiceItem[]> {
+    return await db.select().from(invoiceItems).where(eq(invoiceItems.invoiceId, invoiceId));
+  }
+  
+  async getInvoiceItemById(id: number): Promise<InvoiceItem | undefined> {
+    const result = await db.select().from(invoiceItems).where(eq(invoiceItems.id, id));
+    return result[0];
+  }
+  
+  async createInvoiceItem(item: InsertInvoiceItem): Promise<InvoiceItem> {
+    const result = await db.insert(invoiceItems).values(item).returning();
+    return result[0];
+  }
+  
+  async updateInvoiceItem(id: number, item: Partial<InsertInvoiceItem>): Promise<InvoiceItem | undefined> {
+    const result = await db.update(invoiceItems)
+      .set(item)
+      .where(eq(invoiceItems.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  async deleteInvoiceItem(id: number): Promise<boolean> {
+    await db.delete(invoiceItems).where(eq(invoiceItems.id, id));
+    return true;
+  }
+  
+  // Settings
+  async getSettings(): Promise<Setting[]> {
+    return await db.select().from(settings);
+  }
+  
+  async getSettingsByCategory(category: string): Promise<Setting[]> {
+    return await db.select().from(settings).where(eq(settings.category, category));
+  }
+  
+  async getSettingByKey(key: string): Promise<Setting | undefined> {
+    const result = await db.select().from(settings).where(eq(settings.settingKey, key));
+    return result[0];
+  }
+  
+  async createSetting(setting: InsertSetting): Promise<Setting> {
+    const result = await db.insert(settings).values(setting).returning();
+    return result[0];
+  }
+  
+  async updateSetting(id: number, setting: Partial<InsertSetting>): Promise<Setting | undefined> {
+    const result = await db.update(settings)
+      .set(setting)
+      .where(eq(settings.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  async deleteSetting(id: number): Promise<boolean> {
+    await db.delete(settings).where(eq(settings.id, id));
+    return true;
+  }
+
+  // Initialize default settings
+  async initializeDefaultSettings() {
+    // Check if any settings exist
+    const existingSettings = await this.getSettings();
+    if (existingSettings.length > 0) {
+      return; // Settings already exist
+    }
+    
+    // Add default dropdown options
+    await this.createSetting({
+      settingKey: 'dropdown_options',
+      settingValue: {
+        medicalHistory: ['Diabetes', 'Hypertension', 'Heart Disease', 'Asthma', 'None'],
+        drugAllergy: ['Penicillin', 'NSAIDs', 'Sulfa Drugs', 'Local Anesthetics', 'None'],
+        previousDentalHistory: ['Extraction', 'Root Canal Treatment', 'Filling', 'Crown', 'Implant', 'None'],
+        chiefComplaint: ['Toothache', 'Tooth Sensitivity', 'Bleeding Gums', 'Bad Breath', 'Broken Tooth', 'Jaw Pain'],
+        oralExamination: ['Cavity', 'Gingivitis', 'Periodontitis', 'Abscess', 'Fractured Tooth'],
+        investigation: ['X-Ray', 'CBCT', 'Pulp Testing', 'Blood Test', 'None'],
+        treatmentPlan: ['Filling', 'Extraction', 'Root Canal', 'Scaling', 'Crown', 'Implant'],
+        prescription: ['Antibiotics', 'Painkillers', 'Anti-inflammatory', 'Mouthwash', 'None'],
+        treatmentDone: ['Filling', 'Extraction', 'Root Canal', 'Scaling', 'Crown', 'Consultation Only'],
+        advice: ['Soft Diet', 'Maintain Oral Hygiene', 'Avoid Hot Food/Beverage', 'Follow-up Required', 'None']
+      },
+      category: 'dropdown_options'
+    });
+    
+    // Add clinic info settings
+    await this.createSetting({
+      settingKey: 'clinic_info',
+      settingValue: {
+        name: "Dr. Shawn's Clinic",
+        logo: "",
+        address: "",
+        phone: "",
+        email: ""
+      },
+      category: 'clinic_info'
+    });
+    
+    // Add patient ID format setting
+    await this.createSetting({
+      settingKey: 'patient_id_format',
+      settingValue: {
+        prefix: 'PT',
+        yearInFormat: true,
+        digitCount: 4,
+        separator: '-'
+      },
+      category: 'patient_id_format'
+    });
+  }
+}
+
+export const storage = new DatabaseStorage();

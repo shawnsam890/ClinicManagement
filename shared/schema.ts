@@ -2,6 +2,16 @@ import { pgTable, text, serial, integer, boolean, timestamp, jsonb, real, date }
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// User related schema
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(),
+  fullName: text("full_name").notNull(),
+  role: text("role").notNull().default("staff"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Patient related schemas
 export const patients = pgTable("patients", {
   id: serial("id").primaryKey(),
@@ -122,6 +132,7 @@ export const settings = pgTable("settings", {
 });
 
 // Create insert schemas
+export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
 export const insertPatientSchema = createInsertSchema(patients).omit({ id: true, createdAt: true });
 export const insertPatientVisitSchema = createInsertSchema(patientVisits).omit({ id: true });
 export const insertLabWorkSchema = createInsertSchema(labWorks).omit({ id: true });
