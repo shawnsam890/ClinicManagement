@@ -335,7 +335,7 @@ export default function AppointmentsPage() {
           <DialogTrigger asChild>
             <Button>Create Appointment</Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px] overflow-y-auto max-h-[90vh]">
+          <DialogContent className="sm:max-w-[900px] overflow-y-auto max-h-[90vh]">
             <DialogHeader>
               <DialogTitle>Create New Appointment</DialogTitle>
               <DialogDescription>
@@ -345,143 +345,199 @@ export default function AppointmentsPage() {
 
             <form onSubmit={form.handleSubmit(onSubmit)}>
               <div className="grid gap-4 py-4">
-                <div className="mb-4">
-                  <Label htmlFor="patientSearch">Search Patient</Label>
-                  <Input
-                    id="patientSearch"
-                    placeholder="Search by name, ID, or phone number"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="mb-2"
-                  />
+                <h3 className="text-lg font-semibold border-b pb-2 mb-2">Patient Information & Basic Details</h3>
+                
+                {/* Patient Selection Section */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="md:col-span-3">
+                    <Label htmlFor="patientSearch">Search Patient</Label>
+                    <Input
+                      id="patientSearch"
+                      placeholder="Search by name, ID, or phone number"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="mb-2"
+                    />
 
-                  {searchTerm && filteredPatients && (
-                    <div className="max-h-40 overflow-y-auto border rounded-md p-2 mb-4">
-                      {filteredPatients.length > 0 ? (
-                        filteredPatients.map((patient) => (
-                          <div
-                            key={patient.id}
-                            className="p-2 hover:bg-gray-100 cursor-pointer rounded-md"
-                            onClick={() => {
-                              form.setValue("patientId", patient.patientId);
-                              setSearchTerm("");
-                            }}
-                          >
-                            <p className="font-medium">
-                              {patient.name} ({patient.patientId})
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {patient.phoneNumber}
-                            </p>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-center py-2 text-gray-500">
-                          No patients found
+                    {searchTerm && filteredPatients && (
+                      <div className="max-h-40 overflow-y-auto border rounded-md p-2 mb-4">
+                        {filteredPatients.length > 0 ? (
+                          filteredPatients.map((patient) => (
+                            <div
+                              key={patient.id}
+                              className="p-2 hover:bg-gray-100 cursor-pointer rounded-md"
+                              onClick={() => {
+                                form.setValue("patientId", patient.patientId);
+                                setSearchTerm("");
+                              }}
+                            >
+                              <p className="font-medium">
+                                {patient.name} ({patient.patientId})
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                {patient.phoneNumber}
+                              </p>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-center py-2 text-gray-500">
+                            No patients found
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="mt-2">
+                      <Label htmlFor="patientId">Selected Patient ID</Label>
+                      <Input
+                        id="patientId"
+                        {...form.register("patientId")}
+                        readOnly
+                      />
+                      {form.formState.errors.patientId && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {form.formState.errors.patientId.message}
                         </p>
                       )}
                     </div>
-                  )}
-
-                  <div className="mt-2">
-                    <Label htmlFor="patientId">Selected Patient ID</Label>
+                  </div>
+                  
+                  {/* Date, Doctor, Treatment Row */}
+                  <div>
+                    <Label htmlFor="date">Appointment Date</Label>
                     <Input
-                      id="patientId"
-                      {...form.register("patientId")}
-                      readOnly
+                      id="date"
+                      type="date"
+                      {...form.register("date")}
                     />
-                    {form.formState.errors.patientId && (
+                    {form.formState.errors.date && (
                       <p className="text-red-500 text-sm mt-1">
-                        {form.formState.errors.patientId.message}
+                        {form.formState.errors.date.message}
                       </p>
                     )}
                   </div>
-                </div>
 
-                <div className="mb-4">
-                  <Label htmlFor="date">Appointment Date</Label>
-                  <Input
-                    id="date"
-                    type="date"
-                    {...form.register("date")}
-                  />
-                  {form.formState.errors.date && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {form.formState.errors.date.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="mb-4">
-                  <Label htmlFor="doctorName">Doctor</Label>
-                  <Controller
-                    control={form.control}
-                    name="doctorName"
-                    render={({ field }) => (
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value ?? ""}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select doctor" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {dropdownSettings?.settingValue?.doctors?.map(
-                            (doctor: string) => (
-                              <SelectItem key={doctor} value={doctor}>
-                                {doctor}
-                              </SelectItem>
-                            )
-                          )}
-                        </SelectContent>
-                      </Select>
+                  <div>
+                    <Label htmlFor="doctorName">Doctor</Label>
+                    <Controller
+                      control={form.control}
+                      name="doctorName"
+                      render={({ field }) => (
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value ?? ""}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select doctor" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {dropdownSettings?.settingValue?.doctors?.map(
+                              (doctor: string) => (
+                                <SelectItem key={doctor} value={doctor}>
+                                  {doctor}
+                                </SelectItem>
+                              )
+                            )}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                    {form.formState.errors.doctorName && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {form.formState.errors.doctorName.message}
+                      </p>
                     )}
-                  />
-                  {form.formState.errors.doctorName && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {form.formState.errors.doctorName.message}
-                    </p>
-                  )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="treatmentDone">Treatment</Label>
+                    <Controller
+                      control={form.control}
+                      name="treatmentDone"
+                      render={({ field }) => (
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value ?? ""}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select treatment" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {dropdownSettings?.settingValue?.treatmentDone?.map(
+                              (treatment: string) => (
+                                <SelectItem key={treatment} value={treatment}>
+                                  {treatment}
+                                </SelectItem>
+                              )
+                            )}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </div>
                 </div>
 
-                <div className="mb-4">
-                  <Label htmlFor="treatmentDone">Treatment</Label>
-                  <Controller
-                    control={form.control}
-                    name="treatmentDone"
-                    render={({ field }) => (
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value ?? ""}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select treatment" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {dropdownSettings?.settingValue?.treatmentDone?.map(
-                            (treatment: string) => (
-                              <SelectItem key={treatment} value={treatment}>
-                                {treatment}
-                              </SelectItem>
-                            )
-                          )}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                </div>
-
-                <div className="mb-4">
-                  <Label htmlFor="notes">Notes</Label>
+                {/* Notes Section */}
+                <div>
+                  <Label htmlFor="notes">Clinical Notes</Label>
                   <Textarea
                     id="notes"
                     {...form.register("notes")}
                     placeholder="Add any notes about the appointment"
+                    className="min-h-[100px]"
                   />
+                </div>
+
+                {/* Prescription Section */}
+                <h3 className="text-lg font-semibold border-b pb-2 mb-2 mt-4">Prescription & Medication</h3>
+                <div className="bg-muted/20 p-4 rounded-md">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Prescriptions can be added after creating the appointment and linking it to a patient visit.
+                  </p>
+                </div>
+                
+                {/* Attachments Section */}
+                <h3 className="text-lg font-semibold border-b pb-2 mb-2 mt-4">Attachments & Documentation</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="attachments" className="flex items-center mb-2">
+                      <Paperclip className="h-4 w-4 mr-2" /> Attachments
+                    </Label>
+                    <div className="border border-dashed rounded-md p-6 text-center">
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Drag and drop files or click to upload
+                      </p>
+                      <Button type="button" variant="outline" size="sm">
+                        Upload Files
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="consentForms" className="flex items-center mb-2">
+                      <FileCheck className="h-4 w-4 mr-2" /> Consent Forms
+                    </Label>
+                    <div className="border border-dashed rounded-md p-6 text-center">
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Drag and drop forms or click to upload
+                      </p>
+                      <Button type="button" variant="outline" size="sm">
+                        Upload Forms
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Invoice Section */}
+                <h3 className="text-lg font-semibold border-b pb-2 mb-2 mt-4">Invoice & Billing</h3>
+                <div className="bg-muted/20 p-4 rounded-md">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Invoices can be created after the appointment is saved.
+                  </p>
                 </div>
               </div>
 
-              <DialogFooter>
+              <DialogFooter className="mt-4 pt-4 border-t">
                 <Button type="submit" disabled={createAppointmentMutation.isPending}>
                   {createAppointmentMutation.isPending ? (
                     <>
