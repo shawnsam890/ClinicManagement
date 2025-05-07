@@ -123,8 +123,46 @@ export default function AppointmentsPage() {
       }
       return await res.json();
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      
+      // Automatically create a patient visit record
+      try {
+        const visitData = {
+          patientId: data.patientId,
+          date: data.date,
+          chiefComplaint: data.treatmentDone || "Routine check-up",
+          notes: data.notes,
+        };
+        
+        const visitRes = await apiRequest("POST", "/api/visits", visitData);
+        if (!visitRes.ok) {
+          throw new Error("Failed to create patient visit");
+        }
+        
+        const visitResult = await visitRes.json();
+        
+        // Update the appointment with the visit ID
+        const updateData = {
+          ...data,
+          visitId: visitResult.id,
+        };
+        
+        await apiRequest("PUT", `/api/appointments/${data.id}`, updateData);
+        
+        // Refetch appointments and update the selected appointment
+        await queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+        
+        const updatedAppointment = {
+          ...data,
+          visitId: visitResult.id
+        };
+        
+        setSelectedAppointment(updatedAppointment);
+      } catch (error) {
+        console.error("Error creating patient visit:", error);
+      }
+      
       toast({
         title: "Success",
         description: "Appointment created successfully",
@@ -133,7 +171,6 @@ export default function AppointmentsPage() {
       form.reset();
       
       // Open the view dialog to show the newly created appointment
-      setSelectedAppointment(data);
       setIsViewDialogOpen(true);
     },
     onError: (error) => {
