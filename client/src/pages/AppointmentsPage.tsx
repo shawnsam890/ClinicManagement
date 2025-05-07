@@ -51,6 +51,8 @@ import {
   Plus,
   Trash,
   RefreshCcw,
+  Eye,
+  Save,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -362,9 +364,29 @@ export default function AppointmentsPage() {
     return patient ? patient.name : "Unknown";
   };
 
+  // Handle viewing an appointment (read-only mode)
+  const handleViewAppointment = (appointment: any) => {
+    setSelectedAppointment(appointment);
+    setReadOnly(true);
+    
+    // Set form values for viewing
+    form.setValue("id", appointment.id);
+    form.setValue("patientId", appointment.patientId);
+    form.setValue("date", appointment.date);
+    form.setValue("doctorName", appointment.doctorName || "");
+    form.setValue("treatmentDone", appointment.treatmentDone || null);
+    form.setValue("notes", appointment.notes || null);
+    form.setValue("visitId", appointment.visitId || null);
+    form.setValue("invoiceId", appointment.invoiceId || null);
+    
+    // Open dialog
+    setIsDialogOpen(true);
+  };
+
   // Handle editing an appointment
   const handleEditAppointment = (appointment: any) => {
     setSelectedAppointment(appointment);
+    setReadOnly(false);
     
     // Set form values for editing
     form.setValue("id", appointment.id);
@@ -378,6 +400,13 @@ export default function AppointmentsPage() {
     
     // Open edit dialog
     setIsDialogOpen(true);
+  };
+  
+  // Handle deletion of an invoice
+  const handleDeleteInvoice = (invoiceId: number) => {
+    if (window.confirm("Are you sure you want to delete this invoice? This action cannot be undone.")) {
+      deleteInvoiceMutation.mutate(invoiceId);
+    }
   };
   
   // Handle deleting an appointment
@@ -449,13 +478,48 @@ export default function AppointmentsPage() {
           </DialogTrigger>
           <DialogContent className="sm:max-w-[900px] overflow-y-auto max-h-[90vh]">
             <DialogHeader>
-              <DialogTitle>{form.getValues("id") ? "Edit Appointment" : "Create New Appointment"}</DialogTitle>
+              <DialogTitle>
+                {readOnly 
+                  ? "View Appointment" 
+                  : form.getValues("id") 
+                    ? "Edit Appointment" 
+                    : "Create New Appointment"
+                }
+              </DialogTitle>
               <DialogDescription>
-                {form.getValues("id") ? "Edit appointment details" : "Schedule a new appointment for a patient"}
+                {readOnly 
+                  ? "Review appointment details (read-only)" 
+                  : form.getValues("id") 
+                    ? "Edit appointment details" 
+                    : "Schedule a new appointment for a patient"
+                }
               </DialogDescription>
             </DialogHeader>
 
             <form onSubmit={form.handleSubmit(onSubmit)}>
+              <div className="flex justify-between items-center mb-4">
+                <div>
+                  <h3 className="text-lg font-medium">
+                    {readOnly ? "Viewing Appointment" : form.getValues("id") ? "Edit Appointment" : "New Appointment"}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {readOnly ? "View appointment details below" : form.getValues("id") ? "Edit appointment details" : "Enter appointment details"}
+                  </p>
+                </div>
+                {readOnly && (
+                  <Button 
+                    type="button" 
+                    variant="secondary"
+                    onClick={() => {
+                      setReadOnly(false);
+                    }}
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Switch to Edit Mode
+                  </Button>
+                )}
+              </div>
+              
               <Tabs defaultValue="patient-details" className="w-full mt-4">
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="patient-details">Patient & Details</TabsTrigger>
@@ -524,11 +588,21 @@ export default function AppointmentsPage() {
                     {/* Date, Doctor, Treatment Row */}
                     <div>
                       <Label htmlFor="date">Appointment Date</Label>
-                      <Input
-                        id="date"
-                        type="date"
-                        {...form.register("date")}
-                      />
+                      {readOnly ? (
+                        <Input
+                          id="date"
+                          value={form.getValues("date")}
+                          readOnly
+                          disabled
+                          className="bg-muted"
+                        />
+                      ) : (
+                        <Input
+                          id="date"
+                          type="date"
+                          {...form.register("date")}
+                        />
+                      )}
                       {form.formState.errors.date && (
                         <p className="text-red-500 text-sm mt-1">
                           {form.formState.errors.date.message}
@@ -538,30 +612,40 @@ export default function AppointmentsPage() {
 
                     <div>
                       <Label htmlFor="doctorName">Doctor</Label>
-                      <Controller
-                        control={form.control}
-                        name="doctorName"
-                        render={({ field }) => (
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value ?? ""}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select doctor" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {dropdownSettings?.settingValue?.doctors?.map(
-                                (doctor: string) => (
-                                  <SelectItem key={doctor} value={doctor}>
-                                    {doctor}
-                                  </SelectItem>
-                                )
-                              )}
-                            </SelectContent>
-                          </Select>
-                        )}
-                      />
-                      {form.formState.errors.doctorName && (
+                      {readOnly ? (
+                        <Input
+                          id="doctorName"
+                          value={form.getValues("doctorName") || "Not specified"}
+                          readOnly
+                          disabled
+                          className="bg-muted"
+                        />
+                      ) : (
+                        <Controller
+                          control={form.control}
+                          name="doctorName"
+                          render={({ field }) => (
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value ?? ""}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select doctor" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {dropdownSettings?.settingValue?.doctors?.map(
+                                  (doctor: string) => (
+                                    <SelectItem key={doctor} value={doctor}>
+                                      {doctor}
+                                    </SelectItem>
+                                  )
+                                )}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                      )}
+                      {!readOnly && form.formState.errors.doctorName && (
                         <p className="text-red-500 text-sm mt-1">
                           {form.formState.errors.doctorName.message}
                         </p>
@@ -570,74 +654,96 @@ export default function AppointmentsPage() {
 
                     <div>
                       <Label htmlFor="treatmentDone">Treatment</Label>
-                      <Controller
-                        control={form.control}
-                        name="treatmentDone"
-                        render={({ field }) => (
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value ?? ""}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select treatment" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {dropdownSettings?.settingValue?.treatmentDone?.map(
-                                (treatment: string) => (
-                                  <SelectItem key={treatment} value={treatment}>
-                                    {treatment}
-                                  </SelectItem>
-                                )
-                              )}
-                            </SelectContent>
-                          </Select>
-                        )}
-                      />
+                      {readOnly ? (
+                        <Input
+                          id="treatmentDone"
+                          value={form.getValues("treatmentDone") || "Consultation only"}
+                          readOnly
+                          disabled
+                          className="bg-muted"
+                        />
+                      ) : (
+                        <Controller
+                          control={form.control}
+                          name="treatmentDone"
+                          render={({ field }) => (
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value ?? ""}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select treatment" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {dropdownSettings?.settingValue?.treatmentDone?.map(
+                                  (treatment: string) => (
+                                    <SelectItem key={treatment} value={treatment}>
+                                      {treatment}
+                                    </SelectItem>
+                                  )
+                                )}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                      )}
                     </div>
                     
                     {/* Notes Section */}
                     <div className="md:col-span-3 mt-2">
                       <Label htmlFor="notes">Notes & Additional Treatment Details</Label>
-                      <Textarea
-                        id="notes"
-                        {...form.register("notes")}
-                        placeholder="Enter treatment details, notes, or other relevant information"
-                        className="min-h-[100px]"
-                      />
+                      {readOnly ? (
+                        <div className="border rounded-md p-3 bg-muted">
+                          <p className="text-sm whitespace-pre-wrap">
+                            {form.getValues("notes") || "No notes provided."}
+                          </p>
+                        </div>
+                      ) : (
+                        <Textarea
+                          id="notes"
+                          {...form.register("notes")}
+                          placeholder="Enter treatment details, notes, or other relevant information"
+                          className="min-h-[100px]"
+                        />
+                      )}
                     </div>
                   </div>
 
-                  {/* Attachments Section */}
-                  <h3 className="text-lg font-semibold border-b pb-2 mb-2 mt-4">Attachments & Documentation</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="attachments" className="flex items-center mb-2">
-                        <Paperclip className="h-4 w-4 mr-2" /> Attachments
-                      </Label>
-                      <div className="border border-dashed rounded-md p-6 text-center">
-                        <p className="text-sm text-muted-foreground mb-2">
-                          Drag and drop files or click to upload
-                        </p>
-                        <Button type="button" variant="outline" size="sm">
-                          Upload Files
-                        </Button>
+                  {/* Attachments Section - hidden in read-only mode */}
+                  {!readOnly && (
+                    <>
+                      <h3 className="text-lg font-semibold border-b pb-2 mb-2 mt-4">Attachments & Documentation</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="attachments" className="flex items-center mb-2">
+                            <Paperclip className="h-4 w-4 mr-2" /> Attachments
+                          </Label>
+                          <div className="border border-dashed rounded-md p-6 text-center">
+                            <p className="text-sm text-muted-foreground mb-2">
+                              Drag and drop files or click to upload
+                            </p>
+                            <Button type="button" variant="outline" size="sm">
+                              Upload Files
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="consentForms" className="flex items-center mb-2">
+                            <FileCheck className="h-4 w-4 mr-2" /> Consent Forms
+                          </Label>
+                          <div className="border border-dashed rounded-md p-6 text-center">
+                            <p className="text-sm text-muted-foreground mb-2">
+                              Drag and drop forms or click to upload
+                            </p>
+                            <Button type="button" variant="outline" size="sm">
+                              Upload Forms
+                            </Button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="consentForms" className="flex items-center mb-2">
-                        <FileCheck className="h-4 w-4 mr-2" /> Consent Forms
-                      </Label>
-                      <div className="border border-dashed rounded-md p-6 text-center">
-                        <p className="text-sm text-muted-foreground mb-2">
-                          Drag and drop forms or click to upload
-                        </p>
-                        <Button type="button" variant="outline" size="sm">
-                          Upload Forms
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
+                    </>
+                  )}
                 </TabsContent>
                 
                 <TabsContent value="prescription" className="py-4">
@@ -715,19 +821,48 @@ export default function AppointmentsPage() {
               </Tabs>
 
               <DialogFooter className="mt-4 pt-4 border-t">
-                <Button 
-                  type="submit" 
-                  disabled={createAppointmentMutation.isPending || updateAppointmentMutation.isPending}
-                >
-                  {(createAppointmentMutation.isPending || updateAppointmentMutation.isPending) ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    form.getValues("id") ? "Update Appointment" : "Save Appointment"
-                  )}
-                </Button>
+                {readOnly ? (
+                  // View mode footer - only Close button
+                  <Button 
+                    type="button" 
+                    variant="secondary"
+                    onClick={() => setIsDialogOpen(false)}
+                  >
+                    Close
+                  </Button>
+                ) : (
+                  // Edit mode footer - Save button and Delete Invoice button if it exists
+                  <div className="flex justify-between w-full">
+                    <div className="flex gap-2">
+                      {form.getValues("id") && form.getValues("invoiceId") && (
+                        <Button 
+                          type="button"
+                          variant="outline"
+                          onClick={() => handleDeleteInvoice(form.getValues("invoiceId") as number)}
+                        >
+                          <Trash className="mr-2 h-4 w-4" />
+                          Delete Invoice
+                        </Button>
+                      )}
+                    </div>
+                    <Button 
+                      type="submit" 
+                      disabled={createAppointmentMutation.isPending || updateAppointmentMutation.isPending}
+                    >
+                      {(createAppointmentMutation.isPending || updateAppointmentMutation.isPending) ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="mr-2 h-4 w-4" />
+                          {form.getValues("id") ? "Update Appointment" : "Save Appointment"}
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
               </DialogFooter>
             </form>
           </DialogContent>
@@ -758,7 +893,16 @@ export default function AppointmentsPage() {
                     <Button
                       variant="outline"
                       size="icon"
+                      onClick={() => handleViewAppointment(appointment)}
+                      title="View Appointment"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="icon"
                       onClick={() => handleEditAppointment(appointment)}
+                      title="Edit Appointment"
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -766,6 +910,7 @@ export default function AppointmentsPage() {
                       variant="destructive"
                       size="icon"
                       onClick={() => handleDeleteAppointment(appointment.id)}
+                      title="Delete Appointment"
                     >
                       <Trash className="h-4 w-4" />
                     </Button>
