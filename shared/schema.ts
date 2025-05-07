@@ -142,6 +142,22 @@ export const invoiceItems = pgTable("invoice_items", {
   amount: real("amount").notNull(),
 });
 
+// Appointments
+export const appointments = pgTable("appointments", {
+  id: serial("id").primaryKey(),
+  patientId: text("patient_id")
+    .notNull()
+    .references(() => patients.patientId),
+  date: date("date").notNull(),
+  doctorName: text("doctor_name"),
+  treatmentDone: text("treatment_done"),
+  notes: text("notes"),
+  attachments: jsonb("attachments"),
+  consentForms: jsonb("consent_forms"),
+  visitId: integer("visit_id").references(() => patientVisits.id),
+  invoiceId: integer("invoice_id").references(() => invoices.id),
+});
+
 // Settings schema
 export const settings = pgTable("settings", {
   id: serial("id").primaryKey(),
@@ -164,6 +180,7 @@ export const insertInvoiceItemSchema = createInsertSchema(invoiceItems).omit({ i
 export const insertSettingSchema = createInsertSchema(settings).omit({ id: true });
 export const insertMedicationSchema = createInsertSchema(medications).omit({ id: true });
 export const insertPrescriptionSchema = createInsertSchema(prescriptions).omit({ id: true });
+export const insertAppointmentSchema = createInsertSchema(appointments).omit({ id: true });
 
 // Export types
 export type User = typeof users.$inferSelect;
@@ -204,3 +221,6 @@ export type InsertMedication = z.infer<typeof insertMedicationSchema>;
 
 export type Prescription = typeof prescriptions.$inferSelect;
 export type InsertPrescription = z.infer<typeof insertPrescriptionSchema>;
+
+export type Appointment = typeof appointments.$inferSelect;
+export type InsertAppointment = z.infer<typeof insertAppointmentSchema>;

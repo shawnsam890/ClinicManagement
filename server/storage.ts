@@ -1,6 +1,7 @@
 import {
   Patient, InsertPatient,
   PatientVisit, InsertPatientVisit,
+  Appointment, InsertAppointment,
   LabWork, InsertLabWork,
   LabInventoryItem, InsertLabInventoryItem,
   Staff, InsertStaff,
@@ -28,6 +29,14 @@ export interface IStorage {
   createPatientVisit(visit: InsertPatientVisit): Promise<PatientVisit>;
   updatePatientVisit(id: number, visit: Partial<InsertPatientVisit>): Promise<PatientVisit | undefined>;
   deletePatientVisit(id: number): Promise<boolean>;
+  
+  // Appointments
+  getAppointments(): Promise<Appointment[]>;
+  getAppointmentById(id: number): Promise<Appointment | undefined>;
+  getAppointmentsByPatientId(patientId: string): Promise<Appointment[]>;
+  createAppointment(appointment: InsertAppointment): Promise<Appointment>;
+  updateAppointment(id: number, appointment: Partial<InsertAppointment>): Promise<Appointment | undefined>;
+  deleteAppointment(id: number): Promise<boolean>;
   
   // Lab management
   getLabWorks(): Promise<LabWork[]>;
@@ -109,6 +118,7 @@ export interface IStorage {
 export class MemStorage implements IStorage {
   private patients: Map<number, Patient>;
   private patientVisits: Map<number, PatientVisit>;
+  private appointments: Map<number, Appointment>;
   private labWorks: Map<number, LabWork>;
   private labInventory: Map<number, LabInventoryItem>;
   private staffMembers: Map<number, Staff>;
@@ -120,6 +130,7 @@ export class MemStorage implements IStorage {
   
   private patientIdCounter: number;
   private visitIdCounter: number;
+  private appointmentIdCounter: number;
   private labWorkIdCounter: number;
   private labInventoryIdCounter: number;
   private staffIdCounter: number;
@@ -132,6 +143,7 @@ export class MemStorage implements IStorage {
   constructor() {
     this.patients = new Map();
     this.patientVisits = new Map();
+    this.appointments = new Map();
     this.labWorks = new Map();
     this.labInventory = new Map();
     this.staffMembers = new Map();
@@ -143,6 +155,7 @@ export class MemStorage implements IStorage {
     
     this.patientIdCounter = 1;
     this.visitIdCounter = 1;
+    this.appointmentIdCounter = 1;
     this.labWorkIdCounter = 1;
     this.labInventoryIdCounter = 1;
     this.staffIdCounter = 1;
