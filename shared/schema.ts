@@ -132,6 +132,7 @@ export const invoices = pgTable("invoices", {
   totalAmount: real("total_amount").notNull(),
   status: text("status").notNull(),
   paymentMethod: text("payment_method"),
+  paymentDate: date("payment_date"),
   notes: text("notes"),
 });
 

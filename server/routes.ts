@@ -694,15 +694,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.body.status) {
         const newStatus = req.body.status;
         let paymentMethod = req.body.paymentMethod;
-        let paymentDate = currentInvoice.paymentDate;
+        let paymentDate = null;
+        
+        // Attempt to get existing payment date
+        try {
+          paymentDate = currentInvoice.paymentDate;
+        } catch (e) {
+          console.log('Error accessing payment date:', e);
+        }
         
         // Add payment date if status is paid
-        if (newStatus === 'paid' && !paymentDate) {
+        if (newStatus === 'paid') {
+          // Always set a payment date when status is changed to paid
           paymentDate = new Date().toISOString().split('T')[0];
+          console.log('Setting payment date for paid invoice:', paymentDate);
         } else if (newStatus !== 'paid') {
           // Clear payment info if not paid
           paymentDate = null;
           paymentMethod = null;
+          console.log('Clearing payment info for unpaid invoice');
         }
         
         // Prepare the update with explicit values
@@ -711,6 +721,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           paymentDate,
           paymentMethod
         };
+        
+        console.log('Final update data:', updateData);
         
         // Merge with current invoice data, but with our values taking precedence
         const updatedData = { ...currentInvoice, ...updateData };
