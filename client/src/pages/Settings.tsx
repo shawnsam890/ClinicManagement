@@ -173,6 +173,76 @@ export default function Settings() {
       });
     },
   });
+  
+  // Medication mutations
+  const createMedicationMutation = useMutation({
+    mutationFn: async (values: any) => {
+      return apiRequest("POST", "/api/medications", values);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/medications"] });
+      toast({
+        title: "Success",
+        description: "Medication added to inventory",
+      });
+      // Reset form
+      setMedicationName("");
+      setMedicationQuantity(0);
+      setMedicationThreshold(10);
+      setMedicationNotes("");
+    },
+    onError: (error) => {
+      console.error("Error creating medication:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add medication to inventory",
+        variant: "destructive",
+      });
+    },
+  });
+  
+  const updateMedicationMutation = useMutation({
+    mutationFn: async ({ id, values }: { id: number; values: any }) => {
+      return apiRequest("PUT", `/api/medications/${id}`, values);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/medications"] });
+      toast({
+        title: "Success",
+        description: "Medication updated successfully",
+      });
+      setEditingMedicationId(null);
+    },
+    onError: (error) => {
+      console.error("Error updating medication:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update medication",
+        variant: "destructive",
+      });
+    },
+  });
+  
+  const deleteMedicationMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return apiRequest("DELETE", `/api/medications/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/medications"] });
+      toast({
+        title: "Success",
+        description: "Medication removed from inventory",
+      });
+    },
+    onError: (error) => {
+      console.error("Error deleting medication:", error);
+      toast({
+        title: "Error",
+        description: "Failed to remove medication",
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleSaveClinicInfo = () => {
     updateClinicInfoMutation.mutate(clinicInfoState);
@@ -180,6 +250,57 @@ export default function Settings() {
 
   const handleSavePatientIdFormat = () => {
     updatePatientIdFormatMutation.mutate(patientIdFormatState);
+  };
+  
+  // Medication operations
+  const handleAddMedication = () => {
+    if (!medicationName.trim()) {
+      toast({
+        title: "Error",
+        description: "Medication name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    createMedicationMutation.mutate({
+      name: medicationName,
+      quantity: medicationQuantity,
+      threshold: medicationThreshold,
+      notes: medicationNotes || "",
+    });
+  };
+  
+  const handleEditMedication = (medication: any) => {
+    setMedicationName(medication.name);
+    setMedicationQuantity(medication.quantity);
+    setMedicationThreshold(medication.threshold);
+    setMedicationNotes(medication.notes || "");
+    setEditingMedicationId(medication.id);
+  };
+  
+  const handleUpdateMedication = () => {
+    if (!medicationName.trim() || !editingMedicationId) {
+      return;
+    }
+    
+    updateMedicationMutation.mutate({
+      id: editingMedicationId,
+      values: {
+        name: medicationName,
+        quantity: medicationQuantity,
+        threshold: medicationThreshold,
+        notes: medicationNotes || "",
+      }
+    });
+  };
+  
+  const handleCancelEdit = () => {
+    setEditingMedicationId(null);
+    setMedicationName("");
+    setMedicationQuantity(0);
+    setMedicationThreshold(10);
+    setMedicationNotes("");
   };
 
   const handleDeleteOption = (category: string, value: string) => {
@@ -275,7 +396,7 @@ export default function Settings() {
   return (
     <Layout title="Settings" showBackButton={true} backTo="/dashboard">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="general" className="flex items-center gap-2">
             <SettingsIcon className="h-4 w-4" />
             General Settings
@@ -287,6 +408,17 @@ export default function Settings() {
           <TabsTrigger value="patient" className="flex items-center gap-2">
             <User className="h-4 w-4" />
             Patient ID Format
+          </TabsTrigger>
+          <TabsTrigger value="medications" className="flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+              <path d="m19 19-6-6"></path>
+              <path d="m13 13-6-6"></path>
+              <rect x="3" y="3" width="4" height="4" rx="1"></rect>
+              <rect x="17" y="17" width="4" height="4" rx="1"></rect>
+              <path d="M14 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"></path>
+              <path d="M8 14a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z"></path>
+            </svg>
+            Medications
           </TabsTrigger>
         </TabsList>
         
@@ -650,6 +782,179 @@ export default function Settings() {
                       <Save className="mr-2 h-4 w-4" />
                       {updatePatientIdFormatMutation.isPending ? "Saving..." : "Save Format"}
                     </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="medications">
+          <Card>
+            <CardHeader>
+              <CardTitle>Medication Inventory</CardTitle>
+              <CardDescription>
+                Manage medications for prescriptions
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingMedications ? (
+                <div className="flex justify-center py-6">
+                  <p>Loading medications...</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="border rounded-lg p-4">
+                    <h3 className="text-lg font-medium mb-3">
+                      {editingMedicationId ? "Update Medication" : "Add New Medication"}
+                    </h3>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="medicationName">Medication Name</Label>
+                          <Input
+                            id="medicationName"
+                            value={medicationName}
+                            onChange={(e) => setMedicationName(e.target.value)}
+                            placeholder="Enter medication name"
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="medicationQuantity">Quantity in Stock</Label>
+                          <Input
+                            id="medicationQuantity"
+                            type="number"
+                            min={0}
+                            value={medicationQuantity}
+                            onChange={(e) => setMedicationQuantity(parseInt(e.target.value) || 0)}
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="medicationThreshold">
+                            Reorder Threshold
+                            <span className="text-sm text-muted-foreground ml-1">
+                              (Alert when below this level)
+                            </span>
+                          </Label>
+                          <Input
+                            id="medicationThreshold"
+                            type="number"
+                            min={1}
+                            value={medicationThreshold}
+                            onChange={(e) => setMedicationThreshold(parseInt(e.target.value) || 10)}
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="medicationNotes">Notes</Label>
+                        <Textarea
+                          id="medicationNotes"
+                          value={medicationNotes}
+                          onChange={(e) => setMedicationNotes(e.target.value)}
+                          placeholder="Additional information about the medication"
+                        />
+                      </div>
+                      
+                      <div className="flex justify-end space-x-2">
+                        {editingMedicationId ? (
+                          <>
+                            <Button variant="outline" onClick={handleCancelEdit}>
+                              Cancel
+                            </Button>
+                            <Button 
+                              onClick={handleUpdateMedication}
+                              disabled={updateMedicationMutation.isPending}
+                            >
+                              {updateMedicationMutation.isPending ? "Updating..." : "Update Medication"}
+                            </Button>
+                          </>
+                        ) : (
+                          <Button 
+                            onClick={handleAddMedication}
+                            disabled={createMedicationMutation.isPending}
+                          >
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            {createMedicationMutation.isPending ? "Adding..." : "Add Medication"}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Medication Name</TableHead>
+                          <TableHead>Quantity</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Notes</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {medications?.length > 0 ? (
+                          medications.map((medication: any) => (
+                            <TableRow key={medication.id}>
+                              <TableCell className="font-medium">{medication.name}</TableCell>
+                              <TableCell>{medication.quantity}</TableCell>
+                              <TableCell>
+                                {medication.quantity <= medication.threshold ? (
+                                  <Badge variant="destructive">Low Stock</Badge>
+                                ) : (
+                                  <Badge variant="outline">In Stock</Badge>
+                                )}
+                              </TableCell>
+                              <TableCell className="max-w-[200px] truncate">
+                                {medication.notes || "-"}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex justify-end space-x-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleEditMedication(medication)}
+                                  >
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      width="24"
+                                      height="24"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      className="h-4 w-4"
+                                    >
+                                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                    </svg>
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => deleteMedicationMutation.mutate(medication.id)}
+                                    disabled={deleteMedicationMutation.isPending}
+                                  >
+                                    <Trash2 className="h-4 w-4 text-red-500" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
+                              No medications found. Add your first medication above.
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
                   </div>
                 </div>
               )}
