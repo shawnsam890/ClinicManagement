@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { insertPatientSchema, insertPatientVisitSchema, insertLabWorkSchema, 
   insertLabInventorySchema, insertStaffSchema, insertStaffAttendanceSchema, 
   insertStaffSalarySchema, insertInvoiceSchema, insertInvoiceItemSchema, 
-  insertSettingSchema } from "@shared/schema";
+  insertSettingSchema, insertMedicationSchema, insertPrescriptionSchema } from "@shared/schema";
 import { z } from "zod";
 import path from 'path';
 import fs from 'fs';
@@ -843,6 +843,165 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       res.json({ message: 'File uploaded successfully' });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Medication routes
+  app.get('/api/medications', async (req, res) => {
+    try {
+      const medications = await storage.getMedications();
+      res.json(medications);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.get('/api/medications/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid ID' });
+      }
+      
+      const medication = await storage.getMedicationById(id);
+      if (!medication) {
+        return res.status(404).json({ message: 'Medication not found' });
+      }
+      
+      res.json(medication);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.post('/api/medications', async (req, res) => {
+    try {
+      const validatedData = insertMedicationSchema.parse(req.body);
+      const medication = await storage.createMedication(validatedData);
+      res.status(201).json(medication);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Validation error', errors: error.errors });
+      }
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.put('/api/medications/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid ID' });
+      }
+      
+      const updatedMedication = await storage.updateMedication(id, req.body);
+      if (!updatedMedication) {
+        return res.status(404).json({ message: 'Medication not found' });
+      }
+      
+      res.json(updatedMedication);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.delete('/api/medications/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid ID' });
+      }
+      
+      const success = await storage.deleteMedication(id);
+      if (!success) {
+        return res.status(404).json({ message: 'Medication not found' });
+      }
+      
+      res.status(204).end();
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Prescription routes
+  app.get('/api/visits/:visitId/prescriptions', async (req, res) => {
+    try {
+      const visitId = parseInt(req.params.visitId);
+      if (isNaN(visitId)) {
+        return res.status(400).json({ message: 'Invalid visit ID' });
+      }
+      
+      const prescriptions = await storage.getPrescriptions(visitId);
+      res.json(prescriptions);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.get('/api/prescriptions/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid ID' });
+      }
+      
+      const prescription = await storage.getPrescriptionById(id);
+      if (!prescription) {
+        return res.status(404).json({ message: 'Prescription not found' });
+      }
+      
+      res.json(prescription);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.post('/api/prescriptions', async (req, res) => {
+    try {
+      const validatedData = insertPrescriptionSchema.parse(req.body);
+      const prescription = await storage.createPrescription(validatedData);
+      res.status(201).json(prescription);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Validation error', errors: error.errors });
+      }
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.put('/api/prescriptions/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid ID' });
+      }
+      
+      const updatedPrescription = await storage.updatePrescription(id, req.body);
+      if (!updatedPrescription) {
+        return res.status(404).json({ message: 'Prescription not found' });
+      }
+      
+      res.json(updatedPrescription);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.delete('/api/prescriptions/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid ID' });
+      }
+      
+      const success = await storage.deletePrescription(id);
+      if (!success) {
+        return res.status(404).json({ message: 'Prescription not found' });
+      }
+      
+      res.status(204).end();
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }

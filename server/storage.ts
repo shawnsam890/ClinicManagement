@@ -8,7 +8,9 @@ import {
   StaffSalary, InsertStaffSalary,
   Invoice, InsertInvoice,
   InvoiceItem, InsertInvoiceItem,
-  Setting, InsertSetting
+  Setting, InsertSetting,
+  Medication, InsertMedication,
+  Prescription, InsertPrescription
 } from "@shared/schema";
 
 export interface IStorage {
@@ -78,6 +80,21 @@ export interface IStorage {
   updateInvoiceItem(id: number, item: Partial<InsertInvoiceItem>): Promise<InvoiceItem | undefined>;
   deleteInvoiceItem(id: number): Promise<boolean>;
   
+  // Medication management
+  getMedications(): Promise<Medication[]>;
+  getMedicationById(id: number): Promise<Medication | undefined>;
+  getMedicationByName(name: string): Promise<Medication | undefined>;
+  createMedication(medication: InsertMedication): Promise<Medication>;
+  updateMedication(id: number, medication: Partial<InsertMedication>): Promise<Medication | undefined>;
+  deleteMedication(id: number): Promise<boolean>;
+  
+  // Prescription management
+  getPrescriptions(visitId: number): Promise<Prescription[]>;
+  getPrescriptionById(id: number): Promise<Prescription | undefined>;
+  createPrescription(prescription: InsertPrescription): Promise<Prescription>;
+  updatePrescription(id: number, prescription: Partial<InsertPrescription>): Promise<Prescription | undefined>;
+  deletePrescription(id: number): Promise<boolean>;
+  
   // Settings
   getSettings(): Promise<Setting[]>;
   getSettingsByCategory(category: string): Promise<Setting[]>;
@@ -85,6 +102,8 @@ export interface IStorage {
   createSetting(setting: InsertSetting): Promise<Setting>;
   updateSetting(id: number, setting: Partial<InsertSetting>): Promise<Setting | undefined>;
   deleteSetting(id: number): Promise<boolean>;
+  
+  sessionStore: session.SessionStore;
 }
 
 export class MemStorage implements IStorage {
