@@ -688,7 +688,7 @@ export default function LabWorks() {
                                 {technician}
                               </SelectItem>
                             )) || (
-                              <SelectItem value="" disabled>
+                              <SelectItem value="no-technician" disabled>
                                 No technicians found
                               </SelectItem>
                             )}
@@ -723,7 +723,7 @@ export default function LabWorks() {
                                   {shade}
                                 </SelectItem>
                               )) || (
-                                <SelectItem value="" disabled>
+                                <SelectItem value="no-shade" disabled>
                                   No shades found
                                 </SelectItem>
                               )}
