@@ -689,6 +689,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Invoice not found' });
       }
       
+      // Find and update any appointments that reference this invoice
+      const appointments = await storage.getAppointments();
+      
+      for (const appointment of appointments) {
+        if (appointment.invoiceId === id) {
+          // Update the appointment to remove the invoice reference
+          await storage.updateAppointment(appointment.id, { ...appointment, invoiceId: null });
+        }
+      }
+      
+      // Delete invoice items first
+      const invoiceItems = await storage.getInvoiceItems(id);
+      for (const item of invoiceItems) {
+        await storage.deleteInvoiceItem(item.id);
+      }
+      
       // Delete the invoice
       const success = await storage.deleteInvoice(id);
       if (!success) {

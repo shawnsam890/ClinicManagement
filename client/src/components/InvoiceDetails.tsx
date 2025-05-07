@@ -21,6 +21,7 @@ export default function InvoiceDetails({ invoiceId, patientId, readOnly = false 
   const queryClient = useQueryClient();
   const [isEditingStatus, setIsEditingStatus] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<string>("");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("");
   const { toast } = useToast();
   
   // Refresh function
@@ -31,14 +32,21 @@ export default function InvoiceDetails({ invoiceId, patientId, readOnly = false 
     queryClient.invalidateQueries({ queryKey: [`/api/patients/id/${patientId}`] });
   };
   
-  // Update invoice status mutation
+  // Update invoice mutation
   const updateInvoiceStatus = useMutation({
-    mutationFn: async (status: string) => {
+    mutationFn: async ({ status, paymentMethod }: { status: string, paymentMethod?: string }) => {
       // Use PATCH endpoint for partial updates
-      const response = await apiRequest('PATCH', `/api/invoices/${invoiceId}`, { 
+      const updateData: any = { 
         status,
-        paymentDate: status === 'paid' ? new Date().toISOString().split('T')[0] : null 
-      });
+        paymentDate: status === 'paid' ? new Date().toISOString().split('T')[0] : null
+      };
+      
+      // Add payment method if provided (for paid status)
+      if (status === 'paid' && paymentMethod) {
+        updateData.paymentMethod = paymentMethod;
+      }
+      
+      const response = await apiRequest('PATCH', `/api/invoices/${invoiceId}`, updateData);
       return response.json();
     },
     onSuccess: () => {
@@ -46,16 +54,16 @@ export default function InvoiceDetails({ invoiceId, patientId, readOnly = false 
       setIsEditingStatus(false);
       toast({
         title: "Success",
-        description: "Invoice status updated successfully",
+        description: "Invoice updated successfully",
       });
     },
     onError: (error) => {
       toast({
         title: "Error",
-        description: "Failed to update invoice status",
+        description: "Failed to update invoice",
         variant: "destructive",
       });
-      console.error("Error updating invoice status:", error);
+      console.error("Error updating invoice:", error);
     }
   });
   
@@ -102,10 +110,15 @@ export default function InvoiceDetails({ invoiceId, patientId, readOnly = false 
   
   // Separate useEffect to update selectedStatus when invoice data is loaded
   useEffect(() => {
-    if (invoice && !selectedStatus) {
-      setSelectedStatus(invoice.status);
+    if (invoice) {
+      if (!selectedStatus) {
+        setSelectedStatus(invoice.status);
+      }
+      if (!selectedPaymentMethod && invoice.paymentMethod) {
+        setSelectedPaymentMethod(invoice.paymentMethod);
+      }
     }
-  }, [invoice, selectedStatus]);
+  }, [invoice, selectedStatus, selectedPaymentMethod]);
   
   const isLoading = isLoadingInvoice || isLoadingPatient || isLoadingItems;
 
