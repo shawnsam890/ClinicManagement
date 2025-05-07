@@ -768,11 +768,11 @@ export default function AppointmentsPage() {
                 
                 <TabsContent value="invoice" className="py-4">
                   <h3 className="text-lg font-semibold border-b pb-2 mb-2">Invoice & Billing</h3>
-                  {form.getValues("id") && form.getValues("invoiceId") ? (
+                  {selectedAppointment?.invoiceId ? (
                     // Show existing invoice if available
                     <InvoiceDetails 
-                      invoiceId={form.getValues("invoiceId") as number}
-                      patientId={form.getValues("patientId")}
+                      invoiceId={selectedAppointment.invoiceId}
+                      patientId={selectedAppointment.patientId}
                       readOnly={readOnly}
                     />
                   ) : readOnly ? (

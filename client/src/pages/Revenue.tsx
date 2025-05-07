@@ -1,5 +1,7 @@
 import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import Layout from "@/components/Layout";
 import { format, startOfMonth, endOfMonth, parseISO, isWithinInterval } from "date-fns";
 import {
@@ -49,6 +51,7 @@ const financialYears = Array.from({ length: 5 }, (_, i) => {
 const COLORS = ["#0077B6", "#FF8C42", "#00C49F", "#FFBB28", "#FF8042"];
 
 export default function Revenue() {
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [financialYear, setFinancialYear] = useState<string>(financialYears[0].value);
   const [dateRange, setDateRange] = useState<{
@@ -57,6 +60,44 @@ export default function Revenue() {
   }>({
     startDate: format(startOfMonth(new Date()), "yyyy-MM-dd"),
     endDate: format(endOfMonth(new Date()), "yyyy-MM-dd"),
+  });
+  
+  // Delete invoice mutation
+  const deleteInvoiceMutation = useMutation({
+    mutationFn: async (invoiceId: number) => {
+      try {
+        // Delete invoice items first
+        const itemsRes = await fetch(`/api/invoices/${invoiceId}/items`);
+        if (itemsRes.ok) {
+          const items = await itemsRes.json();
+          for (const item of items) {
+            await apiRequest("DELETE", `/api/invoice-items/${item.id}`);
+          }
+        }
+        
+        // Then delete the invoice
+        await apiRequest("DELETE", `/api/invoices/${invoiceId}`);
+        
+        return invoiceId;
+      } catch (error) {
+        console.error("Error deleting invoice:", error);
+        throw new Error("Failed to delete invoice");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      toast({
+        title: "Success",
+        description: "Invoice deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   // Fetch all invoices
