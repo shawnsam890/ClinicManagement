@@ -151,14 +151,14 @@ export default function AppointmentsPage() {
   );
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto p-6 overflow-auto h-screen pb-20">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Appointments</h1>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button>Create Appointment</Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px]">
+          <DialogContent className="sm:max-w-[600px] overflow-y-auto max-h-[90vh]">
             <DialogHeader>
               <DialogTitle>Create New Appointment</DialogTitle>
               <DialogDescription>
