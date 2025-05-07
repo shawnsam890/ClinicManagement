@@ -1,6 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { db } from "./db";
 import { insertPatientSchema, insertPatientVisitSchema, insertLabWorkSchema, 
   insertLabInventorySchema, insertStaffSchema, insertStaffAttendanceSchema, 
   insertStaffSalarySchema, insertInvoiceSchema, insertInvoiceItemSchema, 
@@ -586,6 +587,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Admin route to reset invoice numbering - for maintenance
+  app.post('/api/admin/reset-invoice-sequence', async (req, res) => {
+    try {
+      // Only allow this in development mode
+      if (process.env.NODE_ENV !== 'development') {
+        return res.status(403).json({ message: 'This operation is only allowed in development mode' });
+      }
+      
+      try {
+        // Use direct SQL with the database connection from the pool
+        const { pool } = await import('./db');
+        
+        // This is a PostgreSQL-specific command to reset the sequence
+        await pool.query('ALTER SEQUENCE invoices_id_seq RESTART WITH 1');
+        return res.json({ message: 'Invoice sequence reset successfully' });
+      } catch (error) {
+        console.error('Database error:', error);
+        return res.status(500).json({ message: 'Database error when resetting sequence' });
+      }
+    } catch (error: any) {
+      console.error('Error resetting invoice sequence:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
   app.get('/api/invoices/:id', async (req, res) => {
     try {
       const id = parseInt(req.params.id);
@@ -661,16 +687,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Invoice not found' });
       }
       
-      // Merge the current invoice with the updates
-      const updatedData = { ...currentInvoice, ...req.body };
+      // Log the request body to debug
+      console.log('PATCH invoice update:', req.body);
       
-      const updatedInvoice = await storage.updateInvoice(id, updatedData);
-      if (!updatedInvoice) {
-        return res.status(404).json({ message: 'Invoice update failed' });
+      // Handle special case for status update
+      if (req.body.status) {
+        const newStatus = req.body.status;
+        let paymentMethod = req.body.paymentMethod;
+        let paymentDate = currentInvoice.paymentDate;
+        
+        // Add payment date if status is paid
+        if (newStatus === 'paid' && !paymentDate) {
+          paymentDate = new Date().toISOString().split('T')[0];
+        } else if (newStatus !== 'paid') {
+          // Clear payment info if not paid
+          paymentDate = null;
+          paymentMethod = null;
+        }
+        
+        // Prepare the update with explicit values
+        const updateData = {
+          ...req.body,
+          paymentDate,
+          paymentMethod
+        };
+        
+        // Merge with current invoice data, but with our values taking precedence
+        const updatedData = { ...currentInvoice, ...updateData };
+        
+        const updatedInvoice = await storage.updateInvoice(id, updatedData);
+        if (!updatedInvoice) {
+          return res.status(404).json({ message: 'Invoice update failed' });
+        }
+        
+        return res.json(updatedInvoice);
+      } else {
+        // For non-status updates, just merge the data
+        const updatedData = { ...currentInvoice, ...req.body };
+        
+        const updatedInvoice = await storage.updateInvoice(id, updatedData);
+        if (!updatedInvoice) {
+          return res.status(404).json({ message: 'Invoice update failed' });
+        }
+        
+        res.json(updatedInvoice);
       }
-      
-      res.json(updatedInvoice);
     } catch (error: any) {
+      console.error('Error updating invoice status:', error);
       res.status(500).json({ message: error.message });
     }
   });
