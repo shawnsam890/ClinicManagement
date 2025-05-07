@@ -223,7 +223,7 @@ export default function PrescriptionForm({
   // Save all prescriptions
   const saveAllPrescriptions = async () => {
     // Validate that medications are selected
-    const invalidPrescriptions = prescriptions.filter(p => !p.medication_id || p.medication_id === 0);
+    const invalidPrescriptions = prescriptions.filter(p => !p.medicationId || p.medicationId === 0);
     if (invalidPrescriptions.length > 0) {
       toast({
         title: "Validation Error",
@@ -265,8 +265,8 @@ export default function PrescriptionForm({
                     prescription.medicationName || 'Unknown'
                   ) : (
                     <Select
-                      value={prescription.medication_id.toString()}
-                      onValueChange={(value) => updatePrescription(index, 'medication_id', parseInt(value))}
+                      value={prescription.medicationId.toString()}
+                      onValueChange={(value) => updatePrescription(index, 'medicationId', parseInt(value))}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select medication" />
@@ -382,7 +382,7 @@ export default function PrescriptionForm({
             type="button"
             size="sm"
             onClick={saveAllPrescriptions}
-            disabled={prescriptions.some(p => !p.medication_id || p.medication_id === 0)}
+            disabled={prescriptions.some(p => !p.medicationId || p.medicationId === 0)}
           >
             Save Prescriptions
           </Button>
