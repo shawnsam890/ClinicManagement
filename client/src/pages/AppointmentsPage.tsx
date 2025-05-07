@@ -327,12 +327,24 @@ export default function AppointmentsPage() {
     if (!selectedAppointment) return;
     
     try {
+      // If a visit doesn't exist, create one first
+      let visitId = selectedAppointment.visitId;
+      
+      if (!visitId) {
+        const createdVisit = await createPatientVisit();
+        if (!createdVisit) {
+          throw new Error("Failed to create patient visit for invoice");
+        }
+        visitId = createdVisit.id;
+      }
+      
       const newInvoice = {
         patientId: selectedAppointment.patientId,
         date: selectedAppointment.date,
-        totalAmount: 0, // Will be filled in later
+        totalAmount: 0,
         status: "pending",
-        visitId: selectedAppointment.visitId,
+        visitId: visitId,
+        notes: `Invoice for appointment on ${selectedAppointment.date}`
       };
       
       const res = await apiRequest("POST", "/api/invoices", newInvoice);
@@ -344,28 +356,65 @@ export default function AppointmentsPage() {
       
       const createdInvoice = await res.json();
       
+      // Add a default invoice item for the appointment
+      if (createdInvoice.id) {
+        try {
+          const invoiceItem = {
+            invoiceId: createdInvoice.id,
+            description: selectedAppointment.treatmentDone || "Dental consultation",
+            quantity: 1,
+            rate: 500, // Default rate
+            amount: 500 // Default amount
+          };
+          
+          const itemRes = await apiRequest("POST", "/api/invoice-items", invoiceItem);
+          
+          if (itemRes.ok) {
+            // Update invoice with the total amount
+            await apiRequest("PUT", `/api/invoices/${createdInvoice.id}`, {
+              ...createdInvoice,
+              totalAmount: 500
+            });
+            
+            // Update our local object too
+            createdInvoice.totalAmount = 500;
+          }
+        } catch (itemError) {
+          console.error("Failed to add invoice item:", itemError);
+          // Continue with invoice creation even if item creation fails
+        }
+      }
+      
       // Update appointment with the new invoice ID
-      await updateAppointmentMutation.mutateAsync({
+      const updatedAppointment = await updateAppointmentMutation.mutateAsync({
         ...selectedAppointment,
         invoiceId: createdInvoice.id,
+        visitId: visitId
       });
+      
+      // Refresh the data
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/invoices/${createdInvoice.id}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/invoices/${createdInvoice.id}/items`] });
       
       // Refresh the selected appointment
       setSelectedAppointment({
-        ...selectedAppointment,
+        ...updatedAppointment,
         invoiceId: createdInvoice.id,
+        visitId: visitId
       });
       
       toast({
         title: "Success",
-        description: "Invoice created and linked to appointment",
+        description: "Invoice created successfully",
       });
       
       return createdInvoice;
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to create invoice",
         variant: "destructive",
       });
     }
@@ -811,10 +860,12 @@ export default function AppointmentsPage() {
                 <TabsContent value="invoice" className="space-y-4 mt-4">
                   {selectedAppointment.invoiceId ? (
                     <>
-                      <InvoiceDetails 
-                        invoiceId={selectedAppointment.invoiceId} 
-                        patientId={selectedAppointment.patientId} 
-                      />
+                      <div className="relative" key={selectedAppointment.invoiceId}>
+                        <InvoiceDetails 
+                          invoiceId={selectedAppointment.invoiceId} 
+                          patientId={selectedAppointment.patientId} 
+                        />
+                      </div>
                       <div className="flex justify-end mt-4">
                         <Button variant="outline" onClick={() => setIsViewDialogOpen(false)} className="mr-2">
                           Close
@@ -830,7 +881,26 @@ export default function AppointmentsPage() {
                       <div className="mb-4 text-muted-foreground">
                         No invoice has been created for this appointment
                       </div>
-                      <Button onClick={createInvoice}>
+                      <Button 
+                        onClick={async () => {
+                          const invoice = await createInvoice();
+                          if (invoice) {
+                            // Force refresh the component by re-setting the selectedAppointment
+                            // with the updated invoice data
+                            const updatedAppointments = await queryClient.fetchQuery<any[]>({
+                              queryKey: ["/api/appointments"]
+                            });
+                            
+                            const updated = updatedAppointments.find(
+                              (a: any) => a.id === selectedAppointment.id
+                            );
+                            
+                            if (updated) {
+                              setSelectedAppointment(updated);
+                            }
+                          }
+                        }}
+                      >
                         <Receipt className="h-4 w-4 mr-2" />
                         Create Invoice
                       </Button>
