@@ -39,6 +39,7 @@ export const prescriptions = pgTable("prescriptions", {
   visitId: integer("visit_id").notNull(),
   medicationId: integer("medication_id").notNull(),
   timing: text("timing").default("0-0-0"),
+  days: integer("days").default(0), // Number of days the medication should be taken
   notes: text("notes"),
 });
 

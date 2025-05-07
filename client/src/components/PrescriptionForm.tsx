@@ -16,6 +16,7 @@ interface PrescriptionItem {
   medicationId: number;
   medicationName?: string;
   timing: string;
+  days?: number;
   notes?: string;
 }
 
@@ -288,6 +289,7 @@ export default function PrescriptionForm({
               <TableHead className="w-16 text-center">Sl No</TableHead>
               <TableHead>Medication</TableHead>
               <TableHead className="w-48 text-center">Timing</TableHead>
+              <TableHead className="w-24 text-center">Days</TableHead>
               <TableHead className="w-48">Notes</TableHead>
               {!readOnly && <TableHead className="w-16"></TableHead>}
             </TableRow>
