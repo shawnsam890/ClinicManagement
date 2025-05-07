@@ -249,7 +249,7 @@ export default function AppointmentsPage() {
                           <SelectValue placeholder="Select doctor" />
                         </SelectTrigger>
                         <SelectContent>
-                          {dropdownSettings?.settingValue?.labTechnicians?.map(
+                          {dropdownSettings?.settingValue?.doctors?.map(
                             (doctor: string) => (
                               <SelectItem key={doctor} value={doctor}>
                                 {doctor}

@@ -382,6 +382,8 @@ export default function Settings() {
       prescription: "Prescription",
       treatmentDone: "Treatment Done",
       advice: "Advice",
+      labTechnicians: "Lab Technicians",
+      doctors: "Doctors",
     };
     return labels[key] || key;
   };
