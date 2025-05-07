@@ -35,6 +35,9 @@ export default function PrescriptionForm({
   const { toast } = useToast();
   const [prescriptions, setPrescriptions] = useState<PrescriptionItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [newMedicationId, setNewMedicationId] = useState<number>(0);
+  const [newTiming, setNewTiming] = useState<string>("1-0-1");
+  const [newMedicationNotes, setNewMedicationNotes] = useState<string>("After food");
 
   // Define types for medications and prescriptions
   interface Medication {
@@ -61,8 +64,15 @@ export default function PrescriptionForm({
       }
       return failureCount < 3;
     },
-    onError: (error) => {
-      console.error("Error fetching prescriptions:", error);
+    queryFn: async () => {
+      try {
+        const res = await fetch(`/api/visits/${visitId}/prescriptions`);
+        if (!res.ok) throw new Error("Failed to load prescriptions");
+        return await res.json();
+      } catch (error) {
+        console.error("Error fetching prescriptions:", error);
+        return [];
+      }
     }
   });
 
@@ -367,26 +377,150 @@ export default function PrescriptionForm({
       </div>
 
       {!readOnly && (
-        <div className="flex justify-between">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={addPrescriptionRow}
-            className="flex items-center"
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Add Medication
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            onClick={saveAllPrescriptions}
-            disabled={prescriptions.some(p => !p.medicationId || p.medicationId === 0)}
-          >
-            Save Prescriptions
-          </Button>
-        </div>
+        <>
+          <div className="border p-4 rounded-md bg-muted/20 mb-4">
+            <h4 className="text-sm font-medium mb-3">Quick Add Medication</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="newMedicationId">Medication</Label>
+                <Select 
+                  value={newMedicationId.toString()} 
+                  onValueChange={(value) => setNewMedicationId(parseInt(value))}
+                >
+                  <SelectTrigger id="newMedicationId">
+                    <SelectValue placeholder="Select medication" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0" disabled>Select medication</SelectItem>
+                    {medications && medications.map((med: any) => (
+                      <SelectItem key={med.id} value={med.id.toString()}>
+                        {med.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="newTiming">Timing</Label>
+                <div className="flex items-center space-x-1 mt-2">
+                  <Input
+                    type="text"
+                    value={newTiming.split('-')[0]}
+                    onChange={(e) => {
+                      const timingParts = newTiming.split('-');
+                      timingParts[0] = e.target.value || '0';
+                      setNewTiming(timingParts.join('-'));
+                    }}
+                    className="w-8 h-8 text-center p-0"
+                    maxLength={1}
+                  />
+                  <span>-</span>
+                  <Input
+                    type="text"
+                    value={newTiming.split('-')[1]}
+                    onChange={(e) => {
+                      const timingParts = newTiming.split('-');
+                      timingParts[1] = e.target.value || '0';
+                      setNewTiming(timingParts.join('-'));
+                    }}
+                    className="w-8 h-8 text-center p-0"
+                    maxLength={1}
+                  />
+                  <span>-</span>
+                  <Input
+                    type="text"
+                    value={newTiming.split('-')[2]}
+                    onChange={(e) => {
+                      const timingParts = newTiming.split('-');
+                      timingParts[2] = e.target.value || '0';
+                      setNewTiming(timingParts.join('-'));
+                    }}
+                    className="w-8 h-8 text-center p-0"
+                    maxLength={1}
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="newMedicationNotes">Notes</Label>
+                <Select 
+                  value={newMedicationNotes} 
+                  onValueChange={setNewMedicationNotes}
+                >
+                  <SelectTrigger id="newMedicationNotes">
+                    <SelectValue placeholder="Before/After food" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Before food">Before food</SelectItem>
+                    <SelectItem value="After food">After food</SelectItem>
+                    <SelectItem value="With food">With food</SelectItem>
+                    <SelectItem value="Any time">Any time</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <Button
+              type="button"
+              className="mt-4"
+              onClick={() => {
+                if (!newMedicationId || newMedicationId === 0) {
+                  toast({
+                    title: "Error",
+                    description: "Please select a medication",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+                
+                const medication = medications?.find((med: any) => med.id === newMedicationId);
+                
+                const newPrescription: PrescriptionItem = {
+                  visitId: visitId,
+                  medicationId: newMedicationId,
+                  medicationName: medication?.name || 'Unknown',
+                  timing: newTiming,
+                  notes: newMedicationNotes
+                };
+                
+                savePrescription.mutate(newPrescription, {
+                  onSuccess: () => {
+                    // Reset the form
+                    setNewMedicationId(0);
+                    setNewTiming("1-0-1");
+                    setNewMedicationNotes("After food");
+                  }
+                });
+              }}
+              disabled={!newMedicationId || newMedicationId === 0}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add Medication
+            </Button>
+          </div>
+          
+          <div className="flex justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addPrescriptionRow}
+              className="flex items-center"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add Row
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={saveAllPrescriptions}
+              disabled={prescriptions.some(p => !p.medicationId || p.medicationId === 0)}
+            >
+              Save All Prescriptions
+            </Button>
+          </div>
+        </>
       )}
     </div>
   );

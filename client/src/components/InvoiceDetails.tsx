@@ -37,13 +37,14 @@ export default function InvoiceDetails({ invoiceId, patientId }: InvoiceDetailsP
   const { data: invoiceItems = [], isLoading: isLoadingItems } = useQuery({
     queryKey: [`/api/invoices/${invoiceId}/items`],
     queryFn: async () => {
-      const res = await fetch(`/api/invoices/${invoiceId}/items`);
-      if (!res.ok) throw new Error("Failed to load invoice items");
-      return await res.json();
-    },
-    onError: (error) => {
-      console.error("Error fetching invoice items:", error);
-      return [];
+      try {
+        const res = await fetch(`/api/invoices/${invoiceId}/items`);
+        if (!res.ok) throw new Error("Failed to load invoice items");
+        return await res.json();
+      } catch (error) {
+        console.error("Error fetching invoice items:", error);
+        return [];
+      }
     }
   });
 
@@ -78,8 +79,8 @@ export default function InvoiceDetails({ invoiceId, patientId }: InvoiceDetailsP
                 <Calendar className="h-4 w-4 mr-1" /> {invoice.date}
               </div>
               <Badge 
-                className="mt-2" 
-                variant={invoice.status === "paid" ? "success" : "destructive"}
+                className={`mt-2 ${invoice.status === "paid" ? "bg-green-500" : "bg-red-500"}`}
+                variant={invoice.status === "paid" ? "default" : "destructive"}
               >
                 {invoice.status.toUpperCase()}
               </Badge>
