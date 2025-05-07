@@ -15,20 +15,24 @@ import LabWorks from "@/pages/LabWorks";
 import Revenue from "@/pages/Revenue";
 import StaffManagement from "@/pages/StaffManagement";
 import Settings from "@/pages/Settings";
+import AuthPage from "@/pages/auth-page";
+import { AuthProvider } from "@/hooks/use-auth";
+import { ProtectedRoute } from "@/lib/protected-route";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={HomePage} />
-      <Route path="/dashboard" component={Dashboard} />
-      <Route path="/patients" component={PatientDatabase} />
-      <Route path="/patients/new" component={NewPatientForm} />
-      <Route path="/patients/record/:patientId" component={PatientRecord} />
-      <Route path="/patients/list" component={ExistingPatients} />
-      <Route path="/lab-works" component={LabWorks} />
-      <Route path="/revenue" component={Revenue} />
-      <Route path="/staff" component={StaffManagement} />
-      <Route path="/settings" component={Settings} />
+      <ProtectedRoute path="/" component={HomePage} />
+      <ProtectedRoute path="/dashboard" component={Dashboard} />
+      <ProtectedRoute path="/patients" component={PatientDatabase} />
+      <ProtectedRoute path="/patients/new" component={NewPatientForm} />
+      <ProtectedRoute path="/patients/record/:patientId" component={PatientRecord} />
+      <ProtectedRoute path="/patients/list" component={ExistingPatients} />
+      <ProtectedRoute path="/lab-works" component={LabWorks} />
+      <ProtectedRoute path="/revenue" component={Revenue} />
+      <ProtectedRoute path="/staff" component={StaffManagement} />
+      <ProtectedRoute path="/settings" component={Settings} />
+      <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -39,8 +43,10 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="light">
         <TooltipProvider>
-          <Toaster />
-          <Router />
+          <AuthProvider>
+            <Toaster />
+            <Router />
+          </AuthProvider>
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
