@@ -357,7 +357,7 @@ export default function PatientRecord() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="">Select complaint</SelectItem>
+                              <SelectItem value="none">Select complaint</SelectItem>
                               {getDropdownOptions("chiefComplaint").map((option: string) => (
                                 <SelectItem key={option} value={option.toLowerCase().replace(/\s+/g, "_")}>
                                   {option}
@@ -388,7 +388,7 @@ export default function PatientRecord() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="">Select medical history</SelectItem>
+                              <SelectItem value="none">Select medical history</SelectItem>
                               {getDropdownOptions("medicalHistory").map((option: string) => (
                                 <SelectItem key={option} value={option.toLowerCase().replace(/\s+/g, "_")}>
                                   {option}
@@ -419,7 +419,7 @@ export default function PatientRecord() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="">Select drug allergy</SelectItem>
+                              <SelectItem value="none">Select drug allergy</SelectItem>
                               {getDropdownOptions("drugAllergy").map((option: string) => (
                                 <SelectItem key={option} value={option.toLowerCase().replace(/\s+/g, "_")}>
                                   {option}
@@ -450,7 +450,7 @@ export default function PatientRecord() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="">Select dental history</SelectItem>
+                              <SelectItem value="none">Select dental history</SelectItem>
                               {getDropdownOptions("previousDentalHistory").map((option: string) => (
                                 <SelectItem key={option} value={option.toLowerCase().replace(/\s+/g, "_")}>
                                   {option}
@@ -481,7 +481,7 @@ export default function PatientRecord() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="">Select findings</SelectItem>
+                              <SelectItem value="none">Select findings</SelectItem>
                               {getDropdownOptions("oralExamination").map((option: string) => (
                                 <SelectItem key={option} value={option.toLowerCase().replace(/\s+/g, "_")}>
                                   {option}
@@ -512,7 +512,7 @@ export default function PatientRecord() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="">Select investigation</SelectItem>
+                              <SelectItem value="none">Select investigation</SelectItem>
                               {getDropdownOptions("investigation").map((option: string) => (
                                 <SelectItem key={option} value={option.toLowerCase().replace(/\s+/g, "_")}>
                                   {option}
@@ -543,7 +543,7 @@ export default function PatientRecord() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="">Select treatment plan</SelectItem>
+                              <SelectItem value="none">Select treatment plan</SelectItem>
                               {getDropdownOptions("treatmentPlan").map((option: string) => (
                                 <SelectItem key={option} value={option.toLowerCase().replace(/\s+/g, "_")}>
                                   {option}
@@ -574,7 +574,7 @@ export default function PatientRecord() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="">Select medication</SelectItem>
+                              <SelectItem value="none">Select medication</SelectItem>
                               {getDropdownOptions("prescription").map((option: string) => (
                                 <SelectItem key={option} value={option.toLowerCase().replace(/\s+/g, "_")}>
                                   {option}
@@ -605,7 +605,7 @@ export default function PatientRecord() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="">Select treatment done</SelectItem>
+                              <SelectItem value="none">Select treatment done</SelectItem>
                               {getDropdownOptions("treatmentDone").map((option: string) => (
                                 <SelectItem key={option} value={option.toLowerCase().replace(/\s+/g, "_")}>
                                   {option}
@@ -636,7 +636,7 @@ export default function PatientRecord() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="">Select advice</SelectItem>
+                              <SelectItem value="none">Select advice</SelectItem>
                               {getDropdownOptions("advice").map((option: string) => (
                                 <SelectItem key={option} value={option.toLowerCase().replace(/\s+/g, "_")}>
                                   {option}
