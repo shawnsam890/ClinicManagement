@@ -73,6 +73,7 @@ export const labWorks = pgTable("lab_works", {
   dueDate: date("due_date").notNull(),
   completedDate: date("completed_date"),
   technician: text("technician"),
+  shade: text("shade"),
   cost: real("cost"),
   notes: text("notes"),
 });

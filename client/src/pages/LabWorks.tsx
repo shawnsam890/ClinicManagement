@@ -70,6 +70,7 @@ const labWorkFormSchema = insertLabWorkSchema.extend({
   startDate: z.string().min(1, "Start date is required"),
   dueDate: z.string().min(1, "Due date is required"),
   completedDate: z.string().nullable().optional(),
+  shade: z.string().optional(),
   cost: z.coerce.number().min(0, "Cost must be a positive number"),
 });
 
@@ -98,6 +99,11 @@ export default function LabWorks() {
     queryKey: ["/api/lab-inventory"],
   });
 
+  // Fetch dropdown options from settings
+  const { data: dropdownOptions } = useQuery({
+    queryKey: ["/api/settings/key/dropdown_options"],
+  });
+
   // Form for lab work
   const form = useForm<LabWorkFormValues>({
     resolver: zodResolver(labWorkFormSchema),
@@ -110,6 +116,7 @@ export default function LabWorks() {
       dueDate: "",
       completedDate: null,
       technician: "",
+      shade: "",
       cost: 0,
       notes: "",
     },
