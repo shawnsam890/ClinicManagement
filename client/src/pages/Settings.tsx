@@ -60,6 +60,13 @@ export default function Settings() {
   const [newOptionValue, setNewOptionValue] = useState("");
   const [newOptionCategory, setNewOptionCategory] = useState("medicalHistory");
   const [isAddingOption, setIsAddingOption] = useState(false);
+  
+  // Medication management states
+  const [medicationName, setMedicationName] = useState("");
+  const [medicationQuantity, setMedicationQuantity] = useState(0);
+  const [medicationThreshold, setMedicationThreshold] = useState(10);
+  const [medicationNotes, setMedicationNotes] = useState("");
+  const [editingMedicationId, setEditingMedicationId] = useState<number | null>(null);
 
   // Fetch clinic info
   const { data: clinicInfo, isLoading: isLoadingClinicInfo } = useQuery({
@@ -69,6 +76,11 @@ export default function Settings() {
   // Fetch patient ID format
   const { data: patientIdFormat, isLoading: isLoadingPatientIdFormat } = useQuery({
     queryKey: ["/api/settings/key/patient_id_format"],
+  });
+  
+  // Fetch medications
+  const { data: medications, isLoading: isLoadingMedications } = useQuery({
+    queryKey: ["/api/medications"],
   });
 
   // Clinic Info State
