@@ -326,11 +326,25 @@ export default function AppointmentsPage() {
     }
   };
 
-  // Create invoice and link to appointment
+  // Create or update invoice and link to appointment
   const createInvoice = async () => {
     if (!selectedAppointment) return;
     
     try {
+      // Check if an invoice already exists for this appointment
+      if (selectedAppointment.invoiceId) {
+        // Invoice already exists, just refresh the data and return
+        queryClient.invalidateQueries({ queryKey: [`/api/invoices/${selectedAppointment.invoiceId}`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/invoices/${selectedAppointment.invoiceId}/items`] });
+        
+        toast({
+          title: "Info",
+          description: "Invoice already exists for this appointment",
+        });
+        
+        return { id: selectedAppointment.invoiceId };
+      }
+      
       // If a visit doesn't exist, create one first
       let visitId = selectedAppointment.visitId;
       

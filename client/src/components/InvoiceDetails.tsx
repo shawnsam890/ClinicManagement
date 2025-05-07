@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
 import { Receipt, Calendar, User, Phone, RefreshCcw, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 interface InvoiceDetailsProps {
   invoiceId: number;
@@ -13,9 +14,20 @@ interface InvoiceDetailsProps {
 }
 
 export default function InvoiceDetails({ invoiceId, patientId }: InvoiceDetailsProps) {
+  const queryClient = useQueryClient();
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  
+  // Refresh function
+  const refreshData = () => {
+    // Force refresh all related queries
+    queryClient.invalidateQueries({ queryKey: [`/api/invoices/${invoiceId}`] });
+    queryClient.invalidateQueries({ queryKey: [`/api/invoices/${invoiceId}/items`] });
+    setRefreshTrigger(prev => prev + 1);
+  };
+  
   // Fetch invoice details
   const { data: invoice, isLoading: isLoadingInvoice } = useQuery({
-    queryKey: [`/api/invoices/${invoiceId}`],
+    queryKey: [`/api/invoices/${invoiceId}`, refreshTrigger],
     queryFn: async () => {
       const res = await fetch(`/api/invoices/${invoiceId}`);
       if (!res.ok) throw new Error("Failed to load invoice");
@@ -25,7 +37,7 @@ export default function InvoiceDetails({ invoiceId, patientId }: InvoiceDetailsP
 
   // Fetch patient details for the invoice
   const { data: patient, isLoading: isLoadingPatient } = useQuery({
-    queryKey: [`/api/patients/id/${patientId}`],
+    queryKey: [`/api/patients/id/${patientId}`, refreshTrigger],
     queryFn: async () => {
       const res = await fetch(`/api/patients/id/${patientId}`);
       if (!res.ok) throw new Error("Failed to load patient");
@@ -35,7 +47,7 @@ export default function InvoiceDetails({ invoiceId, patientId }: InvoiceDetailsP
 
   // Fetch invoice items
   const { data: invoiceItems = [], isLoading: isLoadingItems } = useQuery({
-    queryKey: [`/api/invoices/${invoiceId}/items`],
+    queryKey: [`/api/invoices/${invoiceId}/items`, refreshTrigger],
     queryFn: async () => {
       try {
         const res = await fetch(`/api/invoices/${invoiceId}/items`);
@@ -48,6 +60,11 @@ export default function InvoiceDetails({ invoiceId, patientId }: InvoiceDetailsP
     }
   });
 
+  // UseEffect to force refresh on first mount
+  useEffect(() => {
+    refreshData();
+  }, [invoiceId]); // Re-run when invoiceId changes
+  
   const isLoading = isLoadingInvoice || isLoadingPatient || isLoadingItems;
 
   if (isLoading) {
@@ -62,6 +79,14 @@ export default function InvoiceDetails({ invoiceId, patientId }: InvoiceDetailsP
     return (
       <div className="text-center py-6 text-gray-500">
         <p>Invoice not found or could not be loaded.</p>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="mt-2" 
+          onClick={refreshData}
+        >
+          <RefreshCcw className="mr-2 h-4 w-4" /> Try Again
+        </Button>
       </div>
     );
   }
@@ -73,6 +98,15 @@ export default function InvoiceDetails({ invoiceId, patientId }: InvoiceDetailsP
           <div>
             <CardTitle className="text-2xl flex items-center">
               <Receipt className="mr-2 h-6 w-6" /> Invoice #{invoice.id}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="ml-2" 
+                onClick={refreshData}
+                title="Refresh invoice data"
+              >
+                <RefreshCcw className="h-4 w-4" />
+              </Button>
             </CardTitle>
             <CardDescription className="mt-1">
               <div className="flex items-center">
