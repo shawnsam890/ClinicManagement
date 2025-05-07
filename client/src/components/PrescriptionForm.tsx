@@ -37,12 +37,12 @@ export default function PrescriptionForm({
   const [isLoading, setIsLoading] = useState(true);
 
   // Fetch medications for dropdown
-  const { data: medications } = useQuery({
+  const { data: medications = [] } = useQuery<any[]>({
     queryKey: ['/api/medications'],
   });
 
   // Fetch existing prescriptions for this visit
-  const { data: fetchedPrescriptions, isLoading: isFetchingPrescriptions } = useQuery({
+  const { data: fetchedPrescriptions = [], isLoading: isFetchingPrescriptions } = useQuery<any[]>({
     queryKey: [`/api/visits/${visitId}/prescriptions`],
     enabled: !!visitId,
   });
