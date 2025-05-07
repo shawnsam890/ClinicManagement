@@ -696,9 +696,9 @@ export default function AppointmentsPage() {
                     <span className="text-muted-foreground">Visit</span>
                     <span>
                       {appointment.visitId ? (
-                        <Badge>Linked</Badge>
+                        <Badge className="bg-green-500">Linked</Badge>
                       ) : (
-                        <Badge variant="outline">Not linked</Badge>
+                        <Badge className="bg-muted text-muted-foreground">Not linked</Badge>
                       )}
                     </span>
                   </div>
@@ -706,9 +706,9 @@ export default function AppointmentsPage() {
                     <span className="text-muted-foreground">Invoice</span>
                     <span>
                       {appointment.invoiceId ? (
-                        <Badge>Created</Badge>
+                        <Badge className="bg-green-500">Created</Badge>
                       ) : (
-                        <Badge variant="outline">Not created</Badge>
+                        <Badge className="bg-muted text-muted-foreground">Not created</Badge>
                       )}
                     </span>
                   </div>

@@ -21,6 +21,7 @@ interface PrescriptionItem {
 
 interface PrescriptionFormProps {
   visitId: number;
+  patientId?: string;
   existingPrescriptions?: PrescriptionItem[];
   onSave?: (prescriptions: PrescriptionItem[]) => void;
   readOnly?: boolean;
@@ -28,6 +29,7 @@ interface PrescriptionFormProps {
 
 export default function PrescriptionForm({
   visitId,
+  patientId,
   existingPrescriptions,
   onSave,
   readOnly = false,
