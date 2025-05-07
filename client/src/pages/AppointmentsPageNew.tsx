@@ -51,10 +51,9 @@ import {
   Plus,
   Trash,
   RefreshCcw,
+  Separator,
+  Badge,
 } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { User, Phone } from "lucide-react";
 import PrescriptionForm from "@/components/PrescriptionForm";
 import InvoiceDetails from "@/components/InvoiceDetails";
 
