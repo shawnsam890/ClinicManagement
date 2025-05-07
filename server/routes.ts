@@ -4,7 +4,8 @@ import { storage } from "./storage";
 import { insertPatientSchema, insertPatientVisitSchema, insertLabWorkSchema, 
   insertLabInventorySchema, insertStaffSchema, insertStaffAttendanceSchema, 
   insertStaffSalarySchema, insertInvoiceSchema, insertInvoiceItemSchema, 
-  insertSettingSchema, insertMedicationSchema, insertPrescriptionSchema } from "@shared/schema";
+  insertSettingSchema, insertMedicationSchema, insertPrescriptionSchema,
+  insertAppointmentSchema } from "@shared/schema";
 import { z } from "zod";
 import path from 'path';
 import fs from 'fs';
@@ -700,6 +701,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const success = await storage.deleteInvoiceItem(id);
       if (!success) {
         return res.status(404).json({ message: 'Invoice item not found' });
+      }
+      
+      res.status(204).end();
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Appointment routes
+  app.get('/api/appointments', async (req, res) => {
+    try {
+      const appointments = await storage.getAppointments();
+      res.json(appointments);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.get('/api/appointments/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid ID' });
+      }
+      
+      const appointment = await storage.getAppointmentById(id);
+      if (!appointment) {
+        return res.status(404).json({ message: 'Appointment not found' });
+      }
+      
+      res.json(appointment);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.get('/api/patients/:patientId/appointments', async (req, res) => {
+    try {
+      const patientId = req.params.patientId;
+      const appointments = await storage.getAppointmentsByPatientId(patientId);
+      res.json(appointments);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.post('/api/appointments', async (req, res) => {
+    try {
+      const validatedData = insertAppointmentSchema.parse(req.body);
+      const appointment = await storage.createAppointment(validatedData);
+      res.status(201).json(appointment);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Validation error', errors: error.errors });
+      }
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.put('/api/appointments/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid ID' });
+      }
+      
+      const updatedAppointment = await storage.updateAppointment(id, req.body);
+      if (!updatedAppointment) {
+        return res.status(404).json({ message: 'Appointment not found' });
+      }
+      
+      res.json(updatedAppointment);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.delete('/api/appointments/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid ID' });
+      }
+      
+      const success = await storage.deleteAppointment(id);
+      if (!success) {
+        return res.status(404).json({ message: 'Appointment not found' });
       }
       
       res.status(204).end();

@@ -278,6 +278,39 @@ export class MemStorage implements IStorage {
     return this.patientVisits.delete(id);
   }
   
+  // Appointments
+  async getAppointments(): Promise<Appointment[]> {
+    return Array.from(this.appointments.values());
+  }
+  
+  async getAppointmentById(id: number): Promise<Appointment | undefined> {
+    return this.appointments.get(id);
+  }
+  
+  async getAppointmentsByPatientId(patientId: string): Promise<Appointment[]> {
+    return Array.from(this.appointments.values()).filter(appointment => appointment.patientId === patientId);
+  }
+  
+  async createAppointment(appointment: InsertAppointment): Promise<Appointment> {
+    const id = this.appointmentIdCounter++;
+    const newAppointment: Appointment = { ...appointment, id };
+    this.appointments.set(id, newAppointment);
+    return newAppointment;
+  }
+  
+  async updateAppointment(id: number, appointment: Partial<InsertAppointment>): Promise<Appointment | undefined> {
+    const existingAppointment = this.appointments.get(id);
+    if (!existingAppointment) return undefined;
+    
+    const updatedAppointment = { ...existingAppointment, ...appointment };
+    this.appointments.set(id, updatedAppointment);
+    return updatedAppointment;
+  }
+  
+  async deleteAppointment(id: number): Promise<boolean> {
+    return this.appointments.delete(id);
+  }
+  
   // Lab management
   async getLabWorks(): Promise<LabWork[]> {
     return Array.from(this.labWorks.values());
@@ -528,7 +561,7 @@ import connectPg from "connect-pg-simple";
 import { db } from "./db";
 import { eq, and, asc } from "drizzle-orm";
 import { pool } from "./db";
-import { users, patients, patientVisits, labWorks, labInventory, staff, 
+import { users, patients, patientVisits, appointments, labWorks, labInventory, staff, 
   staffAttendance, staffSalary, invoices, invoiceItems, settings,
   medications, prescriptions } from "@shared/schema";
 
@@ -605,6 +638,38 @@ export class DatabaseStorage implements IStorage {
   
   async deletePatientVisit(id: number): Promise<boolean> {
     await db.delete(patientVisits).where(eq(patientVisits.id, id));
+    return true;
+  }
+  
+  // Appointments
+  async getAppointments(): Promise<Appointment[]> {
+    return await db.select().from(appointments);
+  }
+  
+  async getAppointmentById(id: number): Promise<Appointment | undefined> {
+    const result = await db.select().from(appointments).where(eq(appointments.id, id));
+    return result[0];
+  }
+  
+  async getAppointmentsByPatientId(patientId: string): Promise<Appointment[]> {
+    return await db.select().from(appointments).where(eq(appointments.patientId, patientId));
+  }
+  
+  async createAppointment(appointment: InsertAppointment): Promise<Appointment> {
+    const result = await db.insert(appointments).values(appointment).returning();
+    return result[0];
+  }
+  
+  async updateAppointment(id: number, appointment: Partial<InsertAppointment>): Promise<Appointment | undefined> {
+    const result = await db.update(appointments)
+      .set(appointment)
+      .where(eq(appointments.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  async deleteAppointment(id: number): Promise<boolean> {
+    await db.delete(appointments).where(eq(appointments.id, id));
     return true;
   }
   
