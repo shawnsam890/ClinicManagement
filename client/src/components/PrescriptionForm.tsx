@@ -12,8 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 
 interface PrescriptionItem {
   id?: number;
-  visit_id: number;
-  medication_id: number;
+  visitId: number;
+  medicationId: number;
   medicationName?: string;
   timing: string;
   notes?: string;
@@ -74,7 +74,7 @@ export default function PrescriptionForm({
     } else if (fetchedPrescriptions && fetchedPrescriptions.length > 0) {
       // Map fetched prescriptions with medication names from medications data
       const mappedPrescriptions = fetchedPrescriptions.map((prescription: PrescriptionItem) => {
-        const medication = medications?.find((med: any) => med.id === prescription.medication_id);
+        const medication = medications?.find((med: any) => med.id === prescription.medicationId);
         return {
           ...prescription,
           medicationName: medication?.name || 'Unknown'
@@ -86,8 +86,8 @@ export default function PrescriptionForm({
       // If no prescriptions, start with an empty row
       if (!readOnly) {
         setPrescriptions([{
-          visit_id: visitId,
-          medication_id: 0,
+          visitId: visitId,
+          medicationId: 0,
           timing: "0-0-0",
           notes: ""
         }]);
@@ -101,8 +101,8 @@ export default function PrescriptionForm({
     setPrescriptions([
       ...prescriptions,
       {
-        visit_id: visitId,
-        medication_id: 0,
+        visitId: visitId,
+        medicationId: 0,
         timing: "0-0-0",
         notes: ""
       }
@@ -131,7 +131,7 @@ export default function PrescriptionForm({
     };
 
     // If medication ID is updated, also update name
-    if (field === 'medication_id' && medications) {
+    if (field === 'medicationId' && medications) {
       const medication = medications.find((med: any) => med.id === value);
       updatedPrescriptions[index].medicationName = medication?.name || 'Unknown';
     }
