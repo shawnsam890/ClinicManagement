@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Layout from "@/components/Layout";
 import { format, startOfMonth, endOfMonth, parseISO, isWithinInterval } from "date-fns";
@@ -60,9 +60,25 @@ export default function Revenue() {
   });
 
   // Fetch all invoices
-  const { data: invoices, isLoading: isLoadingInvoices } = useQuery({
+  const { data: rawInvoices, isLoading: isLoadingInvoices } = useQuery({
     queryKey: ["/api/invoices"],
   });
+  
+  // Filter out duplicate invoices by ID
+  const invoices = useMemo(() => {
+    if (!rawInvoices) return [];
+    
+    // Use a Map to keep only the latest version of each invoice by ID
+    const uniqueInvoicesMap = new Map();
+    
+    if (Array.isArray(rawInvoices)) {
+      rawInvoices.forEach((invoice: any) => {
+        uniqueInvoicesMap.set(invoice.id, invoice);
+      });
+    }
+    
+    return Array.from(uniqueInvoicesMap.values());
+  }, [rawInvoices]);
 
   // Function to filter invoices by date range
   const filterInvoicesByDateRange = (invoices: any[]) => {
