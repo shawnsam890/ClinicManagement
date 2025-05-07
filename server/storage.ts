@@ -170,7 +170,9 @@ export class MemStorage implements IStorage {
         treatmentPlan: ['Filling', 'Extraction', 'Root Canal', 'Scaling', 'Crown', 'Implant'],
         prescription: ['Antibiotics', 'Painkillers', 'Anti-inflammatory', 'Mouthwash', 'None'],
         treatmentDone: ['Filling', 'Extraction', 'Root Canal', 'Scaling', 'Crown', 'Consultation Only'],
-        advice: ['Soft Diet', 'Maintain Oral Hygiene', 'Avoid Hot Food/Beverage', 'Follow-up Required', 'None']
+        advice: ['Soft Diet', 'Maintain Oral Hygiene', 'Avoid Hot Food/Beverage', 'Follow-up Required', 'None'],
+        labTechnicians: ['Dr. Smith', 'Dr. Johnson', 'Dr. Patel'],
+        crownShades: ['A1', 'A2', 'A3', 'A3.5', 'A4', 'B1', 'B2', 'B3', 'B4', 'C1', 'C2', 'C3', 'C4', 'D2', 'D3', 'D4']
       },
       category: 'dropdown_options'
     });

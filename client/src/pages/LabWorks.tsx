@@ -258,6 +258,7 @@ export default function LabWorks() {
       dueDate: "",
       completedDate: null,
       technician: "",
+      shade: "",
       cost: 0,
       notes: "",
     });
@@ -437,6 +438,7 @@ export default function LabWorks() {
                         <TableHead>Start Date</TableHead>
                         <TableHead>Due Date</TableHead>
                         <TableHead>Technician</TableHead>
+                        <TableHead>Shade</TableHead>
                         <TableHead className="text-right">Cost</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
@@ -450,6 +452,7 @@ export default function LabWorks() {
                           <TableCell>{work.startDate}</TableCell>
                           <TableCell>{work.dueDate}</TableCell>
                           <TableCell>{work.technician || "-"}</TableCell>
+                          <TableCell>{work.workType === "crown" && work.shade ? work.shade : "-"}</TableCell>
                           <TableCell className="text-right">₹{work.cost?.toLocaleString() || "0"}</TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end space-x-2">
@@ -669,13 +672,68 @@ export default function LabWorks() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Technician</FormLabel>
-                        <FormControl>
-                          <Input {...field} value={field.value || ""} />
-                        </FormControl>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select technician" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {dropdownOptions?.settingValue?.labTechnicians?.map((technician: string) => (
+                              <SelectItem key={technician} value={technician}>
+                                {technician}
+                              </SelectItem>
+                            )) || (
+                              <SelectItem value="" disabled>
+                                No technicians found
+                              </SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                  
+                  {/* Shade (only for crown work) */}
+                  {form.watch("workType") === "crown" && (
+                    <FormField
+                      control={form.control}
+                      name="shade"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Crown Shade</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            value={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select shade" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {dropdownOptions?.settingValue?.crownShades?.map((shade: string) => (
+                                <SelectItem key={shade} value={shade}>
+                                  {shade}
+                                </SelectItem>
+                              )) || (
+                                <SelectItem value="" disabled>
+                                  No shades found
+                                </SelectItem>
+                              )}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
 
                   {/* Start Date */}
                   <FormField
