@@ -213,7 +213,7 @@ export default function AppointmentsPage() {
         treatmentDone: selectedAppointment.treatmentDone,
       };
       
-      const res = await apiRequest("POST", "/api/patient-visits", visitData);
+      const res = await apiRequest("POST", "/api/visits", visitData);
       
       if (!res.ok) {
         const errorData = await res.json();
