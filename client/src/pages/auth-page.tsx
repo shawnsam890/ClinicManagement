@@ -3,22 +3,20 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Card, 
   CardContent, 
   CardDescription, 
-  CardFooter, 
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { User } from "lucide-react";
+import { Stethoscope } from "lucide-react";
 
 // Login form schema
 const loginSchema = z.object({
@@ -85,7 +83,7 @@ export default function AuthPage() {
       <div className="flex flex-col justify-center flex-1 px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24">
         <div className="w-full max-w-sm mx-auto lg:w-96">
           <div className="flex items-center mb-6">
-            <User className="w-10 h-10 text-primary mr-3" />
+            <Stethoscope className="w-10 h-10 text-primary mr-3" />
             <h2 className="text-2xl font-bold text-primary">Dr. Shawn's Clinic</h2>
           </div>
           
