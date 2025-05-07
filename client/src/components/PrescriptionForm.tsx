@@ -12,8 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 
 interface PrescriptionItem {
   id?: number;
-  visitId: number;
-  medicationId: number;
+  visit_id: number;
+  medication_id: number;
   medicationName?: string;
   timing: string;
   notes?: string;
@@ -74,7 +74,7 @@ export default function PrescriptionForm({
     } else if (fetchedPrescriptions && fetchedPrescriptions.length > 0) {
       // Map fetched prescriptions with medication names from medications data
       const mappedPrescriptions = fetchedPrescriptions.map((prescription: PrescriptionItem) => {
-        const medication = medications?.find((med: any) => med.id === prescription.medicationId);
+        const medication = medications?.find((med: any) => med.id === prescription.medication_id);
         return {
           ...prescription,
           medicationName: medication?.name || 'Unknown'
@@ -86,8 +86,8 @@ export default function PrescriptionForm({
       // If no prescriptions, start with an empty row
       if (!readOnly) {
         setPrescriptions([{
-          visitId,
-          medicationId: 0,
+          visit_id: visitId,
+          medication_id: 0,
           timing: "0-0-0",
           notes: ""
         }]);
@@ -101,8 +101,8 @@ export default function PrescriptionForm({
     setPrescriptions([
       ...prescriptions,
       {
-        visitId,
-        medicationId: 0,
+        visit_id: visitId,
+        medication_id: 0,
         timing: "0-0-0",
         notes: ""
       }
@@ -131,7 +131,7 @@ export default function PrescriptionForm({
     };
 
     // If medication ID is updated, also update name
-    if (field === 'medicationId' && medications) {
+    if (field === 'medication_id' && medications) {
       const medication = medications.find((med: any) => med.id === value);
       updatedPrescriptions[index].medicationName = medication?.name || 'Unknown';
     }
@@ -223,7 +223,7 @@ export default function PrescriptionForm({
   // Save all prescriptions
   const saveAllPrescriptions = async () => {
     // Validate that medications are selected
-    const invalidPrescriptions = prescriptions.filter(p => !p.medicationId || p.medicationId === 0);
+    const invalidPrescriptions = prescriptions.filter(p => !p.medication_id || p.medication_id === 0);
     if (invalidPrescriptions.length > 0) {
       toast({
         title: "Validation Error",
@@ -265,8 +265,8 @@ export default function PrescriptionForm({
                     prescription.medicationName || 'Unknown'
                   ) : (
                     <Select
-                      value={prescription.medicationId.toString()}
-                      onValueChange={(value) => updatePrescription(index, 'medicationId', parseInt(value))}
+                      value={prescription.medication_id.toString()}
+                      onValueChange={(value) => updatePrescription(index, 'medication_id', parseInt(value))}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select medication" />
