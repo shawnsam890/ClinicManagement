@@ -74,6 +74,7 @@ export default function AppointmentsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [readOnly, setReadOnly] = useState(false);
 
   // Get all appointments
   const { data: appointments, isLoading: isLoadingAppointments } = useQuery({
@@ -232,6 +233,52 @@ export default function AppointmentsPage() {
     },
   });
   
+  // Delete invoice mutation
+  const deleteInvoiceMutation = useMutation({
+    mutationFn: async (invoiceId: number) => {
+      try {
+        // Delete invoice items first
+        const itemsRes = await fetch(`/api/invoices/${invoiceId}/items`);
+        if (itemsRes.ok) {
+          const items = await itemsRes.json();
+          for (const item of items) {
+            await apiRequest("DELETE", `/api/invoice-items/${item.id}`);
+          }
+        }
+        
+        // Then delete the invoice
+        await apiRequest("DELETE", `/api/invoices/${invoiceId}`);
+        
+        return invoiceId;
+      } catch (error) {
+        console.error("Error deleting invoice:", error);
+        throw new Error("Failed to delete invoice");
+      }
+    },
+    onSuccess: (invoiceId) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      // Update appointment to remove invoiceId reference
+      if (selectedAppointment?.id) {
+        const updatedAppointment = {
+          ...selectedAppointment,
+          invoiceId: null
+        };
+        updateAppointmentMutation.mutate(updatedAppointment);
+      }
+      toast({
+        title: "Success",
+        description: "Invoice deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Delete appointment mutation (with cascading deletes for invoice and visit)
   const deleteAppointmentMutation = useMutation({
     mutationFn: async (id: number) => {
