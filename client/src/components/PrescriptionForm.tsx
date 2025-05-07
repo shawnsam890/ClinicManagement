@@ -100,6 +100,7 @@ export default function PrescriptionForm({
           visitId: visitId,
           medicationId: 0,
           timing: "0-0-0",
+          days: 7, // Default to 7 days
           notes: ""
         }]);
       }
@@ -115,6 +116,7 @@ export default function PrescriptionForm({
         visitId: visitId,
         medicationId: 0,
         timing: "0-0-0",
+        days: 7, // Default to 7 days
         notes: ""
       }
     ]);
@@ -289,7 +291,21 @@ export default function PrescriptionForm({
               <TableHead className="w-16 text-center">Sl No</TableHead>
               <TableHead>Medication</TableHead>
               <TableHead className="w-48 text-center">Timing</TableHead>
-              <TableHead className="w-24 text-center">Days</TableHead>
+              <TableHead className="w-24 text-center">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center justify-center">
+                        Days
+                        <AlertCircle className="ml-1 h-3 w-3 text-muted-foreground" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Number of days the patient should take this medication</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </TableHead>
               <TableHead className="w-48">Notes</TableHead>
               {!readOnly && <TableHead className="w-16"></TableHead>}
             </TableRow>
@@ -365,6 +381,20 @@ export default function PrescriptionForm({
                       </>
                     )}
                   </div>
+                </TableCell>
+                <TableCell className="text-center">
+                  {readOnly ? (
+                    <div>{prescription.days || 0}</div>
+                  ) : (
+                    <Input
+                      type="number"
+                      min="0"
+                      max="90"
+                      value={prescription.days?.toString() || "0"}
+                      onChange={(e) => updatePrescription(index, 'days', parseInt(e.target.value) || 0)}
+                      className="w-16 h-8 text-center mx-auto"
+                    />
+                  )}
                 </TableCell>
                 <TableCell>
                   {readOnly ? (
