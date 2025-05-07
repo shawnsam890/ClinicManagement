@@ -797,9 +797,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Invalid ID' });
       }
       
-      const updatedAppointment = await storage.updateAppointment(id, req.body);
-      if (!updatedAppointment) {
+      // Check if we need to create an invoice
+      const currentAppointment = await storage.getAppointmentById(id);
+      if (!currentAppointment) {
         return res.status(404).json({ message: 'Appointment not found' });
+      }
+      
+      // If an invoice doesn't exist but was requested to be created
+      const requestData = req.body;
+      const shouldCreateInvoice = 
+        !currentAppointment.invoiceId && 
+        (requestData.invoiceId === null || requestData.invoiceId === undefined);
+        
+      // Create a new invoice if needed
+      let invoiceId = currentAppointment.invoiceId;
+      if (shouldCreateInvoice) {
+        // Create a basic invoice with default values
+        const newInvoice = await storage.createInvoice({
+          patientId: currentAppointment.patientId,
+          date: new Date().toISOString().split('T')[0],
+          status: 'pending',
+          totalAmount: 0, // Will be updated when items are added
+          notes: 'Auto-generated invoice',
+        });
+        
+        if (newInvoice) {
+          // Update the request data with the new invoice ID
+          invoiceId = newInvoice.id;
+          requestData.invoiceId = invoiceId;
+        }
+      }
+      
+      // Update the appointment with potentially modified data
+      const updatedAppointment = await storage.updateAppointment(id, requestData);
+      if (!updatedAppointment) {
+        return res.status(404).json({ message: 'Appointment update failed' });
       }
       
       res.json(updatedAppointment);
