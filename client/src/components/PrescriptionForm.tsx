@@ -36,15 +36,34 @@ export default function PrescriptionForm({
   const [prescriptions, setPrescriptions] = useState<PrescriptionItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Define types for medications and prescriptions
+  interface Medication {
+    id: number;
+    name: string;
+    quantity: number;
+    threshold?: number;
+    notes?: string;
+  }
+
   // Fetch medications for dropdown
-  const { data: medications = [] } = useQuery<any[]>({
+  const { data: medications = [] } = useQuery<Medication[]>({
     queryKey: ['/api/medications'],
   });
 
   // Fetch existing prescriptions for this visit
-  const { data: fetchedPrescriptions = [], isLoading: isFetchingPrescriptions } = useQuery<any[]>({
+  const { data: fetchedPrescriptions = [], isLoading: isFetchingPrescriptions } = useQuery<PrescriptionItem[]>({
     queryKey: [`/api/visits/${visitId}/prescriptions`],
     enabled: !!visitId,
+    retry: (failureCount, error) => {
+      // Don't retry if we're getting a 500 error
+      if (error instanceof Error && error.message.includes('500')) {
+        return false;
+      }
+      return failureCount < 3;
+    },
+    onError: (error) => {
+      console.error("Error fetching prescriptions:", error);
+    }
   });
 
   // Initialize prescriptions state when data is loaded
@@ -313,11 +332,20 @@ export default function PrescriptionForm({
                   {readOnly ? (
                     prescription.notes || ''
                   ) : (
-                    <Input
+                    <Select
                       value={prescription.notes || ''}
-                      onChange={(e) => updatePrescription(index, 'notes', e.target.value)}
-                      placeholder="Before/after meals, etc."
-                    />
+                      onValueChange={(value) => updatePrescription(index, 'notes', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Before/After food" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Before food">Before food</SelectItem>
+                        <SelectItem value="After food">After food</SelectItem>
+                        <SelectItem value="With food">With food</SelectItem>
+                        <SelectItem value="Any time">Any time</SelectItem>
+                      </SelectContent>
+                    </Select>
                   )}
                 </TableCell>
                 {!readOnly && (

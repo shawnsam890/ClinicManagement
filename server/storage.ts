@@ -866,7 +866,7 @@ export class DatabaseStorage implements IStorage {
   async getPrescriptions(visitId: number): Promise<Prescription[]> {
     return await db.select().from(prescriptions)
       .where(eq(prescriptions.visitId, visitId))
-      .orderBy(asc(prescriptions.slNo));
+      .orderBy(asc(prescriptions.id));
   }
   
   async getPrescriptionById(id: number): Promise<Prescription | undefined> {
