@@ -54,6 +54,7 @@ export const patientVisits = pgTable("patient_visits", {
   drugAllergy: text("drug_allergy"),
   previousDentalHistory: text("previous_dental_history"),
   chiefComplaint: text("chief_complaint").notNull(),
+  areaOfComplaint: text("area_of_complaint"),
   oralExamination: text("oral_examination"),
   investigation: text("investigation"),
   treatmentPlan: text("treatment_plan"),

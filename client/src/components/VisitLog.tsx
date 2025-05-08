@@ -43,6 +43,11 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
     select: (data: any) => data?.settingValue || [],
   });
 
+  const { data: areaOptions = [] } = useQuery<string[]>({
+    queryKey: ['/api/settings/key/area_options'],
+    select: (data: any) => data?.settingValue || [],
+  });
+
   const { data: treatmentDoneOptions = [] } = useQuery<string[]>({
     queryKey: ['/api/settings/key/treatment_done_options'],
     select: (data: any) => data?.settingValue || [],
@@ -63,6 +68,7 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
     if (visit) {
       setVisitData({
         chiefComplaint: visit.chiefComplaint || '',
+        areaOfComplaint: visit.areaOfComplaint || '',
         treatmentDone: visit.treatmentDone || '',
         treatmentPlan: visit.treatmentPlan || '',
         advice: visit.advice || '',
