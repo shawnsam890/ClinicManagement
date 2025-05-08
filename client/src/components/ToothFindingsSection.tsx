@@ -2,97 +2,64 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2 } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card, CardContent } from "@/components/ui/card";
+import { Trash2 } from "lucide-react";
 
-interface ToothFinding {
-  id?: number;
-  visitId: number;
-  toothNumber: string;
-  finding: string;
-}
+import { ToothFinding } from "@shared/schema";
 
 interface ToothFindingsSectionProps {
   visitId: number;
-  readOnly?: boolean;
 }
 
-export default function ToothFindingsSection({ visitId, readOnly = false }: ToothFindingsSectionProps) {
+export default function ToothFindingsSection({ visitId }: ToothFindingsSectionProps) {
   const { toast } = useToast();
-  const [findings, setFindings] = useState<ToothFinding[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Fetch settings for dropdown options
-  const { data: settings = [] } = useQuery<any[]>({
-    queryKey: ['/api/settings/category/dental_options'],
+  const [newFinding, setNewFinding] = useState<Partial<ToothFinding>>({
+    toothNumber: "",
+    finding: "",
+    visitId
   });
 
-  // Fetch existing tooth findings
-  const { data: fetchedFindings = [], isLoading: isFetchingFindings } = useQuery<ToothFinding[]>({
+  // Fetch tooth findings for the visit
+  const { data: toothFindings = [], isLoading } = useQuery<ToothFinding[]>({
     queryKey: [`/api/visits/${visitId}/tooth-findings`],
     enabled: !!visitId,
   });
 
-  // Initialize findings state when data is loaded
-  useEffect(() => {
-    if (fetchedFindings.length > 0) {
-      setFindings(fetchedFindings);
-      setIsLoading(false);
-    } else if (!isFetchingFindings) {
-      // If no findings, start with an empty row if not readOnly
-      if (!readOnly) {
-        setFindings([{
-          visitId: visitId,
-          toothNumber: '',
-          finding: ''
-        }]);
-      }
-      setIsLoading(false);
-    }
-  }, [fetchedFindings, isFetchingFindings, visitId, readOnly]);
+  // Fetch finding options from settings
+  const { data: findingOptions = [] } = useQuery<string[]>({
+    queryKey: ['/api/settings/key/tooth_finding_options'],
+    select: (data: any) => data?.settingValue || [],
+  });
 
   // Create tooth finding mutation
   const createToothFindingMutation = useMutation({
-    mutationFn: async (finding: Omit<ToothFinding, 'id'>) => {
+    mutationFn: async (finding: Partial<ToothFinding>) => {
       const res = await apiRequest("POST", "/api/tooth-findings", finding);
-      return await res.json();
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/visits/${visitId}/tooth-findings`] });
+      // Reset form
+      setNewFinding({
+        toothNumber: "",
+        finding: "",
+        visitId
+      });
       toast({
-        title: "Finding recorded",
-        description: "Tooth finding has been saved successfully."
+        title: "Success",
+        description: "Tooth finding added",
       });
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      console.error("Error adding tooth finding:", error);
       toast({
-        title: "Failed to save finding",
-        description: error.message || "There was an error saving the tooth finding.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Update tooth finding mutation
-  const updateToothFindingMutation = useMutation({
-    mutationFn: async (finding: ToothFinding) => {
-      const res = await apiRequest("PUT", `/api/tooth-findings/${finding.id}`, finding);
-      return await res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/visits/${visitId}/tooth-findings`] });
-      toast({
-        title: "Finding updated",
-        description: "Tooth finding has been updated successfully."
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Failed to update finding",
-        description: error.message || "There was an error updating the tooth finding.",
+        title: "Error",
+        description: "Failed to add tooth finding",
         variant: "destructive",
       });
     },
@@ -100,183 +67,122 @@ export default function ToothFindingsSection({ visitId, readOnly = false }: Toot
 
   // Delete tooth finding mutation
   const deleteToothFindingMutation = useMutation({
-    mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/tooth-findings/${id}`);
+    mutationFn: async (findingId: number) => {
+      await apiRequest("DELETE", `/api/tooth-findings/${findingId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/visits/${visitId}/tooth-findings`] });
       toast({
-        title: "Finding deleted",
-        description: "Tooth finding has been removed successfully."
+        title: "Success",
+        description: "Tooth finding removed",
       });
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      console.error("Error deleting tooth finding:", error);
       toast({
-        title: "Failed to delete finding",
-        description: error.message || "There was an error deleting the tooth finding.",
+        title: "Error",
+        description: "Failed to remove tooth finding",
         variant: "destructive",
       });
     },
   });
 
-  const addFindingRow = () => {
-    setFindings([
-      ...findings,
-      {
-        visitId: visitId,
-        toothNumber: '',
-        finding: ''
-      }
-    ]);
-  };
-
-  const removeFindingRow = (index: number) => {
-    const finding = findings[index];
-    if (finding.id) {
-      deleteToothFindingMutation.mutate(finding.id);
-    } else {
-      const newFindings = [...findings];
-      newFindings.splice(index, 1);
-      setFindings(newFindings);
-    }
-  };
-
-  const handleInputChange = (index: number, field: 'toothNumber' | 'finding', value: string) => {
-    const updatedFindings = [...findings];
-    updatedFindings[index] = {
-      ...updatedFindings[index],
+  // Handle input changes
+  const handleInputChange = (field: keyof ToothFinding, value: string) => {
+    setNewFinding((prev) => ({
+      ...prev,
       [field]: value
-    };
-    setFindings(updatedFindings);
+    }));
   };
 
-  const handleSaveFinding = (index: number) => {
-    const finding = findings[index];
-    
-    // Skip if empty fields
-    if (!finding.toothNumber || !finding.finding) {
+  // Handle add finding
+  const handleAddFinding = () => {
+    if (!newFinding.toothNumber || !newFinding.finding) {
       toast({
-        title: "Validation Error",
-        description: "Both tooth number and finding must be specified.",
+        title: "Error",
+        description: "Please enter both tooth number and finding",
         variant: "destructive",
       });
       return;
     }
-    
-    if (finding.id) {
-      // Update existing finding
-      updateToothFindingMutation.mutate(finding);
-    } else {
-      // Create new finding
-      createToothFindingMutation.mutate({
-        visitId: finding.visitId,
-        toothNumber: finding.toothNumber,
-        finding: finding.finding
-      });
-    }
+
+    createToothFindingMutation.mutate(newFinding);
   };
 
-  // Get finding options from settings
-  const getFindingOptions = (): string[] => {
-    const setting = settings.find((s: any) => s.settingKey === "tooth_finding_options");
-    if (setting && Array.isArray(setting.settingValue)) {
-      return setting.settingValue;
+  // Handle delete finding
+  const handleDeleteFinding = (findingId: number) => {
+    if (window.confirm("Are you sure you want to delete this finding?")) {
+      deleteToothFindingMutation.mutate(findingId);
     }
-    return ["Caries", "Missing", "Filled", "Root Canal Treated", "Mobility", "Sensitivity"];
   };
-
-  if (isLoading) {
-    return <div className="py-4">Loading tooth findings...</div>;
-  }
 
   return (
-    <div className="space-y-4">
-      {findings.length === 0 && readOnly ? (
-        <div className="text-center py-4 text-muted-foreground">
-          No tooth findings recorded.
+    <Card className="shadow-sm">
+      <CardContent className="p-4 space-y-4">
+        <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
+          <div className="flex-1">
+            <Input
+              type="text"
+              placeholder="Tooth Number"
+              value={newFinding.toothNumber || ""}
+              onChange={(e) => handleInputChange("toothNumber", e.target.value)}
+            />
+          </div>
+          <div className="flex-1">
+            <Select
+              value={newFinding.finding || ""}
+              onValueChange={(value) => handleInputChange("finding", value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a finding" />
+              </SelectTrigger>
+              <SelectContent>
+                {findingOptions.map((option, index) => (
+                  <SelectItem key={index} value={option}>{option}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button onClick={handleAddFinding} disabled={!newFinding.toothNumber || !newFinding.finding}>
+            Add
+          </Button>
         </div>
-      ) : (
-        <div className="space-y-4">
-          {findings.map((finding, index) => (
-            <div key={finding.id || `new-${index}`} className="grid grid-cols-12 gap-4">
-              <div className="col-span-4">
-                <Label htmlFor={`tooth-number-${index}`} className="text-xs mb-1 block">
-                  Tooth Number
-                </Label>
-                <Input
-                  id={`tooth-number-${index}`}
-                  value={finding.toothNumber}
-                  onChange={(e) => handleInputChange(index, 'toothNumber', e.target.value)}
-                  placeholder="e.g., 16, 27"
-                  disabled={readOnly}
-                  className="h-9"
-                />
-              </div>
-              
-              <div className="col-span-6">
-                <Label htmlFor={`finding-${index}`} className="text-xs mb-1 block">
-                  Finding
-                </Label>
-                <Select
-                  value={finding.finding}
-                  onValueChange={(value) => handleInputChange(index, 'finding', value)}
-                  disabled={readOnly}
-                >
-                  <SelectTrigger id={`finding-${index}`} className="h-9">
-                    <SelectValue placeholder="Select finding" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getFindingOptions().map(option => (
-                      <SelectItem key={option} value={option}>
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="col-span-2 flex items-end">
-                {!readOnly && (
-                  <>
-                    {index === findings.length - 1 ? (
-                      <Button 
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleSaveFinding(index)}
-                        disabled={!finding.toothNumber || !finding.finding}
-                        className="h-9 w-full"
-                      >
-                        Save
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeFindingRow(index)}
-                        className="h-9"
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-      
-      {!readOnly && (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={addFindingRow}
-          className="mt-2"
-        >
-          <Plus className="h-4 w-4 mr-1" /> Add Tooth Finding
-        </Button>
-      )}
-    </div>
+
+        {isLoading ? (
+          <div className="text-center py-4">Loading...</div>
+        ) : toothFindings.length > 0 ? (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Tooth Number</TableHead>
+                <TableHead>Finding</TableHead>
+                <TableHead className="w-16"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {toothFindings.map((finding) => (
+                <TableRow key={finding.id}>
+                  <TableCell>{finding.toothNumber}</TableCell>
+                  <TableCell>{finding.finding}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteFinding(finding.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ) : (
+          <div className="text-center py-4 text-muted-foreground">
+            No tooth findings recorded
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

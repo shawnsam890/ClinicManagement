@@ -2,279 +2,295 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { PatientVisit } from "@shared/schema";
 
-// Import required UI components
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 
-// Import specialized section components
 import ToothFindingsSection from "@/components/ToothFindingsSection";
 import GeneralizedFindingsSection from "@/components/GeneralizedFindingsSection";
 import InvestigationSection from "@/components/InvestigationSection";
-import PrescriptionForm from "@/components/PrescriptionForm";
 import FollowUpSection from "@/components/FollowUpSection";
-import InvoiceForm from "@/components/InvoiceForm";
+import PrescriptionForm from "@/components/PrescriptionForm";
+import Invoice from "@/components/Invoice";
+
+import { PatientVisit, InsertPatientVisit } from "@shared/schema";
 
 interface VisitLogProps {
   visitId: number;
   patientId: string;
-  visit?: PatientVisit;
   onBack?: () => void;
 }
 
-export default function VisitLog({ visitId, patientId, visit, onBack }: VisitLogProps) {
+export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) {
   const { toast } = useToast();
-  const [formData, setFormData] = useState({
-    chiefComplaint: visit?.chiefComplaint || "",
-    treatmentPlan: visit?.treatmentPlan || "",
-    treatmentDone: visit?.treatmentDone || "",
-    advice: visit?.advice || "",
-    notes: visit?.notes || ""
+  const [visitData, setVisitData] = useState<Partial<PatientVisit>>({});
+  const [showInvoice, setShowInvoice] = useState(false);
+
+  // Fetch visit data
+  const { data: visit, isLoading } = useQuery<PatientVisit>({
+    queryKey: [`/api/visits/${visitId}`],
+    enabled: !!visitId,
   });
 
-  // Fetch settings for dropdown options
-  const { data: settings = [] } = useQuery<any[]>({
-    queryKey: ['/api/settings/category/patient_options'],
+  // Fetch dropdown options from settings
+  const { data: complaintOptions = [] } = useQuery<string[]>({
+    queryKey: ['/api/settings/key/complaint_options'],
+    select: (data: any) => data?.settingValue || [],
   });
+
+  const { data: treatmentDoneOptions = [] } = useQuery<string[]>({
+    queryKey: ['/api/settings/key/treatment_done_options'],
+    select: (data: any) => data?.settingValue || [],
+  });
+
+  const { data: treatmentPlanOptions = [] } = useQuery<string[]>({
+    queryKey: ['/api/settings/key/treatment_plan_options'],
+    select: (data: any) => data?.settingValue || [],
+  });
+
+  const { data: adviceOptions = [] } = useQuery<string[]>({
+    queryKey: ['/api/settings/key/advice_options'],
+    select: (data: any) => data?.settingValue || [],
+  });
+
+  // Set initial form data when visit is loaded
+  useEffect(() => {
+    if (visit) {
+      setVisitData({
+        chiefComplaint: visit.chiefComplaint || '',
+        treatmentDone: visit.treatmentDone || '',
+        treatmentPlan: visit.treatmentPlan || '',
+        advice: visit.advice || '',
+        notes: visit.notes || '',
+      });
+    }
+  }, [visit]);
 
   // Update visit mutation
   const updateVisitMutation = useMutation({
-    mutationFn: async (data: Partial<PatientVisit>) => {
-      const res = await apiRequest("PUT", `/api/visits/${visitId}`, {
-        id: visitId,
-        ...data
-      });
+    mutationFn: async (updatedData: Partial<PatientVisit>) => {
+      const res = await apiRequest("PUT", `/api/visits/${visitId}`, updatedData);
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/patients/${patientId}/visits`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/visits/${visitId}`] });
       toast({
         title: "Success",
-        description: "Visit updated successfully",
+        description: "Visit information updated",
       });
     },
     onError: (error) => {
       console.error("Error updating visit:", error);
       toast({
         title: "Error",
-        description: "Failed to update visit details",
+        description: "Failed to update visit information",
         variant: "destructive",
       });
-    }
+    },
   });
 
   // Handle form input changes
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
+  const handleInputChange = (field: keyof PatientVisit, value: string) => {
+    setVisitData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
-    
-    // Auto-save after a short delay
-    updateVisitMutation.mutate({
-      [field]: value
-    });
   };
 
-  // Get dropdown options from settings
-  const getDropdownOptions = (settingKey: string): string[] => {
-    const setting = settings.find((s: any) => s.settingKey === `${settingKey}_options`);
-    if (setting && Array.isArray(setting.settingValue)) {
-      return setting.settingValue;
-    }
-    return [];
+  // Handle form submission
+  const handleSave = (field: keyof PatientVisit) => {
+    // Only update the specific field that was changed
+    updateVisitMutation.mutate({ [field]: visitData[field] });
   };
 
-  // Render dropdown options
-  const renderDropdownOptions = (options: string[]) => {
-    return options.map((option, index) => (
-      <SelectItem key={index} value={option}>
-        {option}
-      </SelectItem>
-    ));
-  };
+  if (isLoading) {
+    return <div className="p-4">Loading visit data...</div>;
+  }
+
+  if (showInvoice) {
+    return (
+      <Invoice 
+        patientId={patientId} 
+        visitId={visitId}
+        onBack={() => setShowInvoice(false)}
+      />
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Chief Complaint Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Chief Complaint</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Select
-            value={formData.chiefComplaint}
-            onValueChange={(value) => handleInputChange("chiefComplaint", value)}
+    <Card className="border-none shadow-none">
+      <CardHeader className="px-0 pt-0">
+        <div className="flex items-center justify-between mb-4">
+          <CardTitle className="text-xl font-semibold">Visit Log</CardTitle>
+          {onBack && (
+            <Button variant="outline" onClick={onBack}>
+              Back to Visits
+            </Button>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="px-0 space-y-6">
+        {/* Chief Complaint Section */}
+        <div className="space-y-3">
+          <Label className="text-base font-semibold">Chief Complaint</Label>
+          <Select 
+            value={visitData.chiefComplaint || ''} 
+            onValueChange={(value) => handleInputChange('chiefComplaint', value)}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select chief complaint" />
             </SelectTrigger>
             <SelectContent>
-              {renderDropdownOptions(getDropdownOptions("chiefComplaint"))}
+              {complaintOptions.map((option, index) => (
+                <SelectItem key={index} value={option}>{option}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
-        </CardContent>
-      </Card>
+          <Button size="sm" onClick={() => handleSave('chiefComplaint')}>
+            Save
+          </Button>
+        </div>
 
-      {/* Oral Examination Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Oral Examination</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h3 className="text-sm font-medium mb-2">Tooth Findings</h3>
-            <ToothFindingsSection visitId={visitId} />
-          </div>
+        <Separator />
 
-          <Separator className="my-4" />
+        {/* Oral Examination Section */}
+        <div className="space-y-3">
+          <Label className="text-base font-semibold">Oral Examination</Label>
+          
+          {/* Tooth Findings Component */}
+          <ToothFindingsSection visitId={visitId} />
+          
+          {/* Generalized Findings Component */}
+          <GeneralizedFindingsSection visitId={visitId} />
+        </div>
 
-          <div>
-            <h3 className="text-sm font-medium mb-2">Generalized Findings</h3>
-            <GeneralizedFindingsSection visitId={visitId} />
-          </div>
-        </CardContent>
-      </Card>
+        <Separator />
 
-      {/* Investigation Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Investigation Done</CardTitle>
-        </CardHeader>
-        <CardContent>
+        {/* Investigation Section */}
+        <div className="space-y-3">
+          <Label className="text-base font-semibold">Investigation Done</Label>
           <InvestigationSection visitId={visitId} />
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Treatment Plan Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Treatment Plan</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Select
-            value={formData.treatmentPlan}
-            onValueChange={(value) => handleInputChange("treatmentPlan", value)}
+        <Separator />
+
+        {/* Treatment Plan Section */}
+        <div className="space-y-3">
+          <Label className="text-base font-semibold">Treatment Plan</Label>
+          <Select 
+            value={visitData.treatmentPlan || ''} 
+            onValueChange={(value) => handleInputChange('treatmentPlan', value)}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select treatment plan" />
             </SelectTrigger>
             <SelectContent>
-              {renderDropdownOptions(getDropdownOptions("treatmentPlan"))}
+              {treatmentPlanOptions.map((option, index) => (
+                <SelectItem key={index} value={option}>{option}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
-        </CardContent>
-      </Card>
+          <Button size="sm" onClick={() => handleSave('treatmentPlan')}>
+            Save
+          </Button>
+        </div>
 
-      {/* Treatment Done Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Treatment Done</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Select
-            value={formData.treatmentDone}
-            onValueChange={(value) => handleInputChange("treatmentDone", value)}
+        <Separator />
+
+        {/* Treatment Done Section */}
+        <div className="space-y-3">
+          <Label className="text-base font-semibold">Treatment Done</Label>
+          <Select 
+            value={visitData.treatmentDone || ''} 
+            onValueChange={(value) => handleInputChange('treatmentDone', value)}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select treatment done" />
             </SelectTrigger>
             <SelectContent>
-              {renderDropdownOptions(getDropdownOptions("treatmentDone"))}
+              {treatmentDoneOptions.map((option, index) => (
+                <SelectItem key={index} value={option}>{option}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
-        </CardContent>
-      </Card>
+          <Button size="sm" onClick={() => handleSave('treatmentDone')}>
+            Save
+          </Button>
+        </div>
 
-      {/* Rx (Prescription) Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Rx (Prescription)</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <Separator />
+
+        {/* Prescription Section */}
+        <div className="space-y-3">
+          <Label className="text-base font-semibold">Rx (Prescription)</Label>
           <PrescriptionForm 
-            visitId={visitId}
+            visitId={visitId} 
             patientId={patientId}
           />
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Advice Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Advice</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Select
-            value={formData.advice}
-            onValueChange={(value) => handleInputChange("advice", value)}
+        <Separator />
+
+        {/* Advice Section */}
+        <div className="space-y-3">
+          <Label className="text-base font-semibold">Advice</Label>
+          <Select 
+            value={visitData.advice || ''} 
+            onValueChange={(value) => handleInputChange('advice', value)}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select advice" />
             </SelectTrigger>
             <SelectContent>
-              {renderDropdownOptions(getDropdownOptions("advice"))}
+              {adviceOptions.map((option, index) => (
+                <SelectItem key={index} value={option}>{option}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
-        </CardContent>
-      </Card>
-
-      {/* Notes Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Notes</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Textarea
-            placeholder="Add any additional notes here..."
-            value={formData.notes || ""}
-            onChange={(e) => handleInputChange("notes", e.target.value)}
-            className="min-h-[100px]"
-          />
-        </CardContent>
-      </Card>
-
-      {/* Invoice Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Invoice</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <InvoiceForm 
-            visitId={visitId}
-            patientId={patientId}
-          />
-        </CardContent>
-      </Card>
-
-      {/* Follow-up Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Follow-up</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <FollowUpSection 
-            visitId={visitId}
-            patientId={patientId}
-          />
-        </CardContent>
-      </Card>
-
-      {/* Back button */}
-      {onBack && (
-        <div className="flex justify-end mt-4">
-          <Button variant="outline" onClick={onBack}>
-            Go Back
+          <Button size="sm" onClick={() => handleSave('advice')}>
+            Save
           </Button>
         </div>
-      )}
-    </div>
+
+        <Separator />
+
+        {/* Notes Section */}
+        <div className="space-y-3">
+          <Label className="text-base font-semibold">Notes</Label>
+          <Textarea 
+            value={visitData.notes || ''} 
+            onChange={(e) => handleInputChange('notes', e.target.value)}
+            className="min-h-[100px]"
+            placeholder="Enter any additional notes"
+          />
+          <Button size="sm" onClick={() => handleSave('notes')}>
+            Save
+          </Button>
+        </div>
+
+        <Separator />
+
+        {/* Invoice Section */}
+        <div className="space-y-3">
+          <Label className="text-base font-semibold">Invoice</Label>
+          <Button onClick={() => setShowInvoice(true)}>
+            Manage Invoice
+          </Button>
+        </div>
+
+        <Separator />
+
+        {/* Follow-up Section */}
+        <div className="space-y-3">
+          <Label className="text-base font-semibold">Follow-up</Label>
+          <FollowUpSection visitId={visitId} patientId={patientId} />
+        </div>
+      </CardContent>
+    </Card>
   );
 }
