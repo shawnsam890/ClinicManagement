@@ -2,98 +2,67 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2 } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card, CardContent } from "@/components/ui/card";
+import { Trash2 } from "lucide-react";
 
-interface Investigation {
-  id?: number;
-  type: string;
-  findings: string;
-  visitId: number;
-}
+import { Investigation } from "@shared/schema";
 
 interface InvestigationSectionProps {
   visitId: number;
-  readOnly?: boolean;
 }
 
-export default function InvestigationSection({ visitId, readOnly = false }: InvestigationSectionProps) {
+export default function InvestigationSection({ visitId }: InvestigationSectionProps) {
   const { toast } = useToast();
-  const [investigations, setInvestigations] = useState<Investigation[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Fetch settings for dropdown options
-  const { data: settings = [] } = useQuery<any[]>({
-    queryKey: ['/api/settings/category/dental_options'],
+  const [newInvestigation, setNewInvestigation] = useState<Partial<Investigation>>({
+    type: "",
+    findings: "",
+    visitId
   });
+  const [showFindings, setShowFindings] = useState(false);
 
-  // Fetch existing investigations
-  const { data: fetchedInvestigations = [], isLoading: isFetchingInvestigations } = useQuery<Investigation[]>({
+  // Fetch investigations for the visit
+  const { data: investigations = [], isLoading } = useQuery<Investigation[]>({
     queryKey: [`/api/visits/${visitId}/investigations`],
     enabled: !!visitId,
   });
 
-  // Initialize investigations state when data is loaded
-  useEffect(() => {
-    if (fetchedInvestigations.length > 0) {
-      setInvestigations(fetchedInvestigations);
-      setIsLoading(false);
-    } else if (!isFetchingInvestigations) {
-      // If no investigations, start with an empty row if not readOnly
-      if (!readOnly) {
-        setInvestigations([{
-          visitId: visitId,
-          type: '',
-          findings: ''
-        }]);
-      }
-      setIsLoading(false);
-    }
-  }, [fetchedInvestigations, isFetchingInvestigations, visitId, readOnly]);
+  // Fetch investigation type options from settings
+  const { data: investigationTypes = [] } = useQuery<string[]>({
+    queryKey: ['/api/settings/key/investigation_types'],
+    select: (data: any) => data?.settingValue || [],
+  });
 
   // Create investigation mutation
   const createInvestigationMutation = useMutation({
-    mutationFn: async (investigation: Omit<Investigation, 'id'>) => {
+    mutationFn: async (investigation: Partial<Investigation>) => {
       const res = await apiRequest("POST", "/api/investigations", investigation);
-      return await res.json();
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/visits/${visitId}/investigations`] });
+      // Reset form
+      setNewInvestigation({
+        type: "",
+        findings: "",
+        visitId
+      });
+      setShowFindings(false);
       toast({
-        title: "Investigation recorded",
-        description: "Investigation has been saved successfully."
+        title: "Success",
+        description: "Investigation added",
       });
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      console.error("Error adding investigation:", error);
       toast({
-        title: "Failed to save investigation",
-        description: error.message || "There was an error saving the investigation.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Update investigation mutation
-  const updateInvestigationMutation = useMutation({
-    mutationFn: async (investigation: Investigation) => {
-      const res = await apiRequest("PUT", `/api/investigations/${investigation.id}`, investigation);
-      return await res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/visits/${visitId}/investigations`] });
-      toast({
-        title: "Investigation updated",
-        description: "Investigation has been updated successfully."
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Failed to update investigation",
-        description: error.message || "There was an error updating the investigation.",
+        title: "Error",
+        description: "Failed to add investigation",
         variant: "destructive",
       });
     },
@@ -101,184 +70,137 @@ export default function InvestigationSection({ visitId, readOnly = false }: Inve
 
   // Delete investigation mutation
   const deleteInvestigationMutation = useMutation({
-    mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/investigations/${id}`);
+    mutationFn: async (investigationId: number) => {
+      await apiRequest("DELETE", `/api/investigations/${investigationId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/visits/${visitId}/investigations`] });
       toast({
-        title: "Investigation deleted",
-        description: "Investigation has been removed successfully."
+        title: "Success",
+        description: "Investigation removed",
       });
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      console.error("Error deleting investigation:", error);
       toast({
-        title: "Failed to delete investigation",
-        description: error.message || "There was an error deleting the investigation.",
+        title: "Error",
+        description: "Failed to remove investigation",
         variant: "destructive",
       });
     },
   });
 
-  const addInvestigationRow = () => {
-    setInvestigations([
-      ...investigations,
-      {
-        visitId: visitId,
-        type: '',
-        findings: ''
-      }
-    ]);
-  };
+  // Handle input changes
+  const handleInputChange = (field: keyof Investigation, value: string) => {
+    setNewInvestigation((prev) => ({
+      ...prev,
+      [field]: value
+    }));
 
-  const removeInvestigationRow = (index: number) => {
-    const investigation = investigations[index];
-    if (investigation.id) {
-      deleteInvestigationMutation.mutate(investigation.id);
-    } else {
-      const newInvestigations = [...investigations];
-      newInvestigations.splice(index, 1);
-      setInvestigations(newInvestigations);
+    // Show findings field when type is selected
+    if (field === 'type' && value) {
+      setShowFindings(true);
     }
   };
 
-  const handleInputChange = (index: number, field: 'type' | 'findings', value: string) => {
-    const updatedInvestigations = [...investigations];
-    updatedInvestigations[index] = {
-      ...updatedInvestigations[index],
-      [field]: value
-    };
-    setInvestigations(updatedInvestigations);
-  };
-
-  const handleSaveInvestigation = (index: number) => {
-    const investigation = investigations[index];
-    
-    // Skip if required fields are empty
-    if (!investigation.type) {
+  // Handle add investigation
+  const handleAddInvestigation = () => {
+    if (!newInvestigation.type) {
       toast({
-        title: "Validation Error",
-        description: "Investigation type must be specified.",
+        title: "Error",
+        description: "Please select an investigation type",
         variant: "destructive",
       });
       return;
     }
-    
-    if (investigation.id) {
-      // Update existing investigation
-      updateInvestigationMutation.mutate(investigation);
-    } else {
-      // Create new investigation
-      createInvestigationMutation.mutate({
-        visitId: investigation.visitId,
-        type: investigation.type,
-        findings: investigation.findings
-      });
-    }
+
+    createInvestigationMutation.mutate(newInvestigation);
   };
 
-  // Get investigation type options from settings
-  const getInvestigationTypes = (): string[] => {
-    const setting = settings.find((s: any) => s.settingKey === "investigation_type_options");
-    if (setting && Array.isArray(setting.settingValue)) {
-      return setting.settingValue;
+  // Handle delete investigation
+  const handleDeleteInvestigation = (investigationId: number) => {
+    if (window.confirm("Are you sure you want to delete this investigation?")) {
+      deleteInvestigationMutation.mutate(investigationId);
     }
-    return ["X-ray", "CBCT", "Blood Test", "Biopsy", "Pulp Testing", "Culture & Sensitivity"];
   };
-
-  if (isLoading) {
-    return <div className="py-4">Loading investigations...</div>;
-  }
 
   return (
-    <div className="space-y-4">
-      {investigations.length === 0 && readOnly ? (
-        <div className="text-center py-4 text-muted-foreground">
-          No investigations recorded.
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {investigations.map((investigation, index) => (
-            <div key={investigation.id || `new-${index}`} className="space-y-3 pb-4 border-b border-muted last:border-0">
-              <div className="grid grid-cols-12 gap-4">
-                <div className="col-span-8">
-                  <Label htmlFor={`type-${index}`} className="text-xs mb-1 block">
-                    Investigation Type
-                  </Label>
-                  <Select
-                    value={investigation.type}
-                    onValueChange={(value) => handleInputChange(index, 'type', value)}
-                    disabled={readOnly}
-                  >
-                    <SelectTrigger id={`type-${index}`}>
-                      <SelectValue placeholder="Select investigation type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {getInvestigationTypes().map(option => (
-                        <SelectItem key={option} value={option}>
-                          {option}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                {!readOnly && (
-                  <div className="col-span-4 flex items-end justify-end">
-                    {index === investigations.length - 1 ? (
-                      <Button 
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleSaveInvestigation(index)}
-                        disabled={!investigation.type}
-                      >
-                        Save
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeInvestigationRow(index)}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
-              
-              {/* Findings field - only displayed when investigation type is selected */}
-              {investigation.type && (
-                <div>
-                  <Label htmlFor={`findings-${index}`} className="text-xs mb-1 block">
-                    Findings
-                  </Label>
-                  <Textarea
-                    id={`findings-${index}`}
-                    value={investigation.findings}
-                    onChange={(e) => handleInputChange(index, 'findings', e.target.value)}
-                    placeholder="Enter investigation findings"
-                    disabled={readOnly}
-                    className="min-h-[80px]"
-                  />
-                </div>
-              )}
+    <Card className="shadow-sm">
+      <CardContent className="p-4 space-y-4">
+        <div className="space-y-4">
+          <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
+            <div className="flex-1">
+              <Select
+                value={newInvestigation.type || ""}
+                onValueChange={(value) => handleInputChange("type", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select investigation type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {investigationTypes.map((type, index) => (
+                    <SelectItem key={index} value={type}>{type}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          ))}
+            
+            <Button 
+              onClick={handleAddInvestigation}
+              disabled={!newInvestigation.type}
+            >
+              Add
+            </Button>
+          </div>
+
+          {/* Conditional findings field - only shown when a type is selected */}
+          {showFindings && (
+            <div className="space-y-2">
+              <Textarea
+                placeholder="Enter findings for this investigation..."
+                value={newInvestigation.findings || ""}
+                onChange={(e) => handleInputChange("findings", e.target.value)}
+                className="min-h-[100px]"
+              />
+            </div>
+          )}
         </div>
-      )}
-      
-      {!readOnly && (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={addInvestigationRow}
-          className="mt-2"
-        >
-          <Plus className="h-4 w-4 mr-1" /> Add Investigation
-        </Button>
-      )}
-    </div>
+
+        {isLoading ? (
+          <div className="text-center py-4">Loading...</div>
+        ) : investigations.length > 0 ? (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Type</TableHead>
+                <TableHead>Findings</TableHead>
+                <TableHead className="w-16"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {investigations.map((investigation) => (
+                <TableRow key={investigation.id}>
+                  <TableCell>{investigation.type}</TableCell>
+                  <TableCell>{investigation.findings || "Not specified"}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteInvestigation(investigation.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ) : (
+          <div className="text-center py-4 text-muted-foreground">
+            No investigations recorded
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
