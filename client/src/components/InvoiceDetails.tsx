@@ -251,7 +251,6 @@ export default function InvoiceDetails({ invoice, onUpdate, patientName }: Invoi
               <thead>
                 <tr className="bg-muted border-b">
                   <th className="text-left p-2">Description</th>
-                  <th className="text-center p-2">Quantity</th>
                   <th className="text-right p-2">Rate (₹)</th>
                   <th className="text-right p-2">Amount (₹)</th>
                 </tr>
@@ -260,13 +259,12 @@ export default function InvoiceDetails({ invoice, onUpdate, patientName }: Invoi
                 {invoice.items.map((item) => (
                   <tr key={item.id} className="border-b">
                     <td className="p-2">{item.description}</td>
-                    <td className="text-center p-2">{item.quantity}</td>
                     <td className="text-right p-2">{item.rate.toFixed(2)}</td>
                     <td className="text-right p-2">{item.amount.toFixed(2)}</td>
                   </tr>
                 ))}
                 <tr className="font-bold">
-                  <td colSpan={3} className="text-right p-2">Total:</td>
+                  <td colSpan={2} className="text-right p-2">Total:</td>
                   <td className="text-right p-2">₹{invoice.totalAmount.toFixed(2)}</td>
                 </tr>
               </tbody>
