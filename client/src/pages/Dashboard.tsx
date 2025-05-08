@@ -81,13 +81,7 @@ export default function Dashboard() {
           href="/staff"
         />
         
-        <DashboardTile
-          title="Appointments"
-          description="Manage patient appointments and scheduling"
-          imageSrc="https://images.unsplash.com/photo-1606800052052-a08af7148866?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=300"
-          icon={<Calendar />}
-          href="/appointments"
-        />
+        {/* Appointments tile removed as per new workflow */}
         
         <DashboardTile
           title="Settings"

@@ -11,6 +11,7 @@ import { InvoiceItem } from "@shared/schema";
 interface InvoiceProps {
   patientId: string;
   visitId?: number;
+  onBack?: () => void;
 }
 
 interface InvoiceItemForm extends Omit<InvoiceItem, 'id' | 'invoiceId'> {

@@ -61,6 +61,7 @@ export const patientVisits = pgTable("patient_visits", {
   nextAppointment: date("next_appointment"),
   attachments: jsonb("attachments"),
   consentForms: jsonb("consent_forms"),
+  previousVisitId: integer("previous_visit_id"), // Reference to parent visit (for follow-ups)
 });
 
 // Lab related schemas

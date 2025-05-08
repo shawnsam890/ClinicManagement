@@ -9,13 +9,13 @@ import HomePage from "@/pages/HomePage";
 import Dashboard from "@/pages/Dashboard";
 import PatientDatabase from "@/pages/PatientDatabase";
 import NewPatientForm from "@/pages/NewPatientForm";
-import PatientRecord from "@/pages/PatientRecord";
+import PatientRecord from "@/pages/PatientRecordRedesigned";
 import ExistingPatients from "@/pages/ExistingPatients";
 import LabWorks from "@/pages/LabWorks";
 import Revenue from "@/pages/Revenue";
 import StaffManagement from "@/pages/StaffManagement";
 import Settings from "@/pages/Settings";
-import AppointmentsPage from "@/pages/AppointmentsPage";
+// Appointments removed as per requirement
 import AuthPage from "@/pages/auth-page";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
@@ -33,7 +33,7 @@ function Router() {
       <ProtectedRoute path="/revenue" component={Revenue} />
       <ProtectedRoute path="/staff" component={StaffManagement} />
       <ProtectedRoute path="/settings" component={Settings} />
-      <ProtectedRoute path="/appointments" component={AppointmentsPage} />
+      {/* Appointments route removed */}
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>
