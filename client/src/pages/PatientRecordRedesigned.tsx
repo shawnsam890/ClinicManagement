@@ -881,6 +881,17 @@ export default function PatientRecord() {
                     />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="areaOfComplaint" className="text-right">
+                      Area of Complaint
+                    </Label>
+                    <Input
+                      id="areaOfComplaint"
+                      className="col-span-3"
+                      value={visitForm.areaOfComplaint}
+                      onChange={(e) => handleVisitFormChange('areaOfComplaint', e.target.value)}
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="treatmentDone" className="text-right">
                       Treatment Done
                     </Label>

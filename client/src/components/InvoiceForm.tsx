@@ -28,7 +28,6 @@ const invoiceFormSchema = z.object({
   items: z.array(
     z.object({
       description: z.string().min(1, { message: "Description is required" }),
-      quantity: z.coerce.number().min(1, { message: "Quantity must be at least 1" }),
       rate: z.coerce.number().min(1, { message: "Rate must be at least 1" }),
       amount: z.coerce.number().min(1, { message: "Amount must be at least 1" }),
     })
