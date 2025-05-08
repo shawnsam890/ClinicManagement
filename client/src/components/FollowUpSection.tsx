@@ -39,7 +39,15 @@ export default function FollowUpSection({ visitId, patientId }: FollowUpSectionP
 
   useEffect(() => {
     if (fetchedFollowUps && fetchedFollowUps.length > 0) {
-      setFollowUps(fetchedFollowUps);
+      // Map the database scheduledDate field to the component's date field
+      const mappedFollowUps = fetchedFollowUps.map(followUp => ({
+        id: followUp.id,
+        date: followUp.scheduledDate, // Map scheduledDate to date
+        reason: followUp.reason || '',
+        status: followUp.status,
+        visitId: followUp.visitId,
+      }));
+      setFollowUps(mappedFollowUps);
     } else if (!isLoading && (!fetchedFollowUps || fetchedFollowUps.length === 0)) {
       // Initialize with one empty follow-up if none exist
       setFollowUps([{
