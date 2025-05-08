@@ -61,8 +61,15 @@ export default function FollowUpSection({ visitId, patientId }: FollowUpSectionP
 
   // Create follow-up mutation
   const createFollowUpMutation = useMutation({
-    mutationFn: async (followUp: Omit<FollowUp, 'id' | 'createdAt'>) => {
-      const res = await apiRequest("POST", "/api/follow-ups", followUp);
+    mutationFn: async (followUp: { date: string, reason: string, status: string, visitId: number }) => {
+      // Map component's date to database's scheduledDate
+      const data = {
+        scheduledDate: followUp.date,
+        reason: followUp.reason,
+        status: followUp.status,
+        visitId: followUp.visitId
+      };
+      const res = await apiRequest("POST", "/api/follow-ups", data);
       return await res.json();
     },
     onSuccess: () => {
@@ -83,8 +90,16 @@ export default function FollowUpSection({ visitId, patientId }: FollowUpSectionP
 
   // Update follow-up mutation
   const updateFollowUpMutation = useMutation({
-    mutationFn: async (followUp: Omit<FollowUp, 'createdAt'>) => {
-      const res = await apiRequest("PUT", `/api/follow-ups/${followUp.id}`, followUp);
+    mutationFn: async (followUp: { id: number, date: string, reason: string, status: string, visitId: number }) => {
+      // Map component's date to database's scheduledDate
+      const data = {
+        id: followUp.id,
+        scheduledDate: followUp.date,
+        reason: followUp.reason,
+        status: followUp.status,
+        visitId: followUp.visitId
+      };
+      const res = await apiRequest("PUT", `/api/follow-ups/${followUp.id}`, data);
       return await res.json();
     },
     onSuccess: () => {
