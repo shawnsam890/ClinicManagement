@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { User, Phone, MessageSquare, Plus, CalendarDays, Receipt, ClipboardList, FileText, Edit, Save, X, PlusCircle } from "lucide-react";
+import { User, Phone, MessageSquare, Plus, CalendarDays, Receipt, ClipboardList, FileText, Edit, Save, X, PlusCircle, Trash2, Repeat } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Patient, PatientVisit, Prescription, Invoice as InvoiceType } from "@shared/schema";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -578,11 +578,58 @@ export default function PatientRecord() {
                                 <CalendarDays className="h-3 w-3 mr-1" /> {formatDate(visit.date)}
                               </div>
                             </div>
-                            {visit.nextAppointment && (
-                              <Badge variant="outline" className="text-xs">
-                                Follow-up
-                              </Badge>
-                            )}
+                            <div className="flex space-x-1 items-center">
+                              {visit.nextAppointment && (
+                                <Badge variant="outline" className="text-xs mr-1">
+                                  Follow-up
+                                </Badge>
+                              )}
+                              <Button
+                                variant="ghost" 
+                                size="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  
+                                  // Prompt for new chief complaint
+                                  const newChiefComplaint = window.prompt(
+                                    "Update chief complaint:",
+                                    visit.chiefComplaint || ""
+                                  );
+                                  
+                                  if (newChiefComplaint !== null) {
+                                    updateVisitMutation.mutate({
+                                      id: visit.id,
+                                      chiefComplaint: newChiefComplaint
+                                    });
+                                  }
+                                }}
+                                className="h-7 w-7"
+                                title="Edit visit"
+                              >
+                                <Edit className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost" 
+                                size="icon"
+                                onClick={(e) => handleDeleteVisit(visit.id, e)}
+                                className="h-7 w-7 text-red-500 hover:text-red-700"
+                                title="Delete visit"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost" 
+                                size="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCreateFollowUp(visit.id);
+                                }}
+                                className="h-7 w-7"
+                                title="Create follow-up"
+                              >
+                                <Repeat className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       ))}
