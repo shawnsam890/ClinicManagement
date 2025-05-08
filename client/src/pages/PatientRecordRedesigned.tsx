@@ -212,6 +212,7 @@ export default function PatientRecord() {
 
   // Create a new Prescription (Rx)
   const handleCreateRx = () => {
+    console.log("Creating new prescription");
     createVisitMutation.mutate({ chiefComplaint: "New prescription" });
   };
 
