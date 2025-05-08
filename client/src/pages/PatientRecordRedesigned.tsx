@@ -51,6 +51,7 @@ export default function PatientRecord() {
   });
   const [visitForm, setVisitForm] = useState<any>({
     chiefComplaint: '',
+    areaOfComplaint: '',
     treatmentDone: '',
     treatmentPlan: '',
     advice: '',
@@ -625,6 +626,7 @@ export default function PatientRecord() {
                                   if (currentVisit) {
                                     setVisitForm({
                                       chiefComplaint: currentVisit.chiefComplaint || '',
+                                      areaOfComplaint: currentVisit.areaOfComplaint || '',
                                       treatmentDone: currentVisit.treatmentDone || '',
                                       treatmentPlan: currentVisit.treatmentPlan || '',
                                       advice: currentVisit.advice || '',

@@ -141,25 +141,57 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
         </div>
       </CardHeader>
       <CardContent className="px-0 space-y-6">
-        {/* Chief Complaint Section */}
+        {/* Chief Complaint Section - Two Columns */}
         <div className="space-y-3">
           <Label className="text-base font-semibold">Chief Complaint</Label>
-          <Select 
-            value={visitData.chiefComplaint || ''} 
-            onValueChange={(value) => handleInputChange('chiefComplaint', value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select chief complaint" />
-            </SelectTrigger>
-            <SelectContent>
-              {complaintOptions.map((option, index) => (
-                <SelectItem key={index} value={option}>{option}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button size="sm" onClick={() => handleSave('chiefComplaint')}>
-            Save
-          </Button>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label>Complaint</Label>
+              <Select 
+                value={visitData.chiefComplaint || ''} 
+                onValueChange={(value) => handleInputChange('chiefComplaint', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select complaint" />
+                </SelectTrigger>
+                <SelectContent>
+                  {complaintOptions.map((option, index) => (
+                    <SelectItem key={index} value={option}>{option}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Location/Area</Label>
+              <Select 
+                value={visitData.areaOfComplaint || ''} 
+                onValueChange={(value) => handleInputChange('areaOfComplaint', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select area" />
+                </SelectTrigger>
+                <SelectContent>
+                  {areaOptions.map((option, index) => (
+                    <SelectItem key={index} value={option}>{option}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <Button 
+              size="sm" 
+              onClick={() => {
+                // Save both fields at once
+                updateVisitMutation.mutate({
+                  chiefComplaint: visitData.chiefComplaint,
+                  areaOfComplaint: visitData.areaOfComplaint
+                });
+              }}
+            >
+              Save
+            </Button>
+          </div>
         </div>
 
         <Separator />
