@@ -1029,6 +1029,121 @@ export class DatabaseStorage implements IStorage {
     return true;
   }
 
+  // Tooth findings
+  async getToothFindings(visitId: number): Promise<ToothFinding[]> {
+    return await db.select().from(toothFindings).where(eq(toothFindings.visitId, visitId));
+  }
+  
+  async getToothFindingById(id: number): Promise<ToothFinding | undefined> {
+    const result = await db.select().from(toothFindings).where(eq(toothFindings.id, id));
+    return result[0];
+  }
+  
+  async createToothFinding(finding: InsertToothFinding): Promise<ToothFinding> {
+    const result = await db.insert(toothFindings).values(finding).returning();
+    return result[0];
+  }
+  
+  async updateToothFinding(id: number, finding: Partial<InsertToothFinding>): Promise<ToothFinding | undefined> {
+    const result = await db.update(toothFindings)
+      .set(finding)
+      .where(eq(toothFindings.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  async deleteToothFinding(id: number): Promise<boolean> {
+    await db.delete(toothFindings).where(eq(toothFindings.id, id));
+    return true;
+  }
+  
+  // Generalized findings
+  async getGeneralizedFindings(visitId: number): Promise<GeneralizedFinding[]> {
+    return await db.select().from(generalizedFindings).where(eq(generalizedFindings.visitId, visitId));
+  }
+  
+  async getGeneralizedFindingById(id: number): Promise<GeneralizedFinding | undefined> {
+    const result = await db.select().from(generalizedFindings).where(eq(generalizedFindings.id, id));
+    return result[0];
+  }
+  
+  async createGeneralizedFinding(finding: InsertGeneralizedFinding): Promise<GeneralizedFinding> {
+    const result = await db.insert(generalizedFindings).values(finding).returning();
+    return result[0];
+  }
+  
+  async updateGeneralizedFinding(id: number, finding: Partial<InsertGeneralizedFinding>): Promise<GeneralizedFinding | undefined> {
+    const result = await db.update(generalizedFindings)
+      .set(finding)
+      .where(eq(generalizedFindings.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  async deleteGeneralizedFinding(id: number): Promise<boolean> {
+    await db.delete(generalizedFindings).where(eq(generalizedFindings.id, id));
+    return true;
+  }
+  
+  // Investigations
+  async getInvestigations(visitId: number): Promise<Investigation[]> {
+    return await db.select().from(investigations).where(eq(investigations.visitId, visitId));
+  }
+  
+  async getInvestigationById(id: number): Promise<Investigation | undefined> {
+    const result = await db.select().from(investigations).where(eq(investigations.id, id));
+    return result[0];
+  }
+  
+  async createInvestigation(investigation: InsertInvestigation): Promise<Investigation> {
+    const result = await db.insert(investigations).values(investigation).returning();
+    return result[0];
+  }
+  
+  async updateInvestigation(id: number, investigation: Partial<InsertInvestigation>): Promise<Investigation | undefined> {
+    const result = await db.update(investigations)
+      .set(investigation)
+      .where(eq(investigations.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  async deleteInvestigation(id: number): Promise<boolean> {
+    await db.delete(investigations).where(eq(investigations.id, id));
+    return true;
+  }
+  
+  // Follow-ups
+  async getFollowUps(visitId: number): Promise<FollowUp[]> {
+    return await db.select().from(followUps).where(eq(followUps.visitId, visitId));
+  }
+  
+  async getFollowUpById(id: number): Promise<FollowUp | undefined> {
+    const result = await db.select().from(followUps).where(eq(followUps.id, id));
+    return result[0];
+  }
+  
+  async createFollowUp(followUp: InsertFollowUp): Promise<FollowUp> {
+    const result = await db.insert(followUps).values({
+      ...followUp,
+      createdAt: new Date(),
+    }).returning();
+    return result[0];
+  }
+  
+  async updateFollowUp(id: number, followUp: Partial<InsertFollowUp>): Promise<FollowUp | undefined> {
+    const result = await db.update(followUps)
+      .set(followUp)
+      .where(eq(followUps.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  async deleteFollowUp(id: number): Promise<boolean> {
+    await db.delete(followUps).where(eq(followUps.id, id));
+    return true;
+  }
+
   // Initialize default settings
   async initializeDefaultSettings() {
     // Check if any settings exist
@@ -1053,6 +1168,30 @@ export class DatabaseStorage implements IStorage {
         advice: ['Soft Diet', 'Maintain Oral Hygiene', 'Avoid Hot Food/Beverage', 'Follow-up Required', 'None']
       },
       category: 'dropdown_options'
+    });
+    
+    // Add settings for dental examination
+    await this.createSetting({
+      settingKey: 'tooth_finding_options',
+      settingValue: {
+        options: [
+          "Caries", "Deep Caries", "Filling", "Root Canal Treated", "Extraction", 
+          "Crown", "Bridge", "Implant", "Denture", "Mobility", 
+          "Sensitivity", "Abscess", "Missing", "Impacted", "Malaligned"
+        ]
+      },
+      category: 'dental_examination'
+    });
+    
+    await this.createSetting({
+      settingKey: 'investigation_types',
+      settingValue: {
+        options: [
+          "X-Ray", "CBCT", "IOPA", "OPG", "Blood Test", 
+          "Vitality Test", "Culture Sensitivity", "Biopsy"
+        ]
+      },
+      category: 'dental_examination'
     });
     
     // Add clinic info settings
