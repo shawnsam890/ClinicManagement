@@ -13,9 +13,20 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { User, Phone, MessageSquare, Plus, CalendarDays, Receipt, ClipboardList, FileText } from "lucide-react";
+import { User, Phone, MessageSquare, Plus, CalendarDays, Receipt, ClipboardList, FileText, Edit, Save, X, PlusCircle } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Patient, PatientVisit, Prescription, Invoice as InvoiceType } from "@shared/schema";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 
 export default function PatientRecord() {
   const { patientId } = useParams();
@@ -26,6 +37,17 @@ export default function PatientRecord() {
   const [showPrescriptionForm, setShowPrescriptionForm] = useState(false);
   const [activeConsentForm, setActiveConsentForm] = useState<string | null>(null);
   const [showInvoice, setShowInvoice] = useState(false);
+  const [showEditPatientDetails, setShowEditPatientDetails] = useState(false);
+  const [patientForm, setPatientForm] = useState<any>({
+    address: '',
+    medicalHistory: '',
+    dentalHistory: '',
+    drugAllergy: ''
+  });
+  const [newMedicalHistoryOption, setNewMedicalHistoryOption] = useState('');
+  const [newDentalHistoryOption, setNewDentalHistoryOption] = useState('');
+  const [medicalHistoryOptions, setMedicalHistoryOptions] = useState<string[]>([]);
+  const [dentalHistoryOptions, setDentalHistoryOptions] = useState<string[]>([]);
 
   // Fetch patient details
   const { data: patient, isLoading: isLoadingPatient } = useQuery<Patient>({
@@ -55,6 +77,45 @@ export default function PatientRecord() {
     queryKey: [`/api/visits/${selectedVisitId}/prescriptions`],
     enabled: !!selectedVisitId,
   });
+  
+  // Fetch medical history and dental history options from settings
+  const { data: settings } = useQuery<any>({
+    queryKey: ['/api/settings/category/patient_options'],
+  });
+
+  // Update form data when patient is loaded
+  useEffect(() => {
+    if (patient) {
+      setPatientForm({
+        address: patient.address || '',
+        medicalHistory: patient.medicalHistory || '',
+        dentalHistory: patient.dentalHistory || '',
+        drugAllergy: patient.drugAllergy || ''
+      });
+    }
+  }, [patient]);
+
+  // Load medical history and dental history options
+  useEffect(() => {
+    if (settings) {
+      const medHistory = settings.find((s: any) => s.settingKey === 'medical_history_options');
+      const dentHistory = settings.find((s: any) => s.settingKey === 'dental_history_options');
+      
+      if (medHistory && Array.isArray(medHistory.settingValue)) {
+        setMedicalHistoryOptions(medHistory.settingValue);
+      } else {
+        // Default options if none exist
+        setMedicalHistoryOptions(['Diabetes', 'Hypertension', 'Heart Disease', 'None']);
+      }
+      
+      if (dentHistory && Array.isArray(dentHistory.settingValue)) {
+        setDentalHistoryOptions(dentHistory.settingValue);
+      } else {
+        // Default options if none exist
+        setDentalHistoryOptions(['Extraction', 'RCT', 'Scaling', 'None']);
+      }
+    }
+  }, [settings]);
 
   // Create a new Visit (Rx)
   const createVisitMutation = useMutation({
@@ -201,6 +262,83 @@ export default function PatientRecord() {
     return visit?.chiefComplaint || "Not specified";
   };
 
+  // Update patient details
+  const updatePatientMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const res = await apiRequest("PATCH", `/api/patients/${patientId}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/patients/patientId/${patientId}`] });
+      setShowEditPatientDetails(false);
+      toast({
+        title: "Success",
+        description: "Patient details updated",
+      });
+    },
+    onError: (error) => {
+      console.error("Error updating patient:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update patient details",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handle form changes
+  const handleFormChange = (field: string, value: string) => {
+    setPatientForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Save patient details
+  const handleSavePatientDetails = () => {
+    updatePatientMutation.mutate(patientForm);
+  };
+
+  // Add new history option
+  const handleAddMedicalHistoryOption = () => {
+    if (!newMedicalHistoryOption.trim()) return;
+    
+    const updatedOptions = [...medicalHistoryOptions, newMedicalHistoryOption];
+    setMedicalHistoryOptions(updatedOptions);
+    
+    // Save to settings
+    apiRequest("POST", "/api/settings", {
+      settingKey: "medical_history_options",
+      settingValue: updatedOptions,
+      category: "patient_options"
+    }).then(() => {
+      queryClient.invalidateQueries({ queryKey: ['/api/settings/category/patient_options'] });
+      setNewMedicalHistoryOption('');
+    }).catch(error => {
+      console.error("Error saving medical history options:", error);
+    });
+  };
+
+  // Add new dental history option
+  const handleAddDentalHistoryOption = () => {
+    if (!newDentalHistoryOption.trim()) return;
+    
+    const updatedOptions = [...dentalHistoryOptions, newDentalHistoryOption];
+    setDentalHistoryOptions(updatedOptions);
+    
+    // Save to settings
+    apiRequest("POST", "/api/settings", {
+      settingKey: "dental_history_options",
+      settingValue: updatedOptions,
+      category: "patient_options"
+    }).then(() => {
+      queryClient.invalidateQueries({ queryKey: ['/api/settings/category/patient_options'] });
+      setNewDentalHistoryOption('');
+    }).catch(error => {
+      console.error("Error saving dental history options:", error);
+    });
+  };
+
   // Loading state
   if (isLoadingPatient) {
     return (
@@ -295,6 +433,51 @@ export default function PatientRecord() {
 
           {/* Main Content */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+            {/* Patient Medical Information */}
+            <div className="md:col-span-3">
+              <Card>
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="text-lg">Patient Details</CardTitle>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      className="text-primary"
+                      onClick={() => setShowEditPatientDetails(true)}
+                    >
+                      <Edit className="h-4 w-4 mr-1" /> Edit
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <h3 className="text-sm font-medium mb-2">Address</h3>
+                    <p className="text-sm p-3 bg-muted/30 rounded-md">
+                      {patient.address || "Not specified"}
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium mb-2">Medical History</h3>
+                    <p className="text-sm p-3 bg-muted/30 rounded-md">
+                      {patient.medicalHistory || "Not specified"}
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium mb-2">Dental History</h3>
+                    <p className="text-sm p-3 bg-muted/30 rounded-md">
+                      {patient.dentalHistory || "Not specified"}
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium mb-2">Drug Allergy</h3>
+                    <p className="text-sm p-3 bg-muted/30 rounded-md">
+                      {patient.drugAllergy || "None"}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
             {/* Left Sidebar - List of Prescriptions */}
             <div className="md:col-span-3">
               <Card>
@@ -342,41 +525,6 @@ export default function PatientRecord() {
                       ))}
                     </div>
                   )}
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Patient Medical Information */}
-            <div className="md:col-span-3">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">Patient Details</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <h3 className="text-sm font-medium mb-2">Address</h3>
-                    <p className="text-sm p-3 bg-muted/30 rounded-md">
-                      {patient.address || "Not specified"}
-                    </p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium mb-2">Medical History</h3>
-                    <p className="text-sm p-3 bg-muted/30 rounded-md">
-                      {patient.medicalHistory || "Not specified"}
-                    </p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium mb-2">Dental History</h3>
-                    <p className="text-sm p-3 bg-muted/30 rounded-md">
-                      {patient.dentalHistory || "Not specified"}
-                    </p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium mb-2">Drug Allergy</h3>
-                    <p className="text-sm p-3 bg-muted/30 rounded-md">
-                      {patient.drugAllergy || "None"}
-                    </p>
-                  </div>
                 </CardContent>
               </Card>
             </div>

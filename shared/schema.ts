@@ -21,6 +21,9 @@ export const patients = pgTable("patients", {
   sex: text("sex").notNull(),
   address: text("address").notNull(),
   phoneNumber: text("phone_number").notNull(),
+  medicalHistory: text("medical_history"),
+  dentalHistory: text("dental_history"),
+  drugAllergy: text("drug_allergy"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
