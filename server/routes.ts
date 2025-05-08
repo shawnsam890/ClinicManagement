@@ -1345,6 +1345,262 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Tooth Findings routes
+  app.get('/api/visits/:visitId/tooth-findings', async (req, res) => {
+    try {
+      const visitId = parseInt(req.params.visitId);
+      if (isNaN(visitId)) {
+        return res.status(400).json({ message: 'Invalid Visit ID' });
+      }
+      
+      const findings = await storage.getToothFindings(visitId);
+      res.json(findings);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post('/api/tooth-findings', async (req, res) => {
+    try {
+      const validatedData = insertToothFindingSchema.parse(req.body);
+      const finding = await storage.createToothFinding(validatedData);
+      res.status(201).json(finding);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Validation error', errors: error.errors });
+      }
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.put('/api/tooth-findings/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid ID' });
+      }
+      
+      const updatedFinding = await storage.updateToothFinding(id, req.body);
+      if (!updatedFinding) {
+        return res.status(404).json({ message: 'Finding not found' });
+      }
+      
+      res.json(updatedFinding);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete('/api/tooth-findings/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid ID' });
+      }
+      
+      const success = await storage.deleteToothFinding(id);
+      if (!success) {
+        return res.status(404).json({ message: 'Finding not found' });
+      }
+      
+      res.status(204).end();
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Generalized Findings routes
+  app.get('/api/visits/:visitId/generalized-findings', async (req, res) => {
+    try {
+      const visitId = parseInt(req.params.visitId);
+      if (isNaN(visitId)) {
+        return res.status(400).json({ message: 'Invalid Visit ID' });
+      }
+      
+      const findings = await storage.getGeneralizedFindings(visitId);
+      res.json(findings);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post('/api/generalized-findings', async (req, res) => {
+    try {
+      const validatedData = insertGeneralizedFindingSchema.parse(req.body);
+      const finding = await storage.createGeneralizedFinding(validatedData);
+      res.status(201).json(finding);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Validation error', errors: error.errors });
+      }
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.put('/api/generalized-findings/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid ID' });
+      }
+      
+      const updatedFinding = await storage.updateGeneralizedFinding(id, req.body);
+      if (!updatedFinding) {
+        return res.status(404).json({ message: 'Finding not found' });
+      }
+      
+      res.json(updatedFinding);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete('/api/generalized-findings/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid ID' });
+      }
+      
+      const success = await storage.deleteGeneralizedFinding(id);
+      if (!success) {
+        return res.status(404).json({ message: 'Finding not found' });
+      }
+      
+      res.status(204).end();
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Investigations routes
+  app.get('/api/visits/:visitId/investigations', async (req, res) => {
+    try {
+      const visitId = parseInt(req.params.visitId);
+      if (isNaN(visitId)) {
+        return res.status(400).json({ message: 'Invalid Visit ID' });
+      }
+      
+      const investigations = await storage.getInvestigations(visitId);
+      res.json(investigations);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post('/api/investigations', async (req, res) => {
+    try {
+      const validatedData = insertInvestigationSchema.parse(req.body);
+      const investigation = await storage.createInvestigation(validatedData);
+      res.status(201).json(investigation);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Validation error', errors: error.errors });
+      }
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.put('/api/investigations/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid ID' });
+      }
+      
+      const updatedInvestigation = await storage.updateInvestigation(id, req.body);
+      if (!updatedInvestigation) {
+        return res.status(404).json({ message: 'Investigation not found' });
+      }
+      
+      res.json(updatedInvestigation);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete('/api/investigations/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid ID' });
+      }
+      
+      const success = await storage.deleteInvestigation(id);
+      if (!success) {
+        return res.status(404).json({ message: 'Investigation not found' });
+      }
+      
+      res.status(204).end();
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Follow-ups routes
+  app.get('/api/visits/:visitId/follow-ups', async (req, res) => {
+    try {
+      const visitId = parseInt(req.params.visitId);
+      if (isNaN(visitId)) {
+        return res.status(400).json({ message: 'Invalid Visit ID' });
+      }
+      
+      const followUps = await storage.getFollowUps(visitId);
+      res.json(followUps);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post('/api/follow-ups', async (req, res) => {
+    try {
+      const validatedData = insertFollowUpSchema.parse(req.body);
+      const followUp = await storage.createFollowUp(validatedData);
+      res.status(201).json(followUp);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Validation error', errors: error.errors });
+      }
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.put('/api/follow-ups/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid ID' });
+      }
+      
+      const updatedFollowUp = await storage.updateFollowUp(id, req.body);
+      if (!updatedFollowUp) {
+        return res.status(404).json({ message: 'Follow-up not found' });
+      }
+      
+      res.json(updatedFollowUp);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete('/api/follow-ups/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid ID' });
+      }
+      
+      const success = await storage.deleteFollowUp(id);
+      if (!success) {
+        return res.status(404).json({ message: 'Follow-up not found' });
+      }
+      
+      res.status(204).end();
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
   // Create the HTTP server
   const httpServer = createServer(app);
   
