@@ -147,7 +147,27 @@ export default function PatientRecord() {
 
   // Create a follow-up for a specific visit
   const handleCreateFollowUp = (visitId: number) => {
-    createFollowUpMutation.mutate({ visitId });
+    // Use the dedicated follow-up endpoint
+    apiRequest("POST", `/api/visits/${visitId}/follow-up`)
+      .then(res => res.json())
+      .then(data => {
+        // After creating a follow-up, refetch visits to update the list
+        queryClient.invalidateQueries({ queryKey: [`/api/patients/${patientId}/visits`] });
+        // Navigate to the new visit immediately
+        if (data && data.id) {
+          setSelectedVisitId(data.id);
+          setActiveTab("rx");
+          setShowPrescriptionForm(true);
+        }
+      })
+      .catch(error => {
+        console.error("Error creating follow-up:", error);
+        toast({
+          title: "Error creating follow-up",
+          description: "There was a problem creating the follow-up appointment.",
+          variant: "destructive",
+        });
+      });
   };
 
   // Show prescription details
@@ -438,11 +458,11 @@ export default function PatientRecord() {
                           <h3 className="text-sm font-medium mb-3">Follow-up Appointments</h3>
                           
                           {/* Find follow-ups for this Rx */}
-                          {visits.filter((v: any) => v.previousVisitId === selectedVisitId).length > 0 ? (
+                          {visits.filter(v => v.previousVisitId === selectedVisitId).length > 0 ? (
                             <div className="space-y-3">
                               {visits
-                                .filter((v: any) => v.previousVisitId === selectedVisitId)
-                                .map((followUp: any) => (
+                                .filter(v => v.previousVisitId === selectedVisitId)
+                                .map((followUp) => (
                                   <Card key={followUp.id} className="overflow-hidden">
                                     <div 
                                       className="p-3 hover:bg-muted/50 cursor-pointer"
@@ -482,7 +502,7 @@ export default function PatientRecord() {
                             <Button 
                               variant="outline" 
                               size="sm"
-                              onClick={() => handleCreateFollowUp(selectedVisitId)}
+                              onClick={() => handleCreateFollowUp(selectedVisitId!)}
                             >
                               <Plus className="h-3.5 w-3.5 mr-1" /> Add Follow-Up
                             </Button>

@@ -6,12 +6,13 @@ import { insertPatientSchema, insertPatientVisitSchema, insertLabWorkSchema,
   insertLabInventorySchema, insertStaffSchema, insertStaffAttendanceSchema, 
   insertStaffSalarySchema, insertInvoiceSchema, insertInvoiceItemSchema, 
   insertSettingSchema, insertMedicationSchema, insertPrescriptionSchema,
-  insertAppointmentSchema } from "@shared/schema";
+  insertAppointmentSchema, patientVisits } from "@shared/schema";
 import { z } from "zod";
 import path from 'path';
 import fs from 'fs';
 import multer from 'multer';
 import { format } from 'date-fns';
+import { eq } from 'drizzle-orm';
 import { setupAuth } from "./auth";
 
 // Configure multer for file uploads
@@ -185,11 +186,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Invalid Visit ID' });
       }
       
-      const { db } = await import('./db');
-      const followUps = await db
-        .select()
-        .from(patientVisits)
-        .where(eq(patientVisits.previousVisitId, visitId));
+      // Use storage instead of direct DB query to follow the pattern
+      const visits = await storage.getPatientVisits("all");
+      const followUps = visits.filter(visit => visit.previousVisitId === visitId);
       
       res.json(followUps);
     } catch (error: any) {
@@ -227,6 +226,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: 'Validation error', errors: error.errors });
       }
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Create a follow-up visit
+  app.post('/api/visits/:visitId/follow-up', async (req, res) => {
+    try {
+      const visitId = parseInt(req.params.visitId);
+      if (isNaN(visitId)) {
+        return res.status(400).json({ message: 'Invalid Visit ID' });
+      }
+      
+      // Get the original visit
+      const originalVisit = await storage.getPatientVisitById(visitId);
+      if (!originalVisit) {
+        return res.status(404).json({ message: 'Visit not found' });
+      }
+      
+      // Create a new visit as follow-up
+      const followUpVisit = await storage.createPatientVisit({
+        patientId: originalVisit.patientId,
+        date: new Date().toISOString(),
+        chiefComplaint: `Follow-up: ${originalVisit.chiefComplaint || 'Appointment'}`,
+        previousVisitId: visitId,
+      });
+      
+      res.status(201).json(followUpVisit);
+    } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
