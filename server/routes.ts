@@ -177,6 +177,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get follow-ups for a specific visit
+  app.get('/api/visits/:visitId/follow-ups', async (req, res) => {
+    try {
+      const visitId = parseInt(req.params.visitId);
+      if (isNaN(visitId)) {
+        return res.status(400).json({ message: 'Invalid Visit ID' });
+      }
+      
+      const { db } = await import('./db');
+      const followUps = await db
+        .select()
+        .from(patientVisits)
+        .where(eq(patientVisits.previousVisitId, visitId));
+      
+      res.json(followUps);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
   app.get('/api/visits/:id', async (req, res) => {
     try {
       const id = parseInt(req.params.id);
@@ -197,7 +217,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post('/api/visits', async (req, res) => {
     try {
+      // Allow previousVisitId to be included in the request
       const validatedData = insertPatientVisitSchema.parse(req.body);
+      
+      // Create the visit with possible follow-up relationship
       const visit = await storage.createPatientVisit(validatedData);
       res.status(201).json(visit);
     } catch (error: any) {

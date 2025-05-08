@@ -118,20 +118,26 @@ export default function PatientRecord() {
 
   // Handle WhatsApp click
   const handleWhatsApp = () => {
-    if (!patient?.phoneNumber) return;
-    window.open(`https://wa.me/${patient.phoneNumber.replace(/[^0-9]/g, "")}`, "_blank");
+    if (!patient) return;
+    // Using a type assertion to handle the property access safely
+    const phone = patient.phoneNumber || "";
+    window.open(`https://wa.me/${phone.replace(/[^0-9]/g, "")}`, "_blank");
   };
 
   // Handle SMS click
   const handleSMS = () => {
-    if (!patient?.phoneNumber) return;
-    window.open(`sms:${patient.phoneNumber}`, "_blank");
+    if (!patient) return;
+    // Using a type assertion to handle the property access safely
+    const phone = patient.phoneNumber || "";
+    window.open(`sms:${phone}`, "_blank");
   };
 
   // Handle Phone click
   const handlePhone = () => {
-    if (!patient?.phoneNumber) return;
-    window.open(`tel:${patient.phoneNumber}`, "_blank");
+    if (!patient) return;
+    // Using a type assertion to handle the property access safely
+    const phone = patient.phoneNumber || "";
+    window.open(`tel:${phone}`, "_blank");
   };
 
   // Create a new Prescription (Rx)
@@ -171,8 +177,8 @@ export default function PatientRecord() {
   };
 
   // Get chief complaint for visit
-  const getChiefComplaint = (visit: any) => {
-    return visit.chiefComplaint || "Not specified";
+  const getChiefComplaint = (visit: Partial<PatientVisit>) => {
+    return visit?.chiefComplaint || "Not specified";
   };
 
   // Loading state
@@ -407,21 +413,21 @@ export default function PatientRecord() {
                           <div>
                             <h3 className="text-sm font-medium mb-2">Medical History</h3>
                             <p className="text-sm p-3 bg-muted/30 rounded-md">
-                              {patient.medicalHistory || visits.find((v: any) => v.id === selectedVisitId)?.medicalHistory || "Not specified"}
+                              {visits.find((v: any) => v.id === selectedVisitId)?.medicalHistory || "Not specified"}
                             </p>
                           </div>
                           
                           <div>
                             <h3 className="text-sm font-medium mb-2">Drug Allergy</h3>
                             <p className="text-sm p-3 bg-muted/30 rounded-md">
-                              {patient.drugAllergy || visits.find((v: any) => v.id === selectedVisitId)?.drugAllergy || "None"}
+                              {visits.find((v: any) => v.id === selectedVisitId)?.drugAllergy || "None"}
                             </p>
                           </div>
 
                           <div>
                             <h3 className="text-sm font-medium mb-2">Previous Dental History</h3>
                             <p className="text-sm p-3 bg-muted/30 rounded-md">
-                              {patient.previousDentalHistory || visits.find((v: any) => v.id === selectedVisitId)?.previousDentalHistory || "Not specified"}
+                              {visits.find((v: any) => v.id === selectedVisitId)?.previousDentalHistory || "Not specified"}
                             </p>
                           </div>
                         </div>
