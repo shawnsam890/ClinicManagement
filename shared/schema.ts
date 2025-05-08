@@ -189,9 +189,11 @@ export const investigations = pgTable("investigations", {
 export const followUps = pgTable("follow_ups", {
   id: serial("id").primaryKey(),
   visitId: integer("visit_id").notNull(),
+  patientId: text("patient_id").notNull(),
   scheduledDate: date("scheduled_date").notNull(),
-  reason: text("reason"),
+  reason: text("reason").notNull(),
   status: text("status").default("scheduled").notNull(),
+  notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
