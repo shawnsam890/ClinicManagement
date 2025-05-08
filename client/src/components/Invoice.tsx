@@ -12,12 +12,13 @@ import { Invoice, InvoiceItem } from "@shared/schema";
 
 interface InvoiceProps {
   patientId: string;
-  patientName: string;
-  visitId?: number;
-  invoices: (Invoice & { items: InvoiceItem[] })[];
+  visitId: number;
+  patientName?: string;
+  invoices?: (Invoice & { items: InvoiceItem[] })[];
+  onBack?: () => void;
 }
 
-export default function InvoiceComponent({ patientId, patientName, visitId, invoices }: InvoiceProps) {
+export default function InvoiceComponent({ patientId, visitId, patientName, invoices = [], onBack }: InvoiceProps) {
   const [showForm, setShowForm] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<number | null>(
     invoices.length > 0 ? invoices[0].id : null
@@ -144,7 +145,19 @@ export default function InvoiceComponent({ patientId, patientName, visitId, invo
   return (
     <Card className="w-full">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Invoices</CardTitle>
+        <div className="flex items-center">
+          {onBack && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={onBack} 
+              className="mr-2"
+            >
+              Back
+            </Button>
+          )}
+          <CardTitle>Invoices</CardTitle>
+        </div>
         <Button onClick={() => setShowForm(true)} size="sm">
           <Plus className="h-4 w-4 mr-2" />
           New Invoice

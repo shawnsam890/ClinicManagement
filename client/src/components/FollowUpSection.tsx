@@ -41,7 +41,7 @@ export default function FollowUpSection({ visitId, patientId }: FollowUpSectionP
       const res = await apiRequest("POST", "/api/follow-ups", {
         visitId,
         patientId,
-        date: format(date, 'yyyy-MM-dd'),
+        scheduledDate: format(date, 'yyyy-MM-dd'),
         reason: reason || "Regular follow-up",
         status: "Scheduled"
       });
@@ -169,7 +169,7 @@ export default function FollowUpSection({ visitId, patientId }: FollowUpSectionP
               {followUps.map((followUp) => (
                 <div key={followUp.id} className="p-3 border rounded-md flex justify-between items-center">
                   <div>
-                    <p className="font-medium">{formatDate(followUp.date)}</p>
+                    <p className="font-medium">{formatDate(followUp.scheduledDate)}</p>
                     <p className="text-sm text-muted-foreground">{followUp.reason}</p>
                   </div>
                   <div>
