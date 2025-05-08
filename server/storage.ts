@@ -196,6 +196,12 @@ export class MemStorage implements IStorage {
     this.invoices = new Map();
     this.invoiceItems = new Map();
     this.settings = new Map();
+    this.medications = new Map();
+    this.prescriptions = new Map();
+    this.toothFindings = new Map();
+    this.generalizedFindings = new Map();
+    this.investigations = new Map();
+    this.followUps = new Map();
     
     this.patientIdCounter = 1;
     this.visitIdCounter = 1;
@@ -208,6 +214,12 @@ export class MemStorage implements IStorage {
     this.invoiceIdCounter = 1;
     this.invoiceItemIdCounter = 1;
     this.settingIdCounter = 1;
+    this.medicationIdCounter = 1;
+    this.prescriptionIdCounter = 1;
+    this.toothFindingIdCounter = 1;
+    this.generalizedFindingIdCounter = 1;
+    this.investigationIdCounter = 1;
+    this.followUpIdCounter = 1;
     
     // Initialize with default settings
     this.initializeDefaultSettings();
