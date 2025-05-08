@@ -177,6 +177,14 @@ export default function PrescriptionForm({
     
     setPrescriptions(updatedPrescriptions);
     
+    // If this is a new unsaved prescription, just update the state
+    if (!updatedPrescriptions[index].id) {
+      return;
+    }
+    
+    // Auto-save this prescription after timing update if it already exists
+    savePrescription.mutate(updatedPrescriptions[index]);
+    
     // If onSave callback is provided, invoke it
     if (onSave) {
       onSave(updatedPrescriptions);

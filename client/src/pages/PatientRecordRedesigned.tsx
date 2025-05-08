@@ -262,6 +262,69 @@ export default function PatientRecord() {
     return visit?.chiefComplaint || "Not specified";
   };
 
+  // Delete visit
+  const deleteVisitMutation = useMutation({
+    mutationFn: async (visitId: number) => {
+      const res = await apiRequest("DELETE", `/api/visits/${visitId}`);
+      return res;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/patients/${patientId}/visits`] });
+      // If we deleted the selected visit, clear the selection
+      if (selectedVisitId) {
+        setSelectedVisitId(null);
+        setShowPrescriptionForm(false);
+      }
+      toast({
+        title: "Success",
+        description: "Visit deleted successfully",
+      });
+    },
+    onError: (error) => {
+      console.error("Error deleting visit:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete visit",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handle delete visit
+  const handleDeleteVisit = (visitId: number, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering the row click
+    
+    // Show confirmation before deleting
+    if (window.confirm("Are you sure you want to delete this visit? This action cannot be undone.")) {
+      deleteVisitMutation.mutate(visitId);
+    }
+  };
+
+  // Update visit
+  const updateVisitMutation = useMutation({
+    mutationFn: async (data: { id: number, chiefComplaint: string }) => {
+      const res = await apiRequest("PUT", `/api/visits/${data.id}`, {
+        chiefComplaint: data.chiefComplaint
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/patients/${patientId}/visits`] });
+      toast({
+        title: "Success",
+        description: "Visit updated successfully",
+      });
+    },
+    onError: (error) => {
+      console.error("Error updating visit:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update visit",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Update patient details
   const updatePatientMutation = useMutation({
     mutationFn: async (data: any) => {
