@@ -19,7 +19,7 @@ interface InvoiceItemForm extends Omit<InvoiceItem, 'id' | 'invoiceId'> {
   tempId?: string;
 }
 
-export default function Invoice({ patientId, visitId }: InvoiceProps) {
+export default function Invoice({ patientId, visitId, onBack }: InvoiceProps) {
   const { toast } = useToast();
   const [invoiceItems, setInvoiceItems] = useState<InvoiceItemForm[]>([]);
   const [invoiceId, setInvoiceId] = useState<number | null>(null);
@@ -196,7 +196,19 @@ export default function Invoice({ patientId, visitId }: InvoiceProps) {
   return (
     <div className="mt-6 bg-neutral-50 rounded-lg p-4 border border-neutral-300 print:border-none">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-lg font-semibold text-neutral-800 font-heading">Invoice</h3>
+        <div className="flex items-center">
+          {onBack && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={onBack} 
+              className="mr-3"
+            >
+              ← Back
+            </Button>
+          )}
+          <h3 className="text-lg font-semibold text-neutral-800 font-heading">Invoice</h3>
+        </div>
         <div className="flex space-x-2">
           <Button
             size="sm"

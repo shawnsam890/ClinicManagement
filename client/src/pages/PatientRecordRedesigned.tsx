@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { User, Phone, MessageSquare, Plus, CalendarDays, Receipt, ClipboardList, FileText } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Patient, PatientVisit, Prescription, Invoice as InvoiceType } from "@shared/schema";
 
 export default function PatientRecord() {
   const { patientId } = useParams();
@@ -27,30 +28,30 @@ export default function PatientRecord() {
   const [showInvoice, setShowInvoice] = useState(false);
 
   // Fetch patient details
-  const { data: patient, isLoading: isLoadingPatient } = useQuery({
+  const { data: patient, isLoading: isLoadingPatient } = useQuery<Patient>({
     queryKey: [`/api/patients/patientId/${patientId}`],
     enabled: !!patientId,
   });
 
   // Fetch patient visits (prescriptions/Rx)
-  const { data: visits = [], isLoading: isLoadingVisits } = useQuery({
+  const { data: visits = [], isLoading: isLoadingVisits } = useQuery<PatientVisit[]>({
     queryKey: [`/api/patients/${patientId}/visits`],
     enabled: !!patientId,
   });
 
   // Fetch medications for dropdown
-  const { data: medications = [] } = useQuery({
+  const { data: medications = [] } = useQuery<any[]>({
     queryKey: ['/api/medications'],
   });
 
   // Fetch patient invoices
-  const { data: invoices = [] } = useQuery({
+  const { data: invoices = [] } = useQuery<InvoiceType[]>({
     queryKey: [`/api/patients/${patientId}/invoices`],
     enabled: !!patientId,
   });
 
   // Fetch prescriptions for selected visit
-  const { data: prescriptions = [], isLoading: isLoadingPrescriptions } = useQuery({
+  const { data: prescriptions = [], isLoading: isLoadingPrescriptions } = useQuery<Prescription[]>({
     queryKey: [`/api/visits/${selectedVisitId}/prescriptions`],
     enabled: !!selectedVisitId,
   });
