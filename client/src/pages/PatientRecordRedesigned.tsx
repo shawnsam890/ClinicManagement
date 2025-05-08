@@ -44,6 +44,15 @@ export default function PatientRecord() {
     dentalHistory: '',
     drugAllergy: ''
   });
+  const [visitForm, setVisitForm] = useState<any>({
+    chiefComplaint: '',
+    treatmentDone: '',
+    treatmentPlan: '',
+    advice: '',
+    notes: ''
+  });
+  const [showEditVisitDialog, setShowEditVisitDialog] = useState(false);
+  const [editingVisitId, setEditingVisitId] = useState<number | null>(null);
   const [newMedicalHistoryOption, setNewMedicalHistoryOption] = useState('');
   const [newDentalHistoryOption, setNewDentalHistoryOption] = useState('');
   const [medicalHistoryOptions, setMedicalHistoryOptions] = useState<string[]>([]);
@@ -302,14 +311,13 @@ export default function PatientRecord() {
 
   // Update visit
   const updateVisitMutation = useMutation({
-    mutationFn: async (data: { id: number, chiefComplaint: string }) => {
-      const res = await apiRequest("PUT", `/api/visits/${data.id}`, {
-        chiefComplaint: data.chiefComplaint
-      });
+    mutationFn: async (data: { id: number } & Partial<PatientVisit>) => {
+      const res = await apiRequest("PUT", `/api/visits/${data.id}`, data);
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/patients/${patientId}/visits`] });
+      setShowEditVisitDialog(false);
       toast({
         title: "Success",
         description: "Visit updated successfully",
@@ -352,6 +360,14 @@ export default function PatientRecord() {
   // Handle form changes
   const handleFormChange = (field: string, value: string) => {
     setPatientForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+  
+  // Handle visit form changes
+  const handleVisitFormChange = (field: string, value: string) => {
+    setVisitForm(prev => ({
       ...prev,
       [field]: value
     }));
@@ -590,17 +606,18 @@ export default function PatientRecord() {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   
-                                  // Prompt for new chief complaint
-                                  const newChiefComplaint = window.prompt(
-                                    "Update chief complaint:",
-                                    visit.chiefComplaint || ""
-                                  );
-                                  
-                                  if (newChiefComplaint !== null) {
-                                    updateVisitMutation.mutate({
-                                      id: visit.id,
-                                      chiefComplaint: newChiefComplaint
+                                  // Open the edit dialog with this visit's data
+                                  const currentVisit = visits.find(v => v.id === visit.id);
+                                  if (currentVisit) {
+                                    setVisitForm({
+                                      chiefComplaint: currentVisit.chiefComplaint || '',
+                                      treatmentDone: currentVisit.treatmentDone || '',
+                                      treatmentPlan: currentVisit.treatmentPlan || '',
+                                      advice: currentVisit.advice || '',
+                                      notes: currentVisit.notes || ''
                                     });
+                                    setEditingVisitId(visit.id);
+                                    setShowEditVisitDialog(true);
                                   }
                                 }}
                                 className="h-7 w-7"
@@ -957,6 +974,96 @@ export default function PatientRecord() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+
+          {/* Edit Visit Dialog */}
+          {showEditVisitDialog && (
+            <Dialog open={showEditVisitDialog} onOpenChange={setShowEditVisitDialog}>
+              <DialogContent className="sm:max-w-[600px]">
+                <DialogHeader>
+                  <DialogTitle>Edit Visit</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="chiefComplaint" className="text-right">
+                      Chief Complaint
+                    </Label>
+                    <Input
+                      id="chiefComplaint"
+                      className="col-span-3"
+                      value={visitForm.chiefComplaint}
+                      onChange={(e) => handleVisitFormChange('chiefComplaint', e.target.value)}
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="treatmentDone" className="text-right">
+                      Treatment Done
+                    </Label>
+                    <Textarea
+                      id="treatmentDone"
+                      className="col-span-3"
+                      value={visitForm.treatmentDone}
+                      rows={3}
+                      onChange={(e) => handleVisitFormChange('treatmentDone', e.target.value)}
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="treatmentPlan" className="text-right">
+                      Treatment Plan
+                    </Label>
+                    <Textarea
+                      id="treatmentPlan"
+                      className="col-span-3"
+                      value={visitForm.treatmentPlan}
+                      rows={3}
+                      onChange={(e) => handleVisitFormChange('treatmentPlan', e.target.value)}
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="advice" className="text-right">
+                      Advice
+                    </Label>
+                    <Textarea
+                      id="advice"
+                      className="col-span-3"
+                      value={visitForm.advice}
+                      rows={3}
+                      onChange={(e) => handleVisitFormChange('advice', e.target.value)}
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="notes" className="text-right">
+                      Notes
+                    </Label>
+                    <Textarea
+                      id="notes"
+                      className="col-span-3"
+                      value={visitForm.notes}
+                      rows={3}
+                      onChange={(e) => handleVisitFormChange('notes', e.target.value)}
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowEditVisitDialog(false)}>
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      if (editingVisitId) {
+                        updateVisitMutation.mutate({
+                          id: editingVisitId,
+                          ...visitForm
+                        });
+                      }
+                    }}
+                    disabled={updateVisitMutation.isPending}
+                  >
+                    {updateVisitMutation.isPending ? "Saving..." : "Save Changes"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
         </>
       )}
     </Layout>
