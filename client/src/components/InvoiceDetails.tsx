@@ -129,7 +129,6 @@ export default function InvoiceDetails({ invoice, onUpdate, patientName }: Invoi
           <thead>
             <tr>
               <th>Description</th>
-              <th>Quantity</th>
               <th>Rate (₹)</th>
               <th>Amount (₹)</th>
             </tr>
@@ -138,7 +137,6 @@ export default function InvoiceDetails({ invoice, onUpdate, patientName }: Invoi
             ${invoice.items.map(item => `
               <tr>
                 <td>${item.description}</td>
-                <td>${item.quantity}</td>
                 <td>${item.rate.toFixed(2)}</td>
                 <td>${item.amount.toFixed(2)}</td>
               </tr>

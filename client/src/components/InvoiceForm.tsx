@@ -63,7 +63,7 @@ export default function InvoiceForm({ patientId, initialData, onSave, onCancel }
       patientId,
       date: today,
       items: [
-        { description: "", quantity: 1, rate: 0, amount: 0 }
+        { description: "", rate: 0, amount: 0 }
       ],
       status: "Pending",
       paymentMethod: "",
@@ -78,12 +78,11 @@ export default function InvoiceForm({ patientId, initialData, onSave, onCancel }
     name: "items",
   });
   
-  // Calculate amount when quantity or rate changes
+  // Calculate amount when rate changes (quantity is now fixed at 1)
   const calculateAmount = (index: number) => {
     setCalculatingTotals(true);
-    const quantity = form.getValues(`items.${index}.quantity`);
     const rate = form.getValues(`items.${index}.rate`);
-    const amount = quantity * rate;
+    const amount = rate; // Amount is now equal to rate since quantity is fixed at 1
     
     form.setValue(`items.${index}.amount`, amount);
     
@@ -130,9 +129,8 @@ export default function InvoiceForm({ patientId, initialData, onSave, onCancel }
           <h3 className="text-md font-medium mb-2">Invoice Items</h3>
           
           {/* Header */}
-          <div className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-2 items-center mb-2">
+          <div className="grid grid-cols-[3fr_1fr_1fr_auto] gap-2 items-center mb-2">
             <FormLabel className="text-sm">Description</FormLabel>
-            <FormLabel className="text-sm">Quantity</FormLabel>
             <FormLabel className="text-sm">Rate (₹)</FormLabel>
             <FormLabel className="text-sm">Amount (₹)</FormLabel>
             <span></span>
@@ -140,7 +138,7 @@ export default function InvoiceForm({ patientId, initialData, onSave, onCancel }
           
           {/* Items */}
           {fields.map((field, index) => (
-            <div key={field.id} className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-2 items-center mb-2">
+            <div key={field.id} className="grid grid-cols-[3fr_1fr_1fr_auto] gap-2 items-center mb-2">
               <FormField
                 control={form.control}
                 name={`items.${index}.description`}
@@ -148,28 +146,6 @@ export default function InvoiceForm({ patientId, initialData, onSave, onCancel }
                   <FormItem>
                     <FormControl>
                       <Input {...field} placeholder="Service/Item description" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name={`items.${index}.quantity`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input 
-                        {...field} 
-                        type="number" 
-                        min="1" 
-                        placeholder="Qty" 
-                        onChange={(e) => {
-                          field.onChange(e);
-                          calculateAmount(index);
-                        }}
-                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -227,7 +203,7 @@ export default function InvoiceForm({ patientId, initialData, onSave, onCancel }
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => append({ description: "", quantity: 1, rate: 0, amount: 0 })}
+            onClick={() => append({ description: "", rate: 0, amount: 0 })}
             className="mt-2"
           >
             <PlusCircle className="h-4 w-4 mr-2" /> Add Item
