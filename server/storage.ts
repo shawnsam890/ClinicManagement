@@ -619,7 +619,8 @@ import { eq, and, asc } from "drizzle-orm";
 import { pool } from "./db";
 import { users, patients, patientVisits, appointments, labWorks, labInventory, staff, 
   staffAttendance, staffSalary, invoices, invoiceItems, settings,
-  medications, prescriptions } from "@shared/schema";
+  medications, prescriptions, toothFindings, generalizedFindings, 
+  investigations, followUps } from "@shared/schema";
 
 const PostgresSessionStore = connectPg(session);
 
