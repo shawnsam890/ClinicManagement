@@ -256,7 +256,10 @@ export default function PatientRecord() {
                     <div className="flex flex-wrap text-sm text-neutral-600">
                       <span className="mr-3">{patient.patientId}</span>
                       <span className="mr-3">{patient.age} years</span>
-                      <span>{patient.sex.charAt(0).toUpperCase() + patient.sex.slice(1)}</span>
+                      <span className="mr-3">{patient.sex.charAt(0).toUpperCase() + patient.sex.slice(1)}</span>
+                    </div>
+                    <div className="text-sm text-neutral-600 mt-1">
+                      <span>{patient.address}</span>
                     </div>
                   </div>
                 </div>
@@ -291,24 +294,24 @@ export default function PatientRecord() {
           </div>
 
           {/* Main Content */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
             {/* Left Sidebar - List of Prescriptions */}
-            <div className="md:col-span-1">
+            <div className="md:col-span-3">
               <Card>
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-center">
-                    <CardTitle className="text-lg">Prescriptions</CardTitle>
+                    <CardTitle className="text-lg">Visit Log</CardTitle>
                     <Button variant="outline" size="sm" onClick={handleCreateRx} className="flex items-center">
-                      <Plus className="h-3.5 w-3.5 mr-1" /> Add Rx
+                      <Plus className="h-3.5 w-3.5 mr-1" /> Rx
                     </Button>
                   </div>
                 </CardHeader>
                 <CardContent className="p-0">
                   {isLoadingVisits ? (
-                    <div className="p-4 text-center">Loading prescriptions...</div>
+                    <div className="p-4 text-center">Loading visit log...</div>
                   ) : visits.length === 0 ? (
                     <div className="p-4 text-center text-muted-foreground">
-                      No prescriptions found. Click "Add Rx" to create a new one.
+                      No visits found. Click "Rx" to create a new one.
                     </div>
                   ) : (
                     <div className="divide-y">
@@ -343,8 +346,43 @@ export default function PatientRecord() {
               </Card>
             </div>
 
-            {/* Right Content Area - Selected Prescription Details */}
+            {/* Patient Medical Information */}
             <div className="md:col-span-3">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg">Patient Details</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <h3 className="text-sm font-medium mb-2">Address</h3>
+                    <p className="text-sm p-3 bg-muted/30 rounded-md">
+                      {patient.address || "Not specified"}
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium mb-2">Medical History</h3>
+                    <p className="text-sm p-3 bg-muted/30 rounded-md">
+                      {patient.medicalHistory || "Not specified"}
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium mb-2">Dental History</h3>
+                    <p className="text-sm p-3 bg-muted/30 rounded-md">
+                      {patient.dentalHistory || "Not specified"}
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium mb-2">Drug Allergy</h3>
+                    <p className="text-sm p-3 bg-muted/30 rounded-md">
+                      {patient.drugAllergy || "None"}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* Right Content Area - Selected Prescription Details */}
+            <div className="md:col-span-6">
               {selectedVisitId ? (
                 <Card>
                   <CardHeader>
@@ -376,10 +414,10 @@ export default function PatientRecord() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <Tabs defaultValue="rx" onValueChange={setActiveTab} value={activeTab}>
+                    <Tabs defaultValue="treatment" onValueChange={setActiveTab} value={activeTab}>
                       <TabsList className="mb-4">
-                        <TabsTrigger value="rx">Prescription</TabsTrigger>
                         <TabsTrigger value="treatment">Treatment</TabsTrigger>
+                        <TabsTrigger value="rx">Prescription</TabsTrigger>
                         <TabsTrigger value="history">Patient History</TabsTrigger>
                         <TabsTrigger value="followups">Follow-ups</TabsTrigger>
                       </TabsList>
@@ -516,12 +554,12 @@ export default function PatientRecord() {
                 <div className="h-full flex items-center justify-center border rounded-lg p-8 bg-muted/10">
                   <div className="text-center">
                     <ClipboardList className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-medium mb-2">No Prescription Selected</h3>
+                    <h3 className="text-lg font-medium mb-2">No Visit Selected</h3>
                     <p className="text-muted-foreground mb-4">
-                      Select a prescription from the list or create a new one.
+                      Select a visit from the list or create a new one.
                     </p>
                     <Button onClick={handleCreateRx}>
-                      <Plus className="h-4 w-4 mr-2" /> Create New Prescription
+                      <Plus className="h-4 w-4 mr-2" /> Create New Visit
                     </Button>
                   </div>
                 </div>
