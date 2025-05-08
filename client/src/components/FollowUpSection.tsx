@@ -1,124 +1,109 @@
 import { useState, useEffect } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarIcon, Check, Edit, Plus } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Trash2, Plus, Calendar } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { apiRequest } from "@/lib/queryClient";
-import { FollowUp } from "@shared/schema";
-import { useToast } from "@/hooks/use-toast";
-import { format, parseISO, isBefore, isToday } from "date-fns";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+interface FollowUp {
+  id?: number;
+  visitId: number;
+  patientId: string;
+  scheduledDate: string;
+  reason: string;
+  status: string;
+  notes?: string;
+}
 
 interface FollowUpSectionProps {
   visitId: number;
   patientId: string;
+  readOnly?: boolean;
 }
 
-export default function FollowUpSection({ visitId, patientId }: FollowUpSectionProps) {
-  const [followUps, setFollowUps] = useState<Array<{
-    id?: number;
-    date: string;
-    reason: string;
-    status: string;
-    visitId: number;
-  }>>([]);
-
-  const queryClient = useQueryClient();
+export default function FollowUpSection({ visitId, patientId, readOnly = false }: FollowUpSectionProps) {
   const { toast } = useToast();
+  const [isCreating, setIsCreating] = useState(false);
+  const [isEditing, setIsEditing] = useState<number | null>(null);
+  const [formData, setFormData] = useState<Omit<FollowUp, 'id'>>({
+    visitId,
+    patientId,
+    scheduledDate: format(new Date(), 'yyyy-MM-dd'),
+    reason: '',
+    status: 'Scheduled',
+    notes: ''
+  });
 
-  // Fetch follow-ups for this visit
-  const { data: fetchedFollowUps, isLoading } = useQuery<FollowUp[]>({
+  // Fetch existing follow-ups
+  const { 
+    data: followUps = [], 
+    isLoading,
+    refetch 
+  } = useQuery<FollowUp[]>({
     queryKey: [`/api/visits/${visitId}/follow-ups`],
     enabled: !!visitId,
   });
 
-  useEffect(() => {
-    if (fetchedFollowUps && fetchedFollowUps.length > 0) {
-      // Map the database scheduledDate field to the component's date field
-      const mappedFollowUps = fetchedFollowUps.map(followUp => ({
-        id: followUp.id,
-        date: followUp.scheduledDate, // Map scheduledDate to date
-        reason: followUp.reason || '',
-        status: followUp.status,
-        visitId: followUp.visitId,
-      }));
-      setFollowUps(mappedFollowUps);
-    } else if (!isLoading && (!fetchedFollowUps || fetchedFollowUps.length === 0)) {
-      // Initialize with one empty follow-up if none exist
-      setFollowUps([{
-        date: new Date().toISOString().split('T')[0],
-        reason: '',
-        status: 'Scheduled',
-        visitId,
-      }]);
-    }
-  }, [fetchedFollowUps, isLoading, visitId]);
-
-  // Create follow-up mutation
+  // Mutation to create follow-up
   const createFollowUpMutation = useMutation({
-    mutationFn: async (followUp: { date: string, reason: string, status: string, visitId: number }) => {
-      // Map component's date to database's scheduledDate
-      const data = {
-        scheduledDate: followUp.date,
-        reason: followUp.reason,
-        status: followUp.status,
-        visitId: followUp.visitId
-      };
+    mutationFn: async (data: Omit<FollowUp, 'id'>) => {
       const res = await apiRequest("POST", "/api/follow-ups", data);
       return await res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/visits/${visitId}/follow-ups`] });
       toast({
-        title: "Follow-up added",
-        description: "Follow-up has been scheduled successfully."
+        title: "Follow-up scheduled",
+        description: "Follow-up appointment has been scheduled successfully."
       });
+      setIsCreating(false);
+      resetForm();
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
-        title: "Failed to schedule follow-up",
-        description: error.message || "There was an error scheduling the follow-up.",
+        title: "Error",
+        description: "Failed to schedule follow-up appointment.",
         variant: "destructive",
       });
-    },
+    }
   });
 
-  // Update follow-up mutation
+  // Mutation to update follow-up
   const updateFollowUpMutation = useMutation({
-    mutationFn: async (followUp: { id: number, date: string, reason: string, status: string, visitId: number }) => {
-      // Map component's date to database's scheduledDate
-      const data = {
-        id: followUp.id,
-        scheduledDate: followUp.date,
-        reason: followUp.reason,
-        status: followUp.status,
-        visitId: followUp.visitId
-      };
-      const res = await apiRequest("PUT", `/api/follow-ups/${followUp.id}`, data);
+    mutationFn: async ({ id, data }: { id: number, data: Partial<FollowUp> }) => {
+      const res = await apiRequest("PUT", `/api/follow-ups/${id}`, data);
       return await res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/visits/${visitId}/follow-ups`] });
       toast({
         title: "Follow-up updated",
-        description: "Follow-up has been updated successfully."
+        description: "Follow-up appointment has been updated successfully."
       });
+      setIsEditing(null);
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
-        title: "Failed to update follow-up",
-        description: error.message || "There was an error updating the follow-up.",
+        title: "Error",
+        description: "Failed to update follow-up appointment.",
         variant: "destructive",
       });
-    },
+    }
   });
 
-  // Delete follow-up mutation
+  // Mutation to delete follow-up
   const deleteFollowUpMutation = useMutation({
     mutationFn: async (id: number) => {
       await apiRequest("DELETE", `/api/follow-ups/${id}`);
@@ -126,282 +111,290 @@ export default function FollowUpSection({ visitId, patientId }: FollowUpSectionP
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/visits/${visitId}/follow-ups`] });
       toast({
-        title: "Follow-up deleted",
-        description: "Follow-up has been removed successfully."
+        title: "Follow-up cancelled",
+        description: "Follow-up appointment has been cancelled successfully."
       });
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
-        title: "Failed to delete follow-up",
-        description: error.message || "There was an error deleting the follow-up.",
+        title: "Error",
+        description: "Failed to cancel follow-up appointment.",
         variant: "destructive",
       });
-    },
+    }
   });
 
-  // Create new visit from follow-up mutation
-  const createVisitFromFollowUpMutation = useMutation({
-    mutationFn: async ({ followUpId, followUpDate }: { followUpId: number, followUpDate: string }) => {
-      // Create a new visit linked to the previous visit
-      const res = await apiRequest("POST", `/api/visits/${visitId}/follow-up`, {
-        date: followUpDate
-      });
-      
-      // Mark the follow-up as completed
-      await apiRequest("PUT", `/api/follow-ups/${followUpId}`, {
-        id: followUpId,
-        status: 'Completed',
-        visitId
-      });
-      
-      return await res.json();
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/visits/${visitId}/follow-ups`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/patients/${patientId}/visits`] });
-      
-      toast({
-        title: "Visit created",
-        description: "A new visit has been created from the follow-up."
-      });
-      
-      // Optionally navigate to the new visit
-      // history.push(`/patients/${patientId}/visits/${data.id}`);
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Failed to create visit",
-        description: error.message || "There was an error creating a visit from the follow-up.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleAddFollowUp = () => {
-    // Add new follow-up with default date (1 week from now)
-    const oneWeekFromNow = new Date();
-    oneWeekFromNow.setDate(oneWeekFromNow.getDate() + 7);
-    
-    setFollowUps([...followUps, {
-      date: oneWeekFromNow.toISOString().split('T')[0],
+  // Reset form after submission
+  const resetForm = () => {
+    setFormData({
+      visitId,
+      patientId,
+      scheduledDate: format(new Date(), 'yyyy-MM-dd'),
       reason: '',
       status: 'Scheduled',
-      visitId,
-    }]);
-  };
-
-  const handleRemoveFollowUp = (index: number) => {
-    const followUp = followUps[index];
-    if (followUp.id) {
-      deleteFollowUpMutation.mutate(followUp.id);
-    } else {
-      const newFollowUps = [...followUps];
-      newFollowUps.splice(index, 1);
-      setFollowUps(newFollowUps);
-    }
-  };
-
-  const handleInputChange = (index: number, field: 'date' | 'reason' | 'status', value: string) => {
-    const updatedFollowUps = [...followUps];
-    updatedFollowUps[index] = {
-      ...updatedFollowUps[index],
-      [field]: value
-    };
-    setFollowUps(updatedFollowUps);
-  };
-
-  const handleDateSelect = (index: number, date: Date) => {
-    handleInputChange(index, 'date', date.toISOString().split('T')[0]);
-  };
-
-  const handleSaveFollowUp = (index: number) => {
-    const followUp = followUps[index];
-    
-    // Skip if empty reason
-    if (!followUp.reason) {
-      toast({
-        title: "Validation Error",
-        description: "Follow-up reason must be specified.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (followUp.id) {
-      // Update existing follow-up
-      updateFollowUpMutation.mutate({
-        id: followUp.id,
-        date: followUp.date,
-        reason: followUp.reason,
-        status: followUp.status,
-        visitId,
-      });
-    } else {
-      // Create new follow-up
-      createFollowUpMutation.mutate({
-        date: followUp.date,
-        reason: followUp.reason,
-        status: followUp.status,
-        visitId,
-      });
-    }
-  };
-
-  const handleCreateVisit = (followUp: { id?: number, date: string }) => {
-    if (!followUp.id) {
-      toast({
-        title: "Save required",
-        description: "Please save the follow-up before creating a visit.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    createVisitFromFollowUpMutation.mutate({
-      followUpId: followUp.id,
-      followUpDate: followUp.date
+      notes: ''
     });
   };
 
-  const getStatusColor = (status: string, date: string) => {
-    const today = new Date();
-    const followUpDate = parseISO(date);
-    
-    if (status === 'Completed') {
-      return "bg-green-100 text-green-800 hover:bg-green-200";
-    } else if (status === 'Cancelled') {
-      return "bg-red-100 text-red-800 hover:bg-red-200";
-    } else if (isBefore(followUpDate, today) && !isToday(followUpDate)) {
-      return "bg-red-100 text-red-800 hover:bg-red-200"; // Overdue
-    } else if (isToday(followUpDate)) {
-      return "bg-blue-100 text-blue-800 hover:bg-blue-200"; // Today
+  // Cancel create mode
+  const handleCancel = () => {
+    setIsCreating(false);
+    setIsEditing(null);
+    resetForm();
+  };
+
+  // Handle input change
+  const handleInputChange = (field: keyof FollowUp, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Start editing a follow-up
+  const startEditing = (followUp: FollowUp) => {
+    setIsEditing(followUp.id!);
+    setFormData({
+      visitId: followUp.visitId,
+      patientId: followUp.patientId,
+      scheduledDate: followUp.scheduledDate,
+      reason: followUp.reason,
+      status: followUp.status,
+      notes: followUp.notes || ''
+    });
+  };
+
+  // Handle submit
+  const handleSubmit = () => {
+    if (!formData.reason) {
+      toast({
+        title: "Validation Error",
+        description: "Please provide a reason for the follow-up.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isEditing) {
+      updateFollowUpMutation.mutate({ 
+        id: isEditing, 
+        data: formData 
+      });
     } else {
-      return "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"; // Upcoming
+      createFollowUpMutation.mutate(formData);
     }
   };
 
+  // Status badge color
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'scheduled':
+        return 'bg-blue-100 text-blue-800';
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      case 'rescheduled':
+        return 'bg-amber-100 text-amber-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  if (isLoading) {
+    return <div className="py-4">Loading follow-up information...</div>;
+  }
+
   return (
-    <Card className="w-full">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Follow-Ups</CardTitle>
-        <Button variant="outline" size="sm" onClick={handleAddFollowUp}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Follow-Up
-        </Button>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="flex justify-center py-4">
-            <div className="animate-spin h-6 w-6 border-2 border-primary rounded-full border-t-transparent"></div>
-          </div>
-        ) : followUps.length === 0 ? (
-          <div className="text-center py-4 text-muted-foreground">
-            No follow-ups scheduled. Add a follow-up to start.
-          </div>
-        ) : (
-          <>
-            {followUps.map((followUp, index) => (
-              <div 
-                key={followUp.id || `new-${index}`} 
-                className="border rounded-md p-4 mb-4"
-              >
-                <div className="flex justify-between items-center mb-4">
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-medium">Follow-up #{index + 1}</h4>
-                    <Badge className={getStatusColor(followUp.status, followUp.date)}>
-                      {followUp.status === 'Scheduled' && isBefore(parseISO(followUp.date), new Date()) && !isToday(parseISO(followUp.date))
-                        ? 'Overdue'
-                        : followUp.status}
-                    </Badge>
-                  </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={() => handleRemoveFollowUp(index)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor={`follow-up-date-${index}`}>Date</Label>
-                    <div className="flex">
-                      <Input
-                        id={`follow-up-date-${index}`}
-                        type="date"
-                        value={followUp.date}
-                        onChange={(e) => handleInputChange(index, 'date', e.target.value)}
-                        className="w-full"
-                      />
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className="ml-2">
-                            <Calendar className="h-4 w-4" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <CalendarComponent
-                            mode="single"
-                            selected={parseISO(followUp.date)}
-                            onSelect={(date) => date && handleDateSelect(index, date)}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor={`follow-up-reason-${index}`}>Reason</Label>
-                    <Textarea
-                      id={`follow-up-reason-${index}`}
-                      placeholder="Enter reason for follow-up"
-                      value={followUp.reason}
-                      onChange={(e) => handleInputChange(index, 'reason', e.target.value)}
-                      className="min-h-[80px]"
-                    />
-                  </div>
-                  
-                  {followUp.id && (
+    <div className="space-y-4">
+      {followUps.length === 0 && !isCreating ? (
+        <div className="text-center py-6">
+          <p className="text-muted-foreground mb-4">No follow-up appointments scheduled.</p>
+          {!readOnly && (
+            <Button 
+              variant="outline" 
+              onClick={() => setIsCreating(true)}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Schedule Follow-up
+            </Button>
+          )}
+        </div>
+      ) : (
+        <>
+          {!isCreating && !isEditing && (
+            <div className="space-y-4">
+              {followUps.map((followUp) => (
+                <div 
+                  key={followUp.id} 
+                  className="border rounded-md p-4 relative"
+                >
+                  <div className="flex justify-between items-start mb-3">
                     <div>
-                      <Label htmlFor={`follow-up-status-${index}`}>Status</Label>
-                      <select
-                        id={`follow-up-status-${index}`}
-                        value={followUp.status}
-                        onChange={(e) => handleInputChange(index, 'status', e.target.value)}
-                        className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        <option value="Scheduled">Scheduled</option>
-                        <option value="Completed">Completed</option>
-                        <option value="Cancelled">Cancelled</option>
-                      </select>
+                      <div className="text-sm font-medium mb-1">
+                        Follow-up on {format(new Date(followUp.scheduledDate), 'PPP')}
+                      </div>
+                      <Badge className={cn("font-normal", getStatusColor(followUp.status))}>
+                        {followUp.status}
+                      </Badge>
                     </div>
-                  )}
-                  
-                  <div className="flex justify-end space-x-2">
-                    <Button 
-                      onClick={() => handleSaveFollowUp(index)} 
-                      disabled={!followUp.reason}
-                    >
-                      Save
-                    </Button>
-                    
-                    {followUp.id && followUp.status === 'Scheduled' && (
-                      <Button 
-                        variant="secondary"
-                        onClick={() => handleCreateVisit(followUp)}
+                    {!readOnly && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => startEditing(followUp)}
                       >
-                        Create Visit
+                        <Edit className="h-4 w-4" />
                       </Button>
                     )}
                   </div>
+
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <span className="font-semibold">Reason: </span>
+                      <span>{followUp.reason}</span>
+                    </div>
+                    {followUp.notes && (
+                      <div>
+                        <span className="font-semibold">Notes: </span>
+                        <span>{followUp.notes}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              {!readOnly && !isCreating && !isEditing && (
+                <Button 
+                  variant="outline" 
+                  className="w-full mt-4"
+                  onClick={() => setIsCreating(true)}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Another Follow-up
+                </Button>
+              )}
+            </div>
+          )}
+
+          {(isCreating || isEditing) && !readOnly && (
+            <div className="border rounded-md p-4 space-y-4">
+              <h3 className="text-sm font-medium">
+                {isEditing ? "Edit Follow-up" : "Schedule Follow-up"}
+              </h3>
+
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="date">
+                    Scheduled Date
+                  </Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full justify-start text-left font-normal mt-1",
+                          !formData.scheduledDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {formData.scheduledDate ? (
+                          format(new Date(formData.scheduledDate), "PPP")
+                        ) : (
+                          <span>Select date</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={formData.scheduledDate ? new Date(formData.scheduledDate) : undefined}
+                        onSelect={(date) => 
+                          handleInputChange('scheduledDate', date ? format(date, 'yyyy-MM-dd') : '')
+                        }
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                <div>
+                  <Label htmlFor="reason">
+                    Reason
+                  </Label>
+                  <Select
+                    value={formData.reason}
+                    onValueChange={(value) => handleInputChange('reason', value)}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select reason for follow-up" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Check-up">Check-up</SelectItem>
+                      <SelectItem value="Treatment Continuation">Treatment Continuation</SelectItem>
+                      <SelectItem value="Post-op Review">Post-op Review</SelectItem>
+                      <SelectItem value="Cleaning">Cleaning</SelectItem>
+                      <SelectItem value="Crown Placement">Crown Placement</SelectItem>
+                      <SelectItem value="Filling">Filling</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {isEditing && (
+                  <div>
+                    <Label htmlFor="status">
+                      Status
+                    </Label>
+                    <Select
+                      value={formData.status}
+                      onValueChange={(value) => handleInputChange('status', value)}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Scheduled">Scheduled</SelectItem>
+                        <SelectItem value="Completed">Completed</SelectItem>
+                        <SelectItem value="Cancelled">Cancelled</SelectItem>
+                        <SelectItem value="Rescheduled">Rescheduled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                <div>
+                  <Label htmlFor="notes">
+                    Additional Notes
+                  </Label>
+                  <Textarea
+                    id="notes"
+                    value={formData.notes || ''}
+                    onChange={(e) => handleInputChange('notes', e.target.value)}
+                    placeholder="Any specific instructions or notes"
+                    className="mt-1"
+                  />
+                </div>
+
+                <div className="flex justify-end space-x-2 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCancel}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleSubmit}
+                  >
+                    {isEditing ? "Update" : "Schedule"}
+                  </Button>
                 </div>
               </div>
-            ))}
-          </>
-        )}
-      </CardContent>
-    </Card>
+            </div>
+          )}
+        </>
+      )}
+    </div>
   );
 }
