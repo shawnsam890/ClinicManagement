@@ -149,6 +149,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Update patient by patientId string (for the patient record page)
+  app.patch('/api/patients/:patientId', async (req, res) => {
+    try {
+      const patientId = req.params.patientId;
+      
+      // Get patient first
+      const patient = await storage.getPatientByPatientId(patientId);
+      if (!patient) {
+        return res.status(404).json({ message: 'Patient not found' });
+      }
+      
+      // Update patient
+      const updatedPatient = await storage.updatePatient(patient.id, req.body);
+      res.json(updatedPatient);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
   app.delete('/api/patients/:id', async (req, res) => {
     try {
       const id = parseInt(req.params.id);
