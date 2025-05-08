@@ -6,7 +6,8 @@ import { insertPatientSchema, insertPatientVisitSchema, insertLabWorkSchema,
   insertLabInventorySchema, insertStaffSchema, insertStaffAttendanceSchema, 
   insertStaffSalarySchema, insertInvoiceSchema, insertInvoiceItemSchema, 
   insertSettingSchema, insertMedicationSchema, insertPrescriptionSchema,
-  insertAppointmentSchema, patientVisits } from "@shared/schema";
+  insertAppointmentSchema, patientVisits, insertToothFindingSchema,
+  insertGeneralizedFindingSchema, insertInvestigationSchema, insertFollowUpSchema } from "@shared/schema";
 import { z } from "zod";
 import path from 'path';
 import fs from 'fs';
