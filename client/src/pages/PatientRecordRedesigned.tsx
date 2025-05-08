@@ -129,6 +129,7 @@ export default function PatientRecord() {
   // Create a new Visit (Rx)
   const createVisitMutation = useMutation({
     mutationFn: async (data: any) => {
+      console.log("Creating new visit for prescription:", data);
       const res = await apiRequest("POST", "/api/visits", {
         patientId,
         date: new Date().toISOString().split('T')[0],
@@ -137,10 +138,17 @@ export default function PatientRecord() {
       return res.json();
     },
     onSuccess: (data) => {
+      console.log("Visit created successfully:", data);
       queryClient.invalidateQueries({ queryKey: [`/api/patients/${patientId}/visits`] });
+      
+      // Set the selected visit and make sure to show prescription form
       setSelectedVisitId(data.id);
       setActiveTab("rx");
+      
+      // Force showing the prescription form
+      console.log("Setting showPrescriptionForm to true");
       setShowPrescriptionForm(true);
+      
       toast({
         title: "Success",
         description: "New prescription created",
@@ -699,15 +707,20 @@ export default function PatientRecord() {
                       </TabsList>
                       
                       <TabsContent value="rx">
-                        {showPrescriptionForm && (
-                          <div className="p-1">
-                            <h3 className="text-lg font-semibold mb-4">Medications</h3>
+                        {/* Always show prescription form when rx tab is active */}
+                        <div className="p-1">
+                          <h3 className="text-lg font-semibold mb-4">Medications</h3>
+                          {!selectedVisitId ? (
+                            <div className="text-center py-4 text-muted-foreground">
+                              No visit selected. Please select a visit first or create a new one.
+                            </div>
+                          ) : (
                             <PrescriptionForm 
                               visitId={selectedVisitId} 
                               patientId={patientId}
                             />
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </TabsContent>
                       
                       <TabsContent value="treatment">

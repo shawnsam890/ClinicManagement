@@ -79,10 +79,16 @@ export default function PrescriptionForm({
 
   // Initialize prescriptions state when data is loaded
   useEffect(() => {
+    console.log("PrescriptionForm - VisitID:", visitId);
+    console.log("PrescriptionForm - Fetched Prescriptions:", fetchedPrescriptions);
+    console.log("PrescriptionForm - Available Medications:", medications);
+    
     if (existingPrescriptions && existingPrescriptions.length > 0) {
+      console.log("PrescriptionForm - Using existing prescriptions");
       setPrescriptions(existingPrescriptions);
       setIsLoading(false);
     } else if (fetchedPrescriptions && fetchedPrescriptions.length > 0) {
+      console.log("PrescriptionForm - Using fetched prescriptions");
       // Map fetched prescriptions with medication names from medications data
       const mappedPrescriptions = fetchedPrescriptions.map((prescription: PrescriptionItem) => {
         const medication = medications?.find((med: any) => med.id === prescription.medicationId);
@@ -94,6 +100,7 @@ export default function PrescriptionForm({
       setPrescriptions(mappedPrescriptions);
       setIsLoading(false);
     } else if (!isFetchingPrescriptions) {
+      console.log("PrescriptionForm - Creating default prescription row");
       // If no prescriptions, start with an empty row
       if (!readOnly) {
         setPrescriptions([{
@@ -292,6 +299,19 @@ export default function PrescriptionForm({
 
   return (
     <div className="space-y-4">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-sm font-medium">Prescription Details</h2>
+        {!readOnly && (
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={addPrescriptionRow}
+            type="button"
+          >
+            <Plus className="h-3.5 w-3.5 mr-1" /> Add Medication
+          </Button>
+        )}
+      </div>
       <div className="border rounded-md overflow-hidden">
         <Table>
           <TableHeader className="bg-muted/50">
