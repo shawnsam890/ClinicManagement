@@ -11,7 +11,11 @@ import {
   InvoiceItem, InsertInvoiceItem,
   Setting, InsertSetting,
   Medication, InsertMedication,
-  Prescription, InsertPrescription
+  Prescription, InsertPrescription,
+  ToothFinding, InsertToothFinding,
+  GeneralizedFinding, InsertGeneralizedFinding,
+  Investigation, InsertInvestigation,
+  FollowUp, InsertFollowUp
 } from "@shared/schema";
 
 export interface IStorage {
@@ -112,6 +116,34 @@ export interface IStorage {
   updateSetting(id: number, setting: Partial<InsertSetting>): Promise<Setting | undefined>;
   deleteSetting(id: number): Promise<boolean>;
   
+  // Tooth findings
+  getToothFindings(visitId: number): Promise<ToothFinding[]>;
+  getToothFindingById(id: number): Promise<ToothFinding | undefined>;
+  createToothFinding(finding: InsertToothFinding): Promise<ToothFinding>;
+  updateToothFinding(id: number, finding: Partial<InsertToothFinding>): Promise<ToothFinding | undefined>;
+  deleteToothFinding(id: number): Promise<boolean>;
+  
+  // Generalized findings
+  getGeneralizedFindings(visitId: number): Promise<GeneralizedFinding[]>;
+  getGeneralizedFindingById(id: number): Promise<GeneralizedFinding | undefined>;
+  createGeneralizedFinding(finding: InsertGeneralizedFinding): Promise<GeneralizedFinding>;
+  updateGeneralizedFinding(id: number, finding: Partial<InsertGeneralizedFinding>): Promise<GeneralizedFinding | undefined>;
+  deleteGeneralizedFinding(id: number): Promise<boolean>;
+  
+  // Investigations
+  getInvestigations(visitId: number): Promise<Investigation[]>;
+  getInvestigationById(id: number): Promise<Investigation | undefined>;
+  createInvestigation(investigation: InsertInvestigation): Promise<Investigation>;
+  updateInvestigation(id: number, investigation: Partial<InsertInvestigation>): Promise<Investigation | undefined>;
+  deleteInvestigation(id: number): Promise<boolean>;
+  
+  // Follow-ups
+  getFollowUps(visitId: number): Promise<FollowUp[]>;
+  getFollowUpById(id: number): Promise<FollowUp | undefined>;
+  createFollowUp(followUp: InsertFollowUp): Promise<FollowUp>;
+  updateFollowUp(id: number, followUp: Partial<InsertFollowUp>): Promise<FollowUp | undefined>;
+  deleteFollowUp(id: number): Promise<boolean>;
+  
   sessionStore: session.SessionStore;
 }
 
@@ -127,6 +159,12 @@ export class MemStorage implements IStorage {
   private invoices: Map<number, Invoice>;
   private invoiceItems: Map<number, InvoiceItem>;
   private settings: Map<number, Setting>;
+  private medications: Map<number, Medication>;
+  private prescriptions: Map<number, Prescription>;
+  private toothFindings: Map<number, ToothFinding>;
+  private generalizedFindings: Map<number, GeneralizedFinding>;
+  private investigations: Map<number, Investigation>;
+  private followUps: Map<number, FollowUp>;
   
   private patientIdCounter: number;
   private visitIdCounter: number;
@@ -139,6 +177,12 @@ export class MemStorage implements IStorage {
   private invoiceIdCounter: number;
   private invoiceItemIdCounter: number;
   private settingIdCounter: number;
+  private medicationIdCounter: number;
+  private prescriptionIdCounter: number;
+  private toothFindingIdCounter: number;
+  private generalizedFindingIdCounter: number;
+  private investigationIdCounter: number;
+  private followUpIdCounter: number;
   
   constructor() {
     this.patients = new Map();

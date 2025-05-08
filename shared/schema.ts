@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb, real, date } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, real, date, primaryKey } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -165,6 +165,36 @@ export const appointments = pgTable("appointments", {
   invoiceId: integer("invoice_id").references(() => invoices.id),
 });
 
+// Dental examination tables
+export const toothFindings = pgTable("tooth_findings", {
+  id: serial("id").primaryKey(),
+  visitId: integer("visit_id").notNull(),
+  toothNumber: text("tooth_number").notNull(),
+  finding: text("finding").notNull(),
+});
+
+export const generalizedFindings = pgTable("generalized_findings", {
+  id: serial("id").primaryKey(),
+  visitId: integer("visit_id").notNull(),
+  finding: text("finding").notNull(),
+});
+
+export const investigations = pgTable("investigations", {
+  id: serial("id").primaryKey(),
+  visitId: integer("visit_id").notNull(),
+  type: text("type").notNull(),
+  findings: text("findings"),
+});
+
+export const followUps = pgTable("follow_ups", {
+  id: serial("id").primaryKey(),
+  visitId: integer("visit_id").notNull(),
+  scheduledDate: date("scheduled_date").notNull(),
+  reason: text("reason"),
+  status: text("status").default("scheduled").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Settings schema
 export const settings = pgTable("settings", {
   id: serial("id").primaryKey(),
@@ -188,6 +218,10 @@ export const insertSettingSchema = createInsertSchema(settings).omit({ id: true 
 export const insertMedicationSchema = createInsertSchema(medications).omit({ id: true });
 export const insertPrescriptionSchema = createInsertSchema(prescriptions).omit({ id: true });
 export const insertAppointmentSchema = createInsertSchema(appointments).omit({ id: true });
+export const insertToothFindingSchema = createInsertSchema(toothFindings).omit({ id: true });
+export const insertGeneralizedFindingSchema = createInsertSchema(generalizedFindings).omit({ id: true });
+export const insertInvestigationSchema = createInsertSchema(investigations).omit({ id: true });
+export const insertFollowUpSchema = createInsertSchema(followUps).omit({ id: true, createdAt: true });
 
 // Export types
 export type User = typeof users.$inferSelect;
@@ -231,3 +265,15 @@ export type InsertPrescription = z.infer<typeof insertPrescriptionSchema>;
 
 export type Appointment = typeof appointments.$inferSelect;
 export type InsertAppointment = z.infer<typeof insertAppointmentSchema>;
+
+export type ToothFinding = typeof toothFindings.$inferSelect;
+export type InsertToothFinding = z.infer<typeof insertToothFindingSchema>;
+
+export type GeneralizedFinding = typeof generalizedFindings.$inferSelect;
+export type InsertGeneralizedFinding = z.infer<typeof insertGeneralizedFindingSchema>;
+
+export type Investigation = typeof investigations.$inferSelect;
+export type InsertInvestigation = z.infer<typeof insertInvestigationSchema>;
+
+export type FollowUp = typeof followUps.$inferSelect;
+export type InsertFollowUp = z.infer<typeof insertFollowUpSchema>;
