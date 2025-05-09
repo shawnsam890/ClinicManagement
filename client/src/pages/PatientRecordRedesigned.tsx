@@ -82,30 +82,43 @@ export default function PatientRecord() {
   // Track which invoices we've loaded items for
   const [invoicesWithItems, setInvoicesWithItems] = useState<(InvoiceType & { items: any[] })[]>([]);
   
-  // Load invoice items when invoices change
+  // Check if an invoice exists before trying to load its items
   useEffect(() => {
     if (rawInvoices.length > 0) {
       const loadInvoiceItems = async () => {
-        const invoicesWithItemsData = await Promise.all(
-          rawInvoices.map(async (invoice) => {
-            try {
-              const res = await fetch(`/api/invoices/${invoice.id}/items`);
-              const items = await res.json();
-              return { ...invoice, items };
-            } catch (error) {
-              console.error(`Failed to load items for invoice ${invoice.id}:`, error);
-              return { ...invoice, items: [] };
+        const existingInvoices = [];
+        
+        for (const invoice of rawInvoices) {
+          try {
+            // First verify if the invoice still exists
+            const checkRes = await fetch(`/api/invoices/${invoice.id}`);
+            if (checkRes.status === 404) {
+              console.log(`Invoice ${invoice.id} no longer exists, skipping`);
+              continue;
             }
-          })
-        );
-        setInvoicesWithItems(invoicesWithItemsData);
+            
+            // If it exists, fetch its items
+            const itemsRes = await fetch(`/api/invoices/${invoice.id}/items`);
+            const items = await itemsRes.json();
+            existingInvoices.push({ ...invoice, items });
+          } catch (error) {
+            console.error(`Failed to process invoice ${invoice.id}:`, error);
+          }
+        }
+        
+        setInvoicesWithItems(existingInvoices);
+        
+        // If the list of invoices has changed, refresh the raw list
+        if (existingInvoices.length !== rawInvoices.length) {
+          queryClient.invalidateQueries({ queryKey: [`/api/patients/${patientId}/invoices`] });
+        }
       };
       
       loadInvoiceItems();
     } else {
       setInvoicesWithItems([]);
     }
-  }, [rawInvoices]);
+  }, [rawInvoices, patientId, queryClient]);
 
   // Fetch prescriptions for selected visit
   const { data: prescriptions = [], isLoading: isLoadingPrescriptions } = useQuery<Prescription[]>({

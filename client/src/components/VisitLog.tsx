@@ -630,7 +630,7 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
         <div className="space-y-3">
           <Label className="text-base font-semibold">Invoice</Label>
           <Button onClick={() => setShowInvoice(true)}>
-            Manage Invoice
+            View Invoice
           </Button>
         </div>
 
