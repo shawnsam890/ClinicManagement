@@ -36,6 +36,8 @@ interface ConsentFormPreview {
   image: string;
   title: string;
   timestamp: string;
+  doctorSignature?: string;
+  doctorName?: string;
   patientInfo?: {
     name: string;
     address: string;
@@ -185,24 +187,66 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
               text-align: center;
               margin-bottom: 20px;
             }
-            .patient-info {
+            .info-container {
               width: 100%;
               max-width: 800px;
               margin-bottom: 20px;
+              border: 1px solid #ddd;
+              border-radius: 8px;
+              overflow: hidden;
+            }
+            .info-header {
+              background-color: #f5f5f5;
+              padding: 10px 15px;
+              border-bottom: 1px solid #ddd;
+              font-weight: bold;
+            }
+            .info-content {
+              padding: 15px;
               font-size: 14px;
+            }
+            .grid-container {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 10px;
             }
             .image-container {
               max-width: 800px;
               width: 100%;
+              margin: 20px 0;
+              border: 1px solid #ddd;
+              border-radius: 8px;
+              overflow: hidden;
             }
-            img {
+            img.form-image {
               width: 100%;
               height: auto;
+            }
+            .signature-container {
+              display: flex;
+              justify-content: space-between;
+              width: 100%;
+              max-width: 800px;
+              margin-top: 20px;
+            }
+            .signature-box {
+              width: 48%;
+              border: 1px solid #ddd;
+              border-radius: 8px;
+              padding: 10px;
+              text-align: center;
+            }
+            .signature-img {
+              max-width: 200px;
+              max-height: 100px;
+              margin: 10px auto;
+              display: block;
             }
             .timestamp {
               margin-top: 20px;
               font-size: 12px;
               color: #666;
+              text-align: center;
             }
             @media print {
               button {
@@ -215,18 +259,37 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
           <div class="header">
             <h2>${previewForm?.title || 'Consent Form'}</h2>
           </div>
-          <div class="patient-info">
-            <p><strong>Patient Name:</strong> ${previewForm?.patientInfo?.name || 'Not provided'}</p>
-            <p><strong>Address:</strong> ${previewForm?.patientInfo?.address || 'Not provided'}</p>
-            <p><strong>Phone:</strong> ${previewForm?.patientInfo?.phone || 'Not provided'}</p>
-            <p><strong>Date:</strong> ${previewForm?.patientInfo?.date ? new Date(previewForm.patientInfo.date).toLocaleDateString() : new Date(previewForm?.timestamp || '').toLocaleDateString()}</p>
+          
+          <div class="info-container">
+            <div class="info-header">Patient Information</div>
+            <div class="info-content grid-container">
+              <p><strong>Patient Name:</strong> ${previewForm?.patientInfo?.name || 'Not provided'}</p>
+              <p><strong>Phone:</strong> ${previewForm?.patientInfo?.phone || 'Not provided'}</p>
+              <p><strong>Address:</strong> ${previewForm?.patientInfo?.address || 'Not provided'}</p>
+              <p><strong>Date:</strong> ${previewForm?.patientInfo?.date ? new Date(previewForm.patientInfo.date).toLocaleDateString() : new Date(previewForm?.timestamp || '').toLocaleDateString()}</p>
+            </div>
           </div>
+          
           <div class="image-container">
-            <img src="${previewForm?.image || ''}" alt="Consent Form" />
+            <img class="form-image" src="${previewForm?.image || ''}" alt="Consent Form" />
           </div>
+          
+          <div class="signature-container">
+            <div class="signature-box">
+              <p><strong>Patient's Signature</strong></p>
+              ${previewForm?.patientInfo?.name ? `<p>${previewForm.patientInfo.name}</p>` : ''}
+            </div>
+            <div class="signature-box">
+              <p><strong>Doctor's Signature</strong></p>
+              ${previewForm?.doctorName ? `<p>${previewForm.doctorName}</p>` : ''}
+              ${previewForm?.doctorSignature ? `<img class="signature-img" src="${previewForm.doctorSignature}" alt="Doctor's Signature">` : ''}
+            </div>
+          </div>
+          
           <div class="timestamp">
-            <p>Signed on: ${new Date(previewForm?.timestamp || '').toLocaleString()}</p>
+            <p>Form signed on: ${new Date(previewForm?.timestamp || '').toLocaleString()}</p>
           </div>
+          
           <button style="margin-top: 20px; padding: 10px; background: #0077cc; color: white; border: none; border-radius: 4px; cursor: pointer;" onclick="window.print(); return false;">
             Print
           </button>
@@ -334,6 +397,26 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
                   alt="Consent Form" 
                   className="w-full h-auto object-contain" 
                 />
+              )}
+            </div>
+            
+            {/* Signatures Section */}
+            <div className="mt-4 flex flex-wrap gap-4">
+              {/* Doctor Signature */}
+              {previewForm?.doctorSignature && (
+                <div className="flex-1 min-w-[200px] border rounded-md p-3 bg-white">
+                  <p className="text-xs font-medium mb-2">Doctor's Signature:</p>
+                  <div className="flex items-center">
+                    <img 
+                      src={previewForm.doctorSignature} 
+                      alt="Doctor Signature" 
+                      className="h-16 object-contain border p-1 rounded"
+                    />
+                    {previewForm.doctorName && (
+                      <p className="ml-2 text-xs">{previewForm.doctorName}</p>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
             
@@ -780,6 +863,8 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
                                   image: form.patientSignature,
                                   title: formTitle,
                                   timestamp: form.timestamp,
+                                  doctorSignature: form.doctorSignature,
+                                  doctorName: form.doctorName || "Doctor",
                                   patientInfo: form.patientInfo || {
                                     name: 'Not provided',
                                     address: 'Not provided',
