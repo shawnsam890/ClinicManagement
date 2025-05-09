@@ -613,21 +613,31 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
                                   title: 'Uploaded Consent Form' 
                                 };
                                 
-                            // Open a dialog with a modal to show the full consent form
-                            // Use temporary window.alert for now
+                            // Open a dialog to show the full consent form
                             if (form.type === 'signature') {
-                              const message = `
-                                ${consentDetails.title}
-                                Date: ${form.patientInfo?.date ? new Date(form.patientInfo.date).toLocaleDateString() : new Date(form.timestamp).toLocaleDateString()}
-                                Patient: ${form.patientInfo?.name || 'Not provided'}
-                                Address: ${form.patientInfo?.address || 'Not provided'}
-                                Phone: ${form.patientInfo?.phone || 'Not provided'}
-                              `;
-                              window.alert(message);
+                              // Show modal with the signed form image
+                              if (form.patientSignature) {
+                                // Open the signed form image in a new tab
+                                // This is better than using a modal for image viewing
+                                window.open(form.patientSignature, '_blank');
+                              } else {
+                                // Fallback if no image
+                                toast({
+                                  title: "Error",
+                                  description: "Signed form image not found.",
+                                  variant: "destructive",
+                                });
+                              }
                             } else {
                               // For uploaded forms, open in a new tab
-                              if (form.data) {
-                                window.open(form.data, '_blank');
+                              if (form.patientSignature) {
+                                window.open(form.patientSignature, '_blank');
+                              } else {
+                                toast({
+                                  title: "Error",
+                                  description: "Form not found or was not properly uploaded.",
+                                  variant: "destructive",
+                                });
                               }
                             }
                           }}
@@ -672,14 +682,17 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
                         </Button>
                       </div>
                       
-                      {/* Show signature preview */}
-                      {form.type === 'signature' && form.patientSignature && (
-                        <div className="ml-2">
-                          <img 
-                            src={form.patientSignature} 
-                            alt="Patient Signature" 
-                            className="h-10 border rounded p-1"
-                          />
+                      {/* Show form thumbnail preview */}
+                      {form.patientSignature && (
+                        <div className="w-full mt-2">
+                          <p className="text-xs font-medium mb-1">Preview:</p>
+                          <div className="border rounded bg-white p-1 max-w-[150px]">
+                            <img 
+                              src={form.patientSignature} 
+                              alt="Consent Form" 
+                              className="h-14 w-auto object-contain"
+                            />
+                          </div>
                         </div>
                       )}
                     </div>
