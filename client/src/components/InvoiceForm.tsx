@@ -223,7 +223,7 @@ export default function InvoiceForm({ patientId, initialData, onSave, onCancel }
                 <div className="flex justify-between items-center">
                   <FormLabel>Total Amount (₹)</FormLabel>
                   <div className="text-xl font-bold">
-                    ₹{(field.value || 0).toFixed(2)}
+                    ₹{(Number(field.value) || 0).toFixed(2)}
                   </div>
                 </div>
                 <FormMessage />
@@ -265,7 +265,7 @@ export default function InvoiceForm({ patientId, initialData, onSave, onCancel }
                 <div className="flex justify-between items-center">
                   <FormLabel>Balance Amount (₹)</FormLabel>
                   <div className="text-lg font-semibold text-red-600">
-                    ₹{(field.value || 0).toFixed(2)}
+                    ₹{(Number(field.value) || 0).toFixed(2)}
                   </div>
                 </div>
                 <FormMessage />
