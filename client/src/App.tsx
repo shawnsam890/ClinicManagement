@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "next-themes";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/HomePage";
+import Dashboard from "@/pages/Dashboard";
 import PatientDatabase from "@/pages/PatientDatabase";
 import NewPatientForm from "@/pages/NewPatientForm";
 import PatientRecord from "@/pages/PatientRecordRedesigned";
@@ -14,24 +15,24 @@ import LabWorks from "@/pages/LabWorks";
 import Revenue from "@/pages/Revenue";
 import StaffManagement from "@/pages/StaffManagement";
 import Settings from "@/pages/Settings";
-import BasicDashboard from "@/pages/BasicDashboard";
-import ModernHomePage from "@/pages/ModernHomePage";
-import AuthPage from "@/pages/auth-page-fixed";
+// Appointments removed as per requirement
+import AuthPage from "@/pages/auth-page";
 import { AuthProvider } from "@/hooks/use-auth";
+import { ProtectedRoute } from "@/lib/protected-route";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={ModernHomePage} />
-      <Route path="/dashboard" component={BasicDashboard} />
-      <Route path="/patients" component={PatientDatabase} />
-      <Route path="/patients/new" component={NewPatientForm} />
-      <Route path="/patients/record/:patientId" component={PatientRecord} />
-      <Route path="/patients/list" component={ExistingPatients} />
-      <Route path="/lab-works" component={LabWorks} />
-      <Route path="/revenue" component={Revenue} />
-      <Route path="/staff" component={StaffManagement} />
-      <Route path="/settings" component={Settings} />
+      <ProtectedRoute path="/" component={HomePage} />
+      <ProtectedRoute path="/dashboard" component={Dashboard} />
+      <ProtectedRoute path="/patients" component={PatientDatabase} />
+      <ProtectedRoute path="/patients/new" component={NewPatientForm} />
+      <ProtectedRoute path="/patients/record/:patientId" component={PatientRecord} />
+      <ProtectedRoute path="/patients/list" component={ExistingPatients} />
+      <ProtectedRoute path="/lab-works" component={LabWorks} />
+      <ProtectedRoute path="/revenue" component={Revenue} />
+      <ProtectedRoute path="/staff" component={StaffManagement} />
+      <ProtectedRoute path="/settings" component={Settings} />
       {/* Appointments route removed */}
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />

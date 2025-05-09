@@ -78,40 +78,32 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-background to-background via-primary/5">
-      {/* Background graphic elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-gradient-to-br from-secondary/20 to-primary/20 rounded-full blur-3xl -z-10 transform translate-x-1/3 -translate-y-1/4"></div>
-        <div className="absolute bottom-0 left-0 w-1/3 h-1/3 bg-gradient-to-tr from-primary/20 to-secondary/20 rounded-full blur-3xl -z-10 transform -translate-x-1/3 translate-y-1/4"></div>
-      </div>
-      
+    <div className="flex min-h-screen bg-background">
       {/* Form Column */}
-      <div className="flex flex-col justify-center flex-1 px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24 relative z-10">
-        <div className="w-full max-w-md mx-auto">
-          <div className="mb-8 text-center">
-            <div className="inline-flex items-center justify-center h-20 w-20 rounded-full bg-primary/10 mb-6">
-              <Stethoscope className="w-10 h-10 text-primary" />
-            </div>
-            <h2 className="text-3xl font-bold text-gradient mb-1">Dr. Shawn's Clinic</h2>
-            <p className="text-muted-foreground">Dental Management System</p>
+      <div className="flex flex-col justify-center flex-1 px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24">
+        <div className="w-full max-w-sm mx-auto lg:w-96">
+          <div className="flex items-center mb-6">
+            <Stethoscope className="w-10 h-10 text-primary mr-3" />
+            <h2 className="text-2xl font-bold text-primary">Dr. Shawn's Clinic</h2>
           </div>
           
-          <div className="glow-card">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6 rounded-xl bg-muted/50 p-1">
-                <TabsTrigger value="login" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-primary">Login</TabsTrigger>
-                <TabsTrigger value="register" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-primary">Register</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="login">
-                <div className="px-1">
-                  <h3 className="text-2xl font-semibold mb-1">Welcome back</h3>
-                  <p className="text-muted-foreground text-sm mb-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="login">Login</TabsTrigger>
+              <TabsTrigger value="register">Register</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="login">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Login</CardTitle>
+                  <CardDescription>
                     Enter your credentials to access your account
-                  </p>
-                  
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
                   <Form {...loginForm}>
-                    <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-5">
+                    <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
                       <FormField
                         control={loginForm.control}
                         name="username"
@@ -119,7 +111,7 @@ export default function AuthPage() {
                           <FormItem>
                             <FormLabel>Username</FormLabel>
                             <FormControl>
-                              <Input placeholder="Enter your username" className="futuristic-input" {...field} />
+                              <Input placeholder="Enter your username" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -133,7 +125,7 @@ export default function AuthPage() {
                           <FormItem>
                             <FormLabel>Password</FormLabel>
                             <FormControl>
-                              <Input type="password" placeholder="Enter your password" className="futuristic-input" {...field} />
+                              <Input type="password" placeholder="Enter your password" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -142,106 +134,111 @@ export default function AuthPage() {
                       
                       <Button 
                         type="submit" 
-                        className="pill-button w-full mt-6" 
+                        className="w-full" 
                         disabled={loginMutation.isPending}
                       >
                         {loginMutation.isPending ? "Logging in..." : "Login"}
                       </Button>
                     </form>
                   </Form>
-                </div>
-              </TabsContent>
+                </CardContent>
+              </Card>
+            </TabsContent>
             
             <TabsContent value="register">
-              <div className="px-1">
-                <h3 className="text-2xl font-semibold mb-1">Create an account</h3>
-                <p className="text-muted-foreground text-sm mb-6">
-                  Register to access the clinic management system
-                </p>
-                <Form {...registerForm}>
-                  <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-5">
-                    <FormField
-                      control={registerForm.control}
-                      name="username"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Username</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Choose a username" className="futuristic-input" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={registerForm.control}
-                      name="fullName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Full Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter your full name" className="futuristic-input" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={registerForm.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Password</FormLabel>
-                          <FormControl>
-                            <Input type="password" placeholder="Choose a password" className="futuristic-input" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={registerForm.control}
-                      name="role"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Role</FormLabel>
-                          <div className="flex items-center space-x-2">
-                            <Checkbox
-                              id="admin-role"
-                              checked={field.value === "admin"}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  field.onChange("admin");
-                                } else {
-                                  field.onChange("staff");
-                                }
-                              }}
-                            />
-                            <label
-                              htmlFor="admin-role"
-                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            >
-                              Administrator role
-                            </label>
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <Button 
-                      type="submit" 
-                      className="pill-button w-full mt-6" 
-                      disabled={registerMutation.isPending}
-                    >
-                      {registerMutation.isPending ? "Creating account..." : "Register"}
-                    </Button>
-                  </form>
-                </Form>
-              </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Create an account</CardTitle>
+                  <CardDescription>
+                    Register to access the clinic management system
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Form {...registerForm}>
+                    <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
+                      <FormField
+                        control={registerForm.control}
+                        name="username"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Username</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Choose a username" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={registerForm.control}
+                        name="fullName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Full Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Enter your full name" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={registerForm.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Password</FormLabel>
+                            <FormControl>
+                              <Input type="password" placeholder="Choose a password" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={registerForm.control}
+                        name="role"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Role</FormLabel>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="admin-role"
+                                checked={field.value === "admin"}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    field.onChange("admin");
+                                  } else {
+                                    field.onChange("staff");
+                                  }
+                                }}
+                              />
+                              <label
+                                htmlFor="admin-role"
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                              >
+                                Administrator role
+                              </label>
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <Button 
+                        type="submit" 
+                        className="w-full" 
+                        disabled={registerMutation.isPending}
+                      >
+                        {registerMutation.isPending ? "Creating account..." : "Register"}
+                      </Button>
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
         </div>

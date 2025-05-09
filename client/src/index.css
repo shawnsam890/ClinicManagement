@@ -1,86 +1,87 @@
 /* Modern font imports from Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  /* Dark purple & lime color scheme - bold and memorable */
-  --background: 260 25% 98%;
-  --foreground: 260 60% 15%;
-  --muted: 260 30% 94%;
-  --muted-foreground: 260 15% 40%;
+  /* Modern color palette with blue-teal primary theme */
+  --background: 210 50% 98%;
+  --foreground: 220 25% 15%;
+  --muted: 210 40% 93%;
+  --muted-foreground: 220 10% 40%;
   --popover: 0 0% 100%;
-  --popover-foreground: 260 60% 15%;
+  --popover-foreground: 220 25% 15%;
   --card: 0 0% 100%;
-  --card-foreground: 260 60% 15%;
-  --border: 260 15% 92%;
-  --input: 260 15% 92%;
+  --card-foreground: 220 25% 15%;
+  --border: 214 10% 90%;
+  --input: 214 10% 90%;
   
-  /* Primary - deep purple */
-  --primary: 265 80% 40%;
+  /* Updated primary colors - teal blue */
+  --primary: 195 85% 41%;
   --primary-foreground: 0 0% 100%;
   
-  /* Secondary - electric lime */
-  --secondary: 75 95% 50%;
-  --secondary-foreground: 260 60% 15%;
+  /* Updated secondary colors - soft coral */
+  --secondary: 10 95% 70%;
+  --secondary-foreground: 10 10% 15%;
   
   /* Other UI elements */
-  --accent: 265 80% 96%;
-  --accent-foreground: 265 80% 30%;
-  --destructive: 0 85% 60%;
+  --accent: 199 75% 95%;
+  --accent-foreground: 195 85% 30%;
+  --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 100%;
-  --ring: 265 80% 40%;
-  --radius: 1rem;
+  --ring: 195 85% 41%;
+  --radius: 0.75rem;
   
   /* Chart colors */
-  --chart-1: 265 80% 40%;
-  --chart-2: 75 95% 50%;
-  --chart-3: 320 80% 50%;
-  --chart-4: 190 95% 50%;
-  --chart-5: 35 95% 50%;
+  --chart-1: 195 85% 41%;
+  --chart-2: 10 95% 70%;
+  --chart-3: 162 67% 40%;
+  --chart-4: 40 96% 62%;
+  --chart-5: 220 70% 60%;
   
   /* Sidebar styles */
-  --sidebar-background: 265 60% 20%;
+  --sidebar-background: 220 35% 18%;
   --sidebar-foreground: 0 0% 100%;
-  --sidebar-primary: 75 95% 50%;
-  --sidebar-primary-foreground: 260 60% 15%;
-  --sidebar-accent: 265 40% 30%;
-  --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-border: 265 30% 25%;
-  --sidebar-ring: 75 95% 50%;
+  --sidebar-primary: 195 85% 41%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 199 75% 95%;
+  --sidebar-accent-foreground: 195 85% 30%;
+  --sidebar-border: 220 30% 25%;
+  --sidebar-ring: 195 85% 41%;
 }
 
 .dark {
-  /* Dark mode with deep purple background and neon accents */
-  --background: 270 40% 8%;
-  --foreground: 0 0% 98%;
-  --muted: 270 35% 15%;
-  --muted-foreground: 270 20% 70%;
-  --popover: 270 40% 8%;
-  --popover-foreground: 0 0% 98%;
-  --card: 270 35% 12%;
-  --card-foreground: 0 0% 98%;
-  --border: 270 30% 18%;
-  --input: 270 30% 18%;
+  /* Modern dark mode with blue-teal accents */
+  --background: 222 47% 11%;
+  --foreground: 210 40% 98%;
+  --muted: 223 47% 20%;
+  --muted-foreground: 215 20% 70%;
+  --popover: 222 47% 11%;
+  --popover-foreground: 210 40% 98%;
+  --card: 222 47% 14%;
+  --card-foreground: 210 40% 98%;
+  --border: 216 34% 17%;
+  --input: 216 34% 17%;
   
-  /* Bright lime primary for dark mode - really pops! */
-  --primary: 75 100% 55%;
-  --primary-foreground: 270 50% 15%;
+  /* Keep brand colors consistent but adjusted for dark mode */
+  --primary: 195 70% 50%;
+  --primary-foreground: 0 0% 100%;
   
-  /* Secondary - hot pink accent */
-  --secondary: 325 100% 60%;
+  --secondary: 10 70% 60%;
   --secondary-foreground: 0 0% 100%;
   
   /* Other UI elements */
-  --accent: 270 50% 25%;
-  --accent-foreground: 270 100% 85%;
-  --destructive: 0 80% 55%;
+  --accent: 199 50% 30%;
+  --accent-foreground: 200 100% 85%;
+  --destructive: 0 60% 50%;
   --destructive-foreground: 0 0% 100%;
-  --ring: 75 100% 55%;
-  --radius: 1rem;
+  --ring: 195 70% 50%;
+  --radius: 0.75rem;
+  
+  /* Sidebar styles can remain the same in dark mode */
 }
 
 @layer base {
@@ -97,65 +98,26 @@
   }
 }
 
-/* Redesigned UI Components */
+/* Modern UI Classes */
 @layer components {
-  /* Neumorphic card with soft shadow */
-  .neumorphic-card {
-    @apply bg-white dark:bg-gray-900 rounded-2xl shadow-[8px_8px_16px_0px_rgba(0,0,0,0.1),-8px_-8px_16px_0px_rgba(255,255,255,0.8)] dark:shadow-[5px_5px_10px_0px_rgba(0,0,0,0.5),inset_1px_1px_1px_rgba(225,225,225,0.1)];
+  .glass-card {
+    @apply bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border border-white/20 dark:border-gray-800/30 shadow-lg;
   }
   
-  /* High contrast card with geometric accent */
-  .accent-card {
-    @apply relative bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-md overflow-hidden;
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
   }
   
-  .accent-card::before {
-    content: '';
-    @apply absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary to-secondary;
+  .modern-input {
+    @apply bg-white dark:bg-gray-900 border-0 shadow-sm ring-1 ring-gray-200 dark:ring-gray-800 focus:ring-2 focus:ring-primary;
   }
   
-  /* Futuristic input with glow effect */
-  .futuristic-input {
-    @apply bg-white/10 dark:bg-gray-900/10 backdrop-blur-sm border-0 rounded-xl py-3 px-4 ring-1 ring-primary/20 dark:ring-primary/10 focus:ring-2 focus:ring-primary focus:bg-white/30 dark:focus:bg-gray-900/30 focus:shadow-[0_0_10px_rgba(var(--primary)/0.3)] transition-all duration-300;
+  .gradient-border {
+    @apply relative before:absolute before:inset-0 before:p-[1px] before:rounded-[inherit] before:bg-gradient-to-r before:from-primary before:to-secondary before:opacity-50 before:-z-10;
   }
   
-  /* Pill button */
-  .pill-button {
-    @apply px-6 py-2 rounded-full bg-primary text-primary-foreground hover:shadow-[0_0_15px_rgba(var(--primary)/0.5)] transition-all duration-300;
-  }
-  
-  /* Neo-brutalist section title */
-  .brutalist-title {
-    @apply text-2xl font-bold uppercase tracking-wider mb-6 inline-block bg-secondary text-secondary-foreground px-4 py-1 -rotate-1 shadow-md border-b-4 border-r-4 border-primary;
-  }
-  
-  /* Gentle section title */
   .section-title {
-    @apply text-xl font-semibold text-foreground/90 mb-4 relative pl-4;
-  }
-  
-  .section-title::before {
-    content: '';
-    @apply absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-primary to-secondary rounded-full;
-  }
-  
-  /* Glowing card */
-  .glow-card {
-    @apply relative bg-gradient-to-br from-background to-white dark:from-gray-900 dark:to-gray-800 rounded-2xl p-6 shadow-md transition-all duration-500;
-  }
-  
-  .glow-card:hover {
-    @apply shadow-[0_5px_20px_rgba(var(--primary)/0.4)];
-  }
-  
-  /* Gradient text highlight for important elements */
-  .highlight-text {
-    @apply relative inline-block;
-  }
-  
-  .highlight-text::after {
-    content: '';
-    @apply absolute bottom-0 left-0 w-full h-[30%] bg-gradient-to-r from-secondary/30 to-primary/30 -z-10 rounded-md -rotate-1;
+    @apply text-xl font-semibold text-foreground/90 mb-4 border-l-4 border-primary pl-3 py-1;
   }
 }
 
@@ -179,24 +141,22 @@
 }
 
 /* Font utility classes */
-.font-outfit {
-  font-family: 'Outfit', sans-serif;
+.font-inter {
+  font-family: 'Inter', sans-serif;
 }
 
-.font-sora {
-  font-family: 'Sora', sans-serif;
+.font-jakarta {
+  font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
-/* Apply Sora to headings - more personality */
+/* Apply Jakarta Sans to headings */
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Sora', sans-serif;
-  letter-spacing: -0.02em;
+  font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
-/* Apply Outfit to body text - highly legible */
+/* Apply Inter to body text */
 body {
-  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
-  letter-spacing: 0.01em;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 /* Typography utilities */
