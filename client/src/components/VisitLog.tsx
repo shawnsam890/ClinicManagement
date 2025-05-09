@@ -83,6 +83,13 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
     }
   }, [visit]);
 
+  // Initialize attachments from visit data
+  useEffect(() => {
+    if (visit && visit.attachments) {
+      setAttachments(Array.isArray(visit.attachments) ? visit.attachments : []);
+    }
+  }, [visit]);
+
   // Update visit mutation
   const updateVisitMutation = useMutation({
     mutationFn: async (updatedData: Partial<PatientVisit>) => {
@@ -108,7 +115,7 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
 
   // Handle form input changes
   const handleInputChange = (field: keyof PatientVisit, value: string) => {
-    setVisitData((prev) => ({
+    setVisitData((prev: any) => ({
       ...prev,
       [field]: value,
     }));
@@ -119,20 +126,6 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
     // Only update the specific field that was changed
     updateVisitMutation.mutate({ [field]: visitData[field] });
   };
-
-  if (isLoading) {
-    return <div className="p-4">Loading visit data...</div>;
-  }
-
-  if (showInvoice) {
-    return (
-      <Invoice 
-        patientId={patientId} 
-        visitId={visitId}
-        onBack={() => setShowInvoice(false)}
-      />
-    );
-  }
 
   // Handle consent form completion
   const handleConsentFormComplete = () => {
@@ -176,7 +169,7 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
       const visitResponse = await fetch(`/api/visits/${visitId}`);
       const visitData = await visitResponse.json();
       if (visitData.attachments) {
-        setAttachments(visitData.attachments);
+        setAttachments(Array.isArray(visitData.attachments) ? visitData.attachments : []);
       }
     } catch (error) {
       console.error(`Error uploading ${fileType}:`, error);
@@ -188,12 +181,19 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
     }
   };
 
-  // Initialize attachments from visit data
-  useEffect(() => {
-    if (visit && visit.attachments) {
-      setAttachments(Array.isArray(visit.attachments) ? visit.attachments : []);
-    }
-  }, [visit]);
+  if (isLoading) {
+    return <div className="p-4">Loading visit data...</div>;
+  }
+
+  if (showInvoice) {
+    return (
+      <Invoice 
+        patientId={patientId} 
+        visitId={visitId}
+        onBack={() => setShowInvoice(false)}
+      />
+    );
+  }
 
   // Render consent form if active
   if (showConsentForm) {
@@ -448,9 +448,9 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
                   {attachments.map((attachment, index) => (
                     <div key={index} className="flex items-center p-2 rounded-lg border bg-neutral-50">
                       <div className="mr-3">
-                        {attachment.type.includes('image') ? (
+                        {attachment.type?.includes('image') ? (
                           <Image className="h-6 w-6 text-primary" />
-                        ) : attachment.type.includes('video') ? (
+                        ) : attachment.type?.includes('video') ? (
                           <Video className="h-6 w-6 text-primary" />
                         ) : (
                           <File className="h-6 w-6 text-primary" />
