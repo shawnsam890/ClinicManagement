@@ -66,8 +66,11 @@ export default function Settings() {
   
   // Signature states
   const signatureRef = useRef<SignatureCanvas | null>(null);
+  const signatureFileInputRef = useRef<HTMLInputElement>(null);
   const [doctorName, setDoctorName] = useState("");
   const [editingSignatureId, setEditingSignatureId] = useState<number | null>(null);
+  const [useImageUpload, setUseImageUpload] = useState(false);
+  const [uploadedSignatureImage, setUploadedSignatureImage] = useState<string | null>(null);
   
   // Medication management states
   const [medicationName, setMedicationName] = useState("");
