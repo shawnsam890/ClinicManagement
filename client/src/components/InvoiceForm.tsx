@@ -28,14 +28,15 @@ const invoiceFormSchema = z.object({
   items: z.array(
     z.object({
       description: z.string().min(1, { message: "Description is required" }),
-      rate: z.coerce.number().min(1, { message: "Rate must be at least 1" }),
-      amount: z.coerce.number().min(1, { message: "Amount must be at least 1" }),
+      amount: z.coerce.number().min(0, { message: "Amount must be a positive number" }),
     })
   ),
   status: z.string().min(1, { message: "Status is required" }),
   paymentMethod: z.string().optional(),
   notes: z.string().optional(),
   totalAmount: z.coerce.number(),
+  paidAmount: z.coerce.number().optional(),
+  balanceAmount: z.coerce.number().optional(),
 });
 
 type InvoiceFormValues = z.infer<typeof invoiceFormSchema>;
@@ -58,17 +59,21 @@ export default function InvoiceForm({ patientId, initialData, onSave, onCancel }
     resolver: zodResolver(invoiceFormSchema),
     defaultValues: initialData ? {
       ...initialData,
-      date: initialData.date || today
+      date: initialData.date || today,
+      paidAmount: initialData.paidAmount || 0,
+      balanceAmount: initialData.balanceAmount || 0
     } : {
       patientId,
       date: today,
       items: [
-        { description: "", rate: 0, amount: 0 }
+        { description: "", amount: 0 }
       ],
       status: "Pending",
       paymentMethod: "",
       notes: "",
-      totalAmount: 0
+      totalAmount: 0,
+      paidAmount: 0,
+      balanceAmount: 0
     }
   });
   
@@ -78,29 +83,40 @@ export default function InvoiceForm({ patientId, initialData, onSave, onCancel }
     name: "items",
   });
   
-  // Calculate amount when rate changes (quantity is now fixed at 1)
-  const calculateAmount = (index: number) => {
+  // Calculate totals and balance
+  const calculateTotals = () => {
     setCalculatingTotals(true);
-    const rate = form.getValues(`items.${index}.rate`);
-    const amount = rate; // Amount is now equal to rate since quantity is fixed at 1
     
-    form.setValue(`items.${index}.amount`, amount);
-    
-    // Calculate total
+    // Calculate total amount
     const items = form.getValues("items");
     const total = items.reduce((sum, item) => sum + (item.amount || 0), 0);
     form.setValue("totalAmount", total);
+    
+    // Calculate balance amount
+    const paidAmount = form.getValues("paidAmount") || 0;
+    const balance = total - paidAmount;
+    form.setValue("balanceAmount", balance);
+    
+    // Update status automatically if paid amount equals total amount
+    if (paidAmount >= total && total > 0) {
+      form.setValue("status", "Paid");
+    } else if (paidAmount > 0 && paidAmount < total) {
+      form.setValue("status", "Partially Paid");
+    } else if (total > 0) {
+      form.setValue("status", "Pending");
+    }
     
     setCalculatingTotals(false);
   };
   
   // Handle form submission
   const onSubmit = (data: InvoiceFormValues) => {
-    // Final calculation of total
-    const total = data.items.reduce((sum, item) => sum + item.amount, 0);
-    data.totalAmount = total;
+    // Final calculation
+    calculateTotals();
     
-    onSave(data);
+    // Get the latest values after calculation
+    const formData = form.getValues();
+    onSave(formData);
   };
   
   return (
@@ -129,16 +145,15 @@ export default function InvoiceForm({ patientId, initialData, onSave, onCancel }
           <h3 className="text-md font-medium mb-2">Invoice Items</h3>
           
           {/* Header */}
-          <div className="grid grid-cols-[3fr_1fr_1fr_auto] gap-2 items-center mb-2">
+          <div className="grid grid-cols-[4fr_1fr_auto] gap-2 items-center mb-2">
             <FormLabel className="text-sm">Description</FormLabel>
-            <FormLabel className="text-sm">Rate (₹)</FormLabel>
             <FormLabel className="text-sm">Amount (₹)</FormLabel>
             <span></span>
           </div>
           
           {/* Items */}
           {fields.map((field, index) => (
-            <div key={field.id} className="grid grid-cols-[3fr_1fr_1fr_auto] gap-2 items-center mb-2">
+            <div key={field.id} className="grid grid-cols-[4fr_1fr_auto] gap-2 items-center mb-2">
               <FormField
                 control={form.control}
                 name={`items.${index}.description`}
@@ -154,7 +169,7 @@ export default function InvoiceForm({ patientId, initialData, onSave, onCancel }
               
               <FormField
                 control={form.control}
-                name={`items.${index}.rate`}
+                name={`items.${index}.amount`}
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
@@ -162,25 +177,13 @@ export default function InvoiceForm({ patientId, initialData, onSave, onCancel }
                         {...field} 
                         type="number" 
                         min="0" 
-                        placeholder="Rate" 
+                        placeholder="Amount" 
                         onChange={(e) => {
                           field.onChange(e);
-                          calculateAmount(index);
+                          // Recalculate totals when amount changes
+                          setTimeout(() => calculateTotals(), 0);
                         }}
                       />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name={`items.${index}.amount`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input {...field} type="number" min="0" placeholder="Amount" readOnly />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -203,29 +206,73 @@ export default function InvoiceForm({ patientId, initialData, onSave, onCancel }
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => append({ description: "", rate: 0, amount: 0 })}
+            onClick={() => append({ description: "", amount: 0 })}
             className="mt-2"
           >
             <PlusCircle className="h-4 w-4 mr-2" /> Add Item
           </Button>
         </div>
         
-        {/* Total Amount */}
-        <FormField
-          control={form.control}
-          name="totalAmount"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex justify-between items-center">
-                <FormLabel>Total Amount (₹)</FormLabel>
-                <div className="text-xl font-bold">
-                  ₹{field.value.toFixed(2)}
+        {/* Amounts */}
+        <div className="space-y-4 border-t pt-4">
+          <FormField
+            control={form.control}
+            name="totalAmount"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex justify-between items-center">
+                  <FormLabel>Total Amount (₹)</FormLabel>
+                  <div className="text-xl font-bold">
+                    ₹{(field.value || 0).toFixed(2)}
+                  </div>
                 </div>
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="paidAmount"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex justify-between items-center">
+                  <FormLabel>Paid Amount (₹)</FormLabel>
+                  <FormControl>
+                    <Input 
+                      {...field} 
+                      type="number" 
+                      min="0" 
+                      className="w-32 text-right" 
+                      onChange={(e) => {
+                        field.onChange(e);
+                        // Recalculate balances when paid amount changes
+                        setTimeout(() => calculateTotals(), 0);
+                      }}
+                    />
+                  </FormControl>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="balanceAmount"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex justify-between items-center">
+                  <FormLabel>Balance Amount (₹)</FormLabel>
+                  <div className="text-lg font-semibold text-red-600">
+                    ₹{(field.value || 0).toFixed(2)}
+                  </div>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
         
         {/* Status */}
         <FormField
