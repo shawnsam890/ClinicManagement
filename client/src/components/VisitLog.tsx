@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 import ToothFindingsSection from "@/components/ToothFindingsSection";
 import GeneralizedFindingsSection from "@/components/GeneralizedFindingsSection";
@@ -21,7 +22,7 @@ import PrescriptionForm from "@/components/PrescriptionForm";
 import Invoice from "@/components/Invoice";
 import ConsentForm from "@/components/ConsentForm";
 
-import { Image, Video, Upload, FileCheck, X, FileText, Camera, File, Trash, Eye } from "lucide-react";
+import { Image, Video, Upload, FileCheck, X, FileText, Camera, File, Trash, Eye, Printer } from "lucide-react";
 import { PatientVisit, InsertPatientVisit } from "@shared/schema";
 
 interface VisitLogProps {
@@ -30,12 +31,28 @@ interface VisitLogProps {
   onBack?: () => void;
 }
 
+// Interface for the consent form preview data
+interface ConsentFormPreview {
+  image: string;
+  title: string;
+  timestamp: string;
+  patientInfo?: {
+    name: string;
+    address: string;
+    phone: string;
+    date?: string;
+  };
+}
+
 export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) {
   const { toast } = useToast();
   const [visitData, setVisitData] = useState<Partial<PatientVisit>>({});
   const [showInvoice, setShowInvoice] = useState(false);
   const [showConsentForm, setShowConsentForm] = useState<string | null>(null);
   const [attachments, setAttachments] = useState<any[]>([]);
+  // State for the consent form preview dialog
+  const [previewForm, setPreviewForm] = useState<ConsentFormPreview | null>(null);
+  const [showPreviewDialog, setShowPreviewDialog] = useState(false);
 
   // Fetch visit data
   const { data: visit, isLoading } = useQuery<PatientVisit>({
@@ -136,6 +153,88 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
       description: "Consent form added successfully."
     });
   };
+  
+  // Function to handle printing the consent form
+  const handlePrintConsentForm = () => {
+    // Create a new window with just the image
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast({
+        title: "Error",
+        description: "Could not open print preview. Please check your popup blocker settings.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Write the HTML content to the new window
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${previewForm?.title || 'Consent Form'}</title>
+          <style>
+            body {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              font-family: Arial, sans-serif;
+              padding: 20px;
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 20px;
+            }
+            .patient-info {
+              width: 100%;
+              max-width: 800px;
+              margin-bottom: 20px;
+              font-size: 14px;
+            }
+            .image-container {
+              max-width: 800px;
+              width: 100%;
+            }
+            img {
+              width: 100%;
+              height: auto;
+            }
+            .timestamp {
+              margin-top: 20px;
+              font-size: 12px;
+              color: #666;
+            }
+            @media print {
+              button {
+                display: none;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h2>${previewForm?.title || 'Consent Form'}</h2>
+          </div>
+          <div class="patient-info">
+            <p><strong>Patient Name:</strong> ${previewForm?.patientInfo?.name || 'Not provided'}</p>
+            <p><strong>Address:</strong> ${previewForm?.patientInfo?.address || 'Not provided'}</p>
+            <p><strong>Phone:</strong> ${previewForm?.patientInfo?.phone || 'Not provided'}</p>
+            <p><strong>Date:</strong> ${previewForm?.patientInfo?.date ? new Date(previewForm.patientInfo.date).toLocaleDateString() : new Date(previewForm?.timestamp || '').toLocaleDateString()}</p>
+          </div>
+          <div class="image-container">
+            <img src="${previewForm?.image || ''}" alt="Consent Form" />
+          </div>
+          <div class="timestamp">
+            <p>Signed on: ${new Date(previewForm?.timestamp || '').toLocaleString()}</p>
+          </div>
+          <button style="margin-top: 20px; padding: 10px; background: #0077cc; color: white; border: none; border-radius: 4px; cursor: pointer;" onclick="window.print(); return false;">
+            Print
+          </button>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
 
   // Handle file upload
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, fileType: string) => {
@@ -208,6 +307,59 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
 
   return (
     <Card className="border-none shadow-none">
+      {/* Consent Form Preview Dialog */}
+      <Dialog open={showPreviewDialog} onOpenChange={setShowPreviewDialog}>
+        <DialogContent className="max-w-3xl h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>{previewForm?.title || 'Consent Form'}</DialogTitle>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-auto p-4">
+            {/* Patient Info */}
+            <div className="mb-4 p-3 bg-gray-50 rounded-md">
+              <p className="font-semibold mb-2">Patient Information:</p>
+              <div className="text-sm grid grid-cols-2 gap-2">
+                <p><span className="font-medium">Name:</span> {previewForm?.patientInfo?.name || 'Not provided'}</p>
+                <p><span className="font-medium">Phone:</span> {previewForm?.patientInfo?.phone || 'Not provided'}</p>
+                <p><span className="font-medium">Address:</span> {previewForm?.patientInfo?.address || 'Not provided'}</p>
+                <p><span className="font-medium">Date:</span> {previewForm?.patientInfo?.date ? new Date(previewForm.patientInfo.date).toLocaleDateString() : new Date(previewForm?.timestamp || '').toLocaleDateString()}</p>
+              </div>
+            </div>
+            
+            {/* Image Container */}
+            <div className="bg-white border rounded-md overflow-hidden">
+              {previewForm?.image && (
+                <img 
+                  src={previewForm.image} 
+                  alt="Consent Form" 
+                  className="w-full h-auto object-contain" 
+                />
+              )}
+            </div>
+            
+            <div className="mt-3 text-xs text-gray-500 text-right">
+              Signed on: {previewForm?.timestamp ? new Date(previewForm.timestamp).toLocaleString() : ''}
+            </div>
+          </div>
+          
+          <DialogFooter className="flex justify-end space-x-2">
+            <Button 
+              onClick={handlePrintConsentForm}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Printer className="h-4 w-4 mr-2" />
+              Print Form
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowPreviewDialog(false)}
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
       <CardHeader className="px-0 pt-0">
         <div className="flex items-center justify-between mb-4">
           <CardTitle className="text-xl font-semibold">Visit Log</CardTitle>
@@ -617,9 +769,26 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
                             if (form.type === 'signature') {
                               // Show modal with the signed form image
                               if (form.patientSignature) {
-                                // Open the signed form image in a new tab
-                                // This is better than using a modal for image viewing
-                                window.open(form.patientSignature, '_blank');
+                                const formTitle = form.formType === 'extraction' 
+                                  ? 'Extraction Consent Form' 
+                                  : form.formType === 'root_canal'
+                                    ? 'Root Canal Consent Form'
+                                    : 'Custom Consent Form';
+                                    
+                                // Set the preview form data for the dialog
+                                setPreviewForm({
+                                  image: form.patientSignature,
+                                  title: formTitle,
+                                  timestamp: form.timestamp,
+                                  patientInfo: form.patientInfo || {
+                                    name: 'Not provided',
+                                    address: 'Not provided',
+                                    phone: 'Not provided',
+                                    date: form.timestamp
+                                  }
+                                });
+                                // Open the dialog
+                                setShowPreviewDialog(true);
                               } else {
                                 // Fallback if no image
                                 toast({
@@ -629,9 +798,9 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
                                 });
                               }
                             } else {
-                              // For uploaded forms, open in a new tab
-                              if (form.patientSignature) {
-                                window.open(form.patientSignature, '_blank');
+                              // For uploaded forms, show in dialog or open in new tab
+                              if (form.data) {
+                                window.open(form.data, '_blank');
                               } else {
                                 toast({
                                   title: "Error",
