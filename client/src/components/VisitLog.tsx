@@ -22,7 +22,7 @@ import PrescriptionForm from "@/components/PrescriptionForm";
 import Invoice from "@/components/Invoice";
 import ConsentForm from "@/components/ConsentForm";
 
-import { Image, Video, Upload, FileCheck, X, FileText, Camera, File, Trash, Eye, Printer } from "lucide-react";
+import { Image, Video, Upload, FileCheck, X, FileText, Camera, File, Trash, Eye, Printer, CheckCircle } from "lucide-react";
 import { PatientVisit, InsertPatientVisit, Invoice as InvoiceType } from "@shared/schema";
 
 interface VisitLogProps {
@@ -163,7 +163,7 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
 
   // Handle form input changes
   const handleInputChange = (field: keyof PatientVisit, value: string) => {
-    setVisitData((prev: any) => ({
+    setVisitData((prev) => ({
       ...prev,
       [field]: value,
     }));
@@ -407,694 +407,806 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
 
   return (
     <Card className="border-none shadow-none bg-transparent">
-      {/* Consent Form Preview Dialog */}
-      <Dialog open={showPreviewDialog} onOpenChange={setShowPreviewDialog}>
-        <DialogContent className="max-w-3xl h-[80vh] flex flex-col glass-card">
-          <DialogHeader>
-            <DialogTitle className="text-gradient font-bold text-2xl">{previewForm?.title || 'Consent Form'}</DialogTitle>
-          </DialogHeader>
+      <CardContent>
+        {/* Consent Form Preview Dialog */}
+        <Dialog open={showPreviewDialog} onOpenChange={setShowPreviewDialog}>
+          <DialogContent className="max-w-3xl h-[80vh] flex flex-col glass-card">
+            <DialogHeader>
+              <DialogTitle className="text-gradient font-bold text-2xl">{previewForm?.title || 'Consent Form'}</DialogTitle>
+            </DialogHeader>
 
-          <div className="flex-1 overflow-auto p-4">
-            {/* Patient Info */}
-            <div className="mb-4 p-3 bg-gray-50 rounded-md">
-              <p className="font-semibold mb-2">Patient Information:</p>
-              <div className="text-sm grid grid-cols-2 gap-2">
-                <p><span className="font-medium">Name:</span> {previewForm?.patientInfo?.name || 'Not provided'}</p>
-                <p><span className="font-medium">Phone:</span> {previewForm?.patientInfo?.phone || 'Not provided'}</p>
-                <p><span className="font-medium">Address:</span> {previewForm?.patientInfo?.address || 'Not provided'}</p>
-                <p><span className="font-medium">Date:</span> {previewForm?.patientInfo?.date ? new Date(previewForm.patientInfo.date).toLocaleDateString() : new Date(previewForm?.timestamp || '').toLocaleDateString()}</p>
-              </div>
-            </div>
-            
-            {/* Image Container */}
-            <div className="bg-white border rounded-md overflow-hidden">
-              {previewForm?.image && (
-                <img 
-                  src={previewForm.image} 
-                  alt="Consent Form" 
-                  className="w-full h-auto object-contain" 
-                />
-              )}
-            </div>
-            
-            {/* Signatures Section */}
-            <div className="mt-4 flex flex-wrap gap-4">
-              {/* Doctor Signature */}
-              {previewForm?.doctorSignature && (
-                <div className="flex-1 min-w-[200px] border rounded-md p-3 bg-white">
-                  <p className="text-xs font-medium mb-2">Doctor's Signature:</p>
-                  <div className="flex items-center">
-                    <img 
-                      src={previewForm.doctorSignature} 
-                      alt="Doctor Signature" 
-                      className="h-16 object-contain border p-1 rounded"
-                    />
-                    {previewForm.doctorName && (
-                      <p className="ml-2 text-xs">{previewForm.doctorName}</p>
-                    )}
-                  </div>
+            <div className="flex-1 overflow-auto p-4">
+              {/* Patient Info */}
+              <div className="mb-4 p-3 bg-gray-50 rounded-md">
+                <p className="font-semibold mb-2">Patient Information:</p>
+                <div className="text-sm grid grid-cols-2 gap-2">
+                  <p><span className="font-medium">Name:</span> {previewForm?.patientInfo?.name || 'Not provided'}</p>
+                  <p><span className="font-medium">Phone:</span> {previewForm?.patientInfo?.phone || 'Not provided'}</p>
+                  <p><span className="font-medium">Address:</span> {previewForm?.patientInfo?.address || 'Not provided'}</p>
+                  <p><span className="font-medium">Date:</span> {previewForm?.patientInfo?.date ? new Date(previewForm.patientInfo.date).toLocaleDateString() : new Date(previewForm?.timestamp || '').toLocaleDateString()}</p>
                 </div>
-              )}
-            </div>
-            
-            <div className="mt-3 text-xs text-gray-500 text-right">
-              Signed on: {previewForm?.timestamp ? new Date(previewForm.timestamp).toLocaleString() : ''}
-            </div>
-          </div>
-          
-          <DialogFooter className="flex justify-end space-x-2">
-            <Button 
-              onClick={handlePrintConsentForm}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              <Printer className="h-4 w-4 mr-2" />
-              Print Form
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => setShowPreviewDialog(false)}
-            >
-              Close
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      <CardHeader className="px-0 pt-0">
-        <div className="flex items-center justify-between mb-4">
-          <CardTitle className="text-xl font-semibold">Visit Log</CardTitle>
-          {onBack && (
-            <Button variant="outline" onClick={onBack}>
-              Back to Visits
-            </Button>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className="px-0 space-y-8">
-        {/* Chief Complaint Section - Two Columns */}
-        <div className="rounded-xl bg-white p-6 shadow-md border border-gray-100">
-          <h3 className="section-title mb-5">Chief Complaint</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="space-y-2">
-              <Label className="text-foreground/80 font-medium">Complaint</Label>
-              <Select 
-                value={visitData.chiefComplaint || ''} 
-                onValueChange={(value) => handleInputChange('chiefComplaint', value)}
-              >
-                <SelectTrigger className="modern-input">
-                  <SelectValue placeholder="Select complaint" />
-                </SelectTrigger>
-                <SelectContent>
-                  {complaintOptions.map((option: string, index: number) => (
-                    <SelectItem key={index} value={option}>{option}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-foreground/80 font-medium">Location/Area</Label>
-              <Select 
-                value={visitData.areaOfComplaint || ''} 
-                onValueChange={(value) => handleInputChange('areaOfComplaint', value)}
-              >
-                <SelectTrigger className="modern-input">
-                  <SelectValue placeholder="Select area" />
-                </SelectTrigger>
-                <SelectContent>
-                  {areaOptions.map((option: string, index: number) => (
-                    <SelectItem key={index} value={option}>{option}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="flex justify-end mt-4">
-            <Button 
-              size="sm" 
-              className="bg-primary hover:bg-primary/90 font-medium"
-              onClick={() => {
-                // Save both fields at once
-                updateVisitMutation.mutate({
-                  chiefComplaint: visitData.chiefComplaint,
-                  areaOfComplaint: visitData.areaOfComplaint
-                });
-              }}
-            >
-              Save Changes
-            </Button>
-          </div>
-        </div>
-
-        <Separator />
-
-        {/* Oral Examination Section */}
-        <div className="space-y-3">
-          <Label className="text-base font-semibold">Oral Examination</Label>
-          
-          {/* Tooth Findings Component */}
-          <ToothFindingsSection visitId={visitId} />
-          
-          {/* Generalized Findings Component */}
-          <GeneralizedFindingsSection visitId={visitId} />
-        </div>
-
-        <Separator />
-
-        {/* Investigation Section */}
-        <div className="space-y-3">
-          <Label className="text-base font-semibold">Investigation Done</Label>
-          <InvestigationSection visitId={visitId} />
-        </div>
-
-        <Separator />
-
-        {/* Treatment Plan Section */}
-        <div className="rounded-xl bg-white p-6 shadow-md border border-gray-100">
-          <h3 className="section-title mb-5">Treatment Plan</h3>
-          <div className="space-y-3">
-            <Label className="text-foreground/80 font-medium">Recommended Plan</Label>
-            <Select 
-              value={visitData.treatmentPlan || ''} 
-              onValueChange={(value) => handleInputChange('treatmentPlan', value)}
-            >
-              <SelectTrigger className="modern-input">
-                <SelectValue placeholder="Select treatment plan" />
-              </SelectTrigger>
-              <SelectContent>
-                {treatmentPlanOptions.map((option: string, index: number) => (
-                  <SelectItem key={index} value={option}>{option}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div className="flex justify-end mt-3">
-              <Button 
-                size="sm" 
-                className="bg-primary hover:bg-primary/90 font-medium"
-                onClick={() => handleSave('treatmentPlan')}
-              >
-                Save Changes
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <Separator />
-
-        {/* Treatment Done Section */}
-        <div className="rounded-xl bg-white p-6 shadow-md border border-gray-100">
-          <h3 className="section-title mb-5">Completed Treatment</h3>
-          <div className="space-y-4">
-            <div className="flex items-start mb-2">
-              <CheckCircle className="text-green-500 h-5 w-5 mr-2 mt-0.5" />
-              <div>
-                <Label className="text-foreground/80 font-medium">Procedure Performed</Label>
-                <p className="text-xs text-foreground/60 mt-0.5">Record the treatment that was actually performed during this visit</p>
               </div>
-            </div>
-            <Select 
-              value={visitData.treatmentDone || ''} 
-              onValueChange={(value) => handleInputChange('treatmentDone', value)}
-            >
-              <SelectTrigger className="modern-input">
-                <SelectValue placeholder="Select treatment done" />
-              </SelectTrigger>
-              <SelectContent>
-                {treatmentDoneOptions.map((option: string, index: number) => (
-                  <SelectItem key={index} value={option}>{option}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div className="flex justify-end mt-3">
-              <Button 
-                size="sm" 
-                className="bg-primary hover:bg-primary/90 font-medium"
-                onClick={() => handleSave('treatmentDone')}
-              >
-                Save Changes
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <Separator />
-
-        {/* Prescription Section */}
-        <div className="rounded-xl bg-white p-6 shadow-md border border-gray-100">
-          <h3 className="section-title mb-5">Rx (Prescription)</h3>
-          <div className="bg-purple-50/50 border border-purple-100 rounded-lg p-3 mb-4">
-            <div className="flex items-start">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="text-purple-500 mt-0.5 mr-2"
-              >
-                <path d="m3 2 2 5h6L9 2" /><path d="M4 7v12a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V7" /><path d="M12 13a3 3 0 0 0 3-3" /><path d="M13 10h5" /><path d="M13 14h5" /><path d="M13 18h5" /><path d="M9 13v5" /><path d="M6 13h6" />
-              </svg>
-              <div className="text-sm text-purple-800">
-                <p className="font-medium mb-1">Medications & Instructions</p>
-                <p className="text-purple-700/80 text-xs">
-                  Prescribe medications with complete instructions for patient treatment
-                </p>
+              
+              {/* Image Container */}
+              <div className="bg-white border rounded-md overflow-hidden">
+                {previewForm?.image && (
+                  <img 
+                    src={previewForm.image} 
+                    alt="Consent Form" 
+                    className="w-full h-auto object-contain" 
+                  />
+                )}
               </div>
-            </div>
-          </div>
-          <PrescriptionForm 
-            visitId={visitId} 
-            patientId={patientId}
-          />
-        </div>
-
-        <Separator />
-
-        {/* Advice Section */}
-        <div className="space-y-3">
-          <Label className="text-base font-semibold">Advice</Label>
-          <Select 
-            value={visitData.advice || ''} 
-            onValueChange={(value) => handleInputChange('advice', value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select advice" />
-            </SelectTrigger>
-            <SelectContent>
-              {adviceOptions.map((option: string, index: number) => (
-                <SelectItem key={index} value={option}>{option}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button size="sm" onClick={() => handleSave('advice')}>
-            Save
-          </Button>
-        </div>
-
-        <Separator />
-
-        {/* Notes Section */}
-        <div className="space-y-3">
-          <Label className="text-base font-semibold">Notes</Label>
-          <Textarea 
-            value={visitData.notes || ''} 
-            onChange={(e) => handleInputChange('notes', e.target.value)}
-            className="min-h-[100px]"
-            placeholder="Enter any additional notes"
-          />
-          <Button size="sm" onClick={() => handleSave('notes')}>
-            Save
-          </Button>
-        </div>
-
-        <Separator />
-
-        {/* Invoice Section */}
-        <div className="rounded-xl bg-white p-6 shadow-md border border-gray-100">
-          <h3 className="section-title mb-5">Invoice Management</h3>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-foreground/70 mb-1">
-                Create and manage patient invoices and payment records
-              </p>
-              <div className="text-xs flex items-center text-foreground/60">
-                <span className={`inline-block h-2 w-2 rounded-full mr-1 ${visitInvoices?.length ? 'bg-green-500' : 'bg-amber-500'}`}></span>
-                {visitInvoices?.length ? `${visitInvoices.length} invoice(s) created` : 'No invoices created yet'}
-              </div>
-            </div>
-            <Button 
-              className="bg-primary hover:bg-primary/90 text-white font-medium card-hover"
-              onClick={() => setShowInvoice(true)}
-            >
-              <span className="mr-2">View Invoice</span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M20 6c0 1-1 2-2 2h-4a2 2 0 0 1-2-2V4c0-1 1-2 2-2h4a2 2 0 0 1 2 2v2Z"/><path d="M18 4v4"/><path d="M20 13c0 1-1 2-2 2h-4a2 2 0 0 1-2-2v-2c0-1 1-2 2-2h4a2 2 0 0 1 2 2v2Z"/><path d="M18 11v4"/><path d="M20 20c0 1-1 2-2 2h-4a2 2 0 0 1-2-2v-2c0-1 1-2 2-2h4a2 2 0 0 1 2 2v2Z"/><path d="M18 18v4"/><path d="M9 5H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h3"/>
-              </svg>
-            </Button>
-          </div>
-        </div>
-
-        <Separator />
-
-        {/* Follow-up Section */}
-        <div className="rounded-xl bg-white p-6 shadow-md border border-gray-100">
-          <h3 className="section-title mb-5">Follow-up Scheduling</h3>
-          <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-3 mb-4">
-            <div className="flex items-start">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="text-blue-500 mt-0.5 mr-2"
-              >
-                <path d="M2 12h10"/><path d="M9 4L3 12l6 8"/><path d="M12 22a10 10 0 0 0 0-20"/>
-              </svg>
-              <div className="text-sm text-blue-800">
-                <p className="font-medium mb-1">Set the next visit follow-up</p>
-                <p className="text-blue-700/80 text-xs">
-                  Schedule follow-up appointments to ensure continuity of care for ongoing treatments
-                </p>
-              </div>
-            </div>
-          </div>
-          <FollowUpSection visitId={visitId} patientId={patientId} />
-        </div>
-
-        <Separator />
-
-        {/* Attachments Section */}
-        <div className="space-y-3">
-          <Label className="text-base font-semibold">Attachments</Label>
-          <div className="flex flex-wrap gap-4 mb-4">
-            <label className="flex flex-col items-center justify-center w-32 h-32 bg-neutral-100 rounded-lg border border-neutral-300 cursor-pointer hover:bg-neutral-200 transition-colors">
-              <div className="text-center">
-                <Image className="text-neutral-500 h-8 w-8 mx-auto" />
-                <p className="text-sm text-neutral-600 mt-1">Add Image</p>
-              </div>
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => handleFileUpload(e, "Image")}
-              />
-            </label>
-            <label className="flex flex-col items-center justify-center w-32 h-32 bg-neutral-100 rounded-lg border border-neutral-300 cursor-pointer hover:bg-neutral-200 transition-colors">
-              <div className="text-center">
-                <Video className="text-neutral-500 h-8 w-8 mx-auto" />
-                <p className="text-sm text-neutral-600 mt-1">Add Video</p>
-              </div>
-              <input
-                type="file"
-                accept="video/*"
-                className="hidden"
-                onChange={(e) => handleFileUpload(e, "Video")}
-              />
-            </label>
-          </div>
-
-          {/* Display existing attachments */}
-          {attachments && attachments.length > 0 ? (
-            <div className="space-y-4">
-              <Label>Uploaded Files</Label>
-              <ScrollArea className="h-60 w-full rounded-md border p-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {attachments.map((attachment, index) => (
-                    <div key={index} className="flex items-center p-2 rounded-lg border bg-neutral-50">
-                      <div className="mr-3">
-                        {attachment.type?.includes('image') ? (
-                          <Image className="h-6 w-6 text-primary" />
-                        ) : attachment.type?.includes('video') ? (
-                          <Video className="h-6 w-6 text-primary" />
-                        ) : (
-                          <File className="h-6 w-6 text-primary" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-neutral-900 truncate">{attachment.name}</p>
-                        <p className="text-xs text-neutral-500">
-                          {new Date(attachment.dateAdded).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <a 
-                          href={attachment.url} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-primary hover:text-primary-dark text-sm px-2 py-1 rounded hover:bg-neutral-200 transition-colors"
-                        >
-                          View
-                        </a>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={async () => {
-                            try {
-                              const response = await fetch(`/api/visits/${visitId}/attachments/${index}`, {
-                                method: 'DELETE',
-                              });
-                              
-                              if (response.ok) {
-                                // Remove the attachment from the local state
-                                const updatedAttachments = [...attachments];
-                                updatedAttachments.splice(index, 1);
-                                setAttachments(updatedAttachments);
-                                
-                                toast({
-                                  title: "Success",
-                                  description: "Attachment deleted successfully.",
-                                });
-                              } else {
-                                throw new Error("Failed to delete attachment");
-                              }
-                            } catch (error) {
-                              console.error("Error deleting attachment:", error);
-                              toast({
-                                title: "Error",
-                                description: "Failed to delete attachment.",
-                                variant: "destructive",
-                              });
-                            }
-                          }}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            </div>
-          ) : (
-            <p className="text-sm text-neutral-500">No attachments yet. Add photos or videos using the buttons above.</p>
-          )}
-        </div>
-
-        <Separator />
-
-        {/* Consent Forms Section */}
-        <div className="space-y-3">
-          <Label className="text-base font-semibold">Consent Forms</Label>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex items-center justify-between"
-              onClick={() => setShowConsentForm("extraction")}
-            >
-              <span>Extraction Consent</span>
-              <FileCheck className="h-4 w-4 text-primary" />
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="flex items-center justify-between"
-              onClick={() => setShowConsentForm("root_canal")}
-            >
-              <span>Root Canal Consent</span>
-              <FileCheck className="h-4 w-4 text-primary" />
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="flex items-center justify-between"
-              onClick={() => setShowConsentForm("custom")}
-            >
-              <span>Upload Custom Form</span>
-              <Upload className="h-4 w-4 text-primary" />
-            </Button>
-          </div>
-
-          {/* Display existing consent forms */}
-          {visit?.consentForms && Array.isArray(visit.consentForms) && visit.consentForms.length > 0 ? (
-            <div className="space-y-4">
-              <Label>Signed Consent Forms</Label>
-              <ScrollArea className="h-60 w-full rounded-md border p-4">
-                <div className="space-y-3">
-                  {visit.consentForms.map((form: any, index: number) => (
-                    <div key={index} className="flex items-center p-3 rounded-lg border bg-neutral-50">
-                      <div className="mr-3">
-                        <FileText className="h-6 w-6 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center">
-                          <p className="text-sm font-medium text-neutral-900">
-                            {form.formType === 'extraction' 
-                              ? 'Extraction Consent' 
-                              : form.formType === 'root_canal'
-                                ? 'Root Canal Consent'
-                                : 'Custom Consent Form'}
-                          </p>
-                          <Badge variant="outline" className="ml-2">
-                            {form.type === 'signature' ? 'Signed' : 'Uploaded'}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-neutral-500">
-                          {new Date(form.timestamp).toLocaleString()}
-                        </p>
-                        {form.patientInfo && (
-                          <div className="mt-1 text-xs text-neutral-600">
-                            <p>Name: {form.patientInfo.name}</p>
-                            <p>Phone: {form.patientInfo.phone}</p>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        {/* View button for detailed view */}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            // For signature type, show the details
-                            const consentDetails = form.type === 'signature' 
-                              ? {
-                                  ...form,
-                                  patientInfo: form.patientInfo || { 
-                                    name: 'Not provided', 
-                                    address: 'Not provided',
-                                    phone: 'Not provided',
-                                    date: new Date(form.timestamp)
-                                  },
-                                  title: form.formType === 'extraction' 
-                                    ? 'Extraction Consent' 
-                                    : form.formType === 'root_canal'
-                                      ? 'Root Canal Consent'
-                                      : 'Custom Consent Form'
-                                }
-                              : { 
-                                  ...form,
-                                  title: 'Uploaded Consent Form' 
-                                };
-                                
-                            // Open a dialog to show the full consent form
-                            if (form.type === 'signature') {
-                              // Show modal with the signed form image
-                              if (form.patientSignature) {
-                                const formTitle = form.formType === 'extraction' 
-                                  ? 'Extraction Consent Form' 
-                                  : form.formType === 'root_canal'
-                                    ? 'Root Canal Consent Form'
-                                    : 'Custom Consent Form';
-                                    
-                                // Set the preview form data for the dialog
-                                setPreviewForm({
-                                  image: form.patientSignature,
-                                  title: formTitle,
-                                  timestamp: form.timestamp,
-                                  doctorSignature: form.doctorSignature,
-                                  doctorName: form.doctorName || "Doctor",
-                                  patientInfo: form.patientInfo || {
-                                    name: 'Not provided',
-                                    address: 'Not provided',
-                                    phone: 'Not provided',
-                                    date: form.timestamp
-                                  }
-                                });
-                                // Open the dialog
-                                setShowPreviewDialog(true);
-                              } else {
-                                // Fallback if no image
-                                toast({
-                                  title: "Error",
-                                  description: "Signed form image not found.",
-                                  variant: "destructive",
-                                });
-                              }
-                            } else {
-                              // For uploaded forms, show in dialog or open in new tab
-                              if (form.data) {
-                                window.open(form.data, '_blank');
-                              } else {
-                                toast({
-                                  title: "Error",
-                                  description: "Form not found or was not properly uploaded.",
-                                  variant: "destructive",
-                                });
-                              }
-                            }
-                          }}
-                          className="text-blue-500 hover:text-blue-700 hover:bg-blue-50"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        
-                        {/* Delete button */}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={async () => {
-                            try {
-                              const response = await fetch(`/api/visits/${visitId}/consent-forms/${index}`, {
-                                method: 'DELETE',
-                              });
-                              
-                              if (response.ok) {
-                                // Refresh data through invalidation
-                                queryClient.invalidateQueries({ queryKey: [`/api/visits/${visitId}`] });
-                                
-                                toast({
-                                  title: "Success",
-                                  description: "Consent form deleted successfully.",
-                                });
-                              } else {
-                                throw new Error("Failed to delete consent form");
-                              }
-                            } catch (error) {
-                              console.error("Error deleting consent form:", error);
-                              toast({
-                                title: "Error",
-                                description: "Failed to delete consent form.",
-                                variant: "destructive",
-                              });
-                            }
-                          }}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      
-                      {/* Show form thumbnail preview */}
-                      {form.patientSignature && (
-                        <div className="w-full mt-2">
-                          <p className="text-xs font-medium mb-1">Preview:</p>
-                          <div className="border rounded bg-white p-1 max-w-[150px]">
-                            <img 
-                              src={form.patientSignature} 
-                              alt="Consent Form" 
-                              className="h-14 w-auto object-contain"
-                            />
-                          </div>
-                        </div>
+              
+              {/* Signatures Section */}
+              <div className="mt-4 flex flex-wrap gap-4">
+                {/* Doctor Signature */}
+                {previewForm?.doctorSignature && (
+                  <div className="flex-1 min-w-[200px] border rounded-md p-3 bg-white">
+                    <p className="text-xs font-medium mb-2">Doctor's Signature:</p>
+                    <div className="flex items-center">
+                      <img 
+                        src={previewForm.doctorSignature} 
+                        alt="Doctor Signature" 
+                        className="h-16 object-contain border p-1 rounded"
+                      />
+                      {previewForm.doctorName && (
+                        <p className="ml-2 text-xs">{previewForm.doctorName}</p>
                       )}
                     </div>
-                  ))}
-                </div>
-              </ScrollArea>
+                  </div>
+                )}
+              </div>
+              
+              <div className="mt-3 text-xs text-gray-500 text-right">
+                Signed on: {previewForm?.timestamp ? new Date(previewForm.timestamp).toLocaleString() : ''}
+              </div>
             </div>
-          ) : (
-            <p className="text-sm text-neutral-500">No consent forms yet. Use the buttons above to add patient consent forms.</p>
-          )}
-        </div>
+            
+            <DialogFooter className="flex justify-end space-x-2">
+              <Button 
+                onClick={handlePrintConsentForm}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <Printer className="h-4 w-4 mr-2" />
+                Print Form
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowPreviewDialog(false)}
+              >
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
+        <CardHeader className="px-0 pt-0">
+          <div className="flex items-center justify-between mb-4">
+            <CardTitle className="text-xl font-semibold">Visit Log</CardTitle>
+            {onBack && (
+              <Button variant="outline" onClick={onBack}>
+                Back to Visits
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        
+        <CardContent className="px-0 space-y-8">
+          {/* Chief Complaint Section - Two Columns */}
+          <div className="rounded-xl bg-white p-6 shadow-md border border-gray-100">
+            <h3 className="section-title mb-5">Chief Complaint</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="space-y-2">
+                <Label className="text-foreground/80 font-medium">Complaint</Label>
+                <Select 
+                  value={visitData.chiefComplaint || ''} 
+                  onValueChange={(value) => handleInputChange('chiefComplaint', value)}
+                >
+                  <SelectTrigger className="modern-input">
+                    <SelectValue placeholder="Select complaint" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {complaintOptions.map((option: string, index: number) => (
+                      <SelectItem key={index} value={option}>{option}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-foreground/80 font-medium">Location/Area</Label>
+                <Select 
+                  value={visitData.areaOfComplaint || ''} 
+                  onValueChange={(value) => handleInputChange('areaOfComplaint', value)}
+                >
+                  <SelectTrigger className="modern-input">
+                    <SelectValue placeholder="Select area" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {areaOptions.map((option: string, index: number) => (
+                      <SelectItem key={index} value={option}>{option}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex justify-end mt-4">
+              <Button 
+                size="sm" 
+                className="bg-primary hover:bg-primary/90 font-medium"
+                onClick={() => {
+                  // Save both fields at once
+                  updateVisitMutation.mutate({
+                    chiefComplaint: visitData.chiefComplaint,
+                    areaOfComplaint: visitData.areaOfComplaint
+                  });
+                }}
+              >
+                Save Changes
+              </Button>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Oral Examination Section */}
+          <div className="space-y-3">
+            <Label className="text-base font-semibold">Oral Examination</Label>
+            
+            {/* Tooth Findings Component */}
+            <ToothFindingsSection visitId={visitId} />
+            
+            {/* Generalized Findings Component */}
+            <GeneralizedFindingsSection visitId={visitId} />
+          </div>
+
+          <Separator />
+
+          {/* Investigation Section */}
+          <div className="space-y-3">
+            <Label className="text-base font-semibold">Investigation Done</Label>
+            <InvestigationSection visitId={visitId} />
+          </div>
+
+          <Separator />
+
+          {/* Treatment Plan Section */}
+          <div className="rounded-xl bg-white p-6 shadow-md border border-gray-100">
+            <h3 className="section-title mb-5">Treatment Plan</h3>
+            <div className="space-y-3">
+              <Label className="text-foreground/80 font-medium">Recommended Plan</Label>
+              <Select 
+                value={visitData.treatmentPlan || ''} 
+                onValueChange={(value) => handleInputChange('treatmentPlan', value)}
+              >
+                <SelectTrigger className="modern-input">
+                  <SelectValue placeholder="Select treatment plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  {treatmentPlanOptions.map((option: string, index: number) => (
+                    <SelectItem key={index} value={option}>{option}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex justify-end mt-3">
+                <Button 
+                  size="sm" 
+                  className="bg-primary hover:bg-primary/90 font-medium"
+                  onClick={() => handleSave('treatmentPlan')}
+                >
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Treatment Done Section */}
+          <div className="rounded-xl bg-white p-6 shadow-md border border-gray-100">
+            <h3 className="section-title mb-5">Completed Treatment</h3>
+            <div className="space-y-4">
+              <div className="flex items-start mb-2">
+                <CheckCircle className="text-green-500 h-5 w-5 mr-2 mt-0.5" />
+                <div>
+                  <Label className="text-foreground/80 font-medium">Procedure Performed</Label>
+                  <p className="text-xs text-foreground/60 mt-0.5">Record the treatment that was actually performed during this visit</p>
+                </div>
+              </div>
+              <Select 
+                value={visitData.treatmentDone || ''} 
+                onValueChange={(value) => handleInputChange('treatmentDone', value)}
+              >
+                <SelectTrigger className="modern-input">
+                  <SelectValue placeholder="Select treatment done" />
+                </SelectTrigger>
+                <SelectContent>
+                  {treatmentDoneOptions.map((option: string, index: number) => (
+                    <SelectItem key={index} value={option}>{option}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex justify-end mt-3">
+                <Button 
+                  size="sm" 
+                  className="bg-primary hover:bg-primary/90 font-medium"
+                  onClick={() => handleSave('treatmentDone')}
+                >
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Prescription Section */}
+          <div className="rounded-xl bg-white p-6 shadow-md border border-gray-100">
+            <h3 className="section-title mb-5">Rx (Prescription)</h3>
+            <div className="bg-purple-50/50 border border-purple-100 rounded-lg p-3 mb-4">
+              <div className="flex items-start">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-purple-500 mt-0.5 mr-2"
+                >
+                  <path d="m3 2 2 5h6L9 2" /><path d="M4 7v12a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V7" /><path d="M12 13a3 3 0 0 0 3-3" /><path d="M13 10h5" /><path d="M13 14h5" /><path d="M13 18h5" /><path d="M9 13v5" /><path d="M6 13h6" />
+                </svg>
+                <div className="text-sm text-purple-800">
+                  <p className="font-medium mb-1">Medications & Instructions</p>
+                  <p className="text-purple-700/80 text-xs">
+                    Prescribe medications with complete instructions for patient treatment
+                  </p>
+                </div>
+              </div>
+            </div>
+            <PrescriptionForm 
+              visitId={visitId} 
+              patientId={patientId}
+            />
+          </div>
+
+          <Separator />
+
+          {/* Advice Section */}
+          <div className="rounded-xl bg-white p-6 shadow-md border border-gray-100">
+            <h3 className="section-title mb-5">Patient Advice</h3>
+            <div className="space-y-4">
+              <div className="flex items-start mb-2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-amber-500 h-5 w-5 mr-2 mt-0.5"
+                >
+                  <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/>
+                </svg>
+                <div>
+                  <Label className="text-foreground/80 font-medium">Post-Treatment Instructions</Label>
+                  <p className="text-xs text-foreground/60 mt-0.5">Provide clear aftercare guidance for the patient</p>
+                </div>
+              </div>
+              <Select 
+                value={visitData.advice || ''} 
+                onValueChange={(value) => handleInputChange('advice', value)}
+              >
+                <SelectTrigger className="modern-input">
+                  <SelectValue placeholder="Select advice for patient" />
+                </SelectTrigger>
+                <SelectContent>
+                  {adviceOptions.map((option: string, index: number) => (
+                    <SelectItem key={index} value={option}>{option}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex justify-end mt-3">
+                <Button 
+                  size="sm" 
+                  className="bg-primary hover:bg-primary/90 font-medium"
+                  onClick={() => handleSave('advice')}
+                >
+                  Save Advice
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Notes Section */}
+          <div className="rounded-xl bg-white p-6 shadow-md border border-gray-100">
+            <h3 className="section-title mb-5">Clinical Notes</h3>
+            <div className="space-y-4">
+              <div className="flex items-start mb-2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-gray-500 h-5 w-5 mr-2 mt-0.5"
+                >
+                  <path d="M4 4v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8.342a2 2 0 0 0-.602-1.43l-4.44-4.342A2 2 0 0 0 13.56 2H6a2 2 0 0 0-2 2z"/><path d="M9 13h6"/><path d="M9 17h3"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/>
+                </svg>
+                <div>
+                  <Label className="text-foreground/80 font-medium">Additional Observations</Label>
+                  <p className="text-xs text-foreground/60 mt-0.5">Record important clinical observations and patient-specific details</p>
+                </div>
+              </div>
+              <Textarea 
+                value={visitData.notes || ''} 
+                onChange={(e) => handleInputChange('notes', e.target.value)}
+                className="min-h-[120px] modern-input resize-none"
+                placeholder="Enter any additional notes regarding this patient visit..."
+              />
+              <div className="flex justify-end mt-3">
+                <Button 
+                  size="sm" 
+                  className="bg-primary hover:bg-primary/90 font-medium"
+                  onClick={() => handleSave('notes')}
+                >
+                  Save Notes
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Invoice Section */}
+          <div className="rounded-xl bg-white p-6 shadow-md border border-gray-100">
+            <h3 className="section-title mb-5">Invoice Management</h3>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-foreground/70 mb-1">
+                  Create and manage patient invoices and payment records
+                </p>
+                <div className="text-xs flex items-center text-foreground/60">
+                  <span className={`inline-block h-2 w-2 rounded-full mr-1 ${visitInvoices?.length ? 'bg-green-500' : 'bg-amber-500'}`}></span>
+                  {visitInvoices?.length ? `${visitInvoices.length} invoice(s) created` : 'No invoices created yet'}
+                </div>
+              </div>
+              <Button 
+                className="bg-primary hover:bg-primary/90 text-white font-medium card-hover"
+                onClick={() => setShowInvoice(true)}
+              >
+                <span className="mr-2">View Invoice</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M20 6c0 1-1 2-2 2h-4a2 2 0 0 1-2-2V4c0-1 1-2 2-2h4a2 2 0 0 1 2 2v2Z"/><path d="M18 4v4"/><path d="M20 13c0 1-1 2-2 2h-4a2 2 0 0 1-2-2v-2c0-1 1-2 2-2h4a2 2 0 0 1 2 2v2Z"/><path d="M18 11v4"/><path d="M20 20c0 1-1 2-2 2h-4a2 2 0 0 1-2-2v-2c0-1 1-2 2-2h4a2 2 0 0 1 2 2v2Z"/><path d="M18 18v4"/><path d="M9 5H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h3"/>
+                </svg>
+              </Button>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Follow-up Section */}
+          <div className="rounded-xl bg-white p-6 shadow-md border border-gray-100">
+            <h3 className="section-title mb-5">Follow-up Scheduling</h3>
+            <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-3 mb-4">
+              <div className="flex items-start">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-blue-500 mt-0.5 mr-2"
+                >
+                  <path d="M2 12h10"/><path d="M9 4L3 12l6 8"/><path d="M12 22a10 10 0 0 0 0-20"/>
+                </svg>
+                <div className="text-sm text-blue-800">
+                  <p className="font-medium mb-1">Set the next visit follow-up</p>
+                  <p className="text-blue-700/80 text-xs">
+                    Schedule follow-up appointments to ensure continuity of care for ongoing treatments
+                  </p>
+                </div>
+              </div>
+            </div>
+            <FollowUpSection visitId={visitId} patientId={patientId} />
+          </div>
+
+          <Separator />
+
+          {/* Attachments Section */}
+          <div className="rounded-xl bg-white p-6 shadow-md border border-gray-100">
+            <h3 className="section-title mb-5">Media Attachments</h3>
+            <div className="space-y-4">
+              <div className="flex items-start mb-2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-indigo-500 h-5 w-5 mr-2 mt-0.5"
+                >
+                  <path d="M21 9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7"/><rect x="16" y="3" width="4" height="7" rx="1"/><circle cx="18" cy="18" r="3"/><path d="M13.3 15H9.5l-.7-2.9.6-2.9L8 7.1 5.3 6l-.1 4"/>
+                </svg>
+                <div>
+                  <Label className="text-foreground/80 font-medium">Upload Images & Videos</Label>
+                  <p className="text-xs text-foreground/60 mt-0.5">Attach clinical photographs, radiographs, or educational videos</p>
+                </div>
+              </div>
+              
+              <div className="flex flex-wrap gap-4 mb-4">
+                <label className="flex flex-col items-center justify-center w-36 h-36 bg-neutral-50 rounded-xl border border-dashed border-neutral-300 cursor-pointer hover:bg-neutral-100 transition-colors">
+                  <div className="text-center p-4">
+                    <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center mx-auto mb-2">
+                      <Image className="text-indigo-500 h-6 w-6" />
+                    </div>
+                    <p className="text-sm font-medium text-neutral-800">Add Image</p>
+                    <p className="text-xs text-neutral-500 mt-1">Upload X-rays or clinical photos</p>
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleFileUpload(e, "Image")}
+                  />
+                </label>
+                
+                <label className="flex flex-col items-center justify-center w-36 h-36 bg-neutral-50 rounded-xl border border-dashed border-neutral-300 cursor-pointer hover:bg-neutral-100 transition-colors">
+                  <div className="text-center p-4">
+                    <div className="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center mx-auto mb-2">
+                      <Video className="text-rose-500 h-6 w-6" />
+                    </div>
+                    <p className="text-sm font-medium text-neutral-800">Add Video</p>
+                    <p className="text-xs text-neutral-500 mt-1">Upload patient education videos</p>
+                  </div>
+                  <input
+                    type="file"
+                    accept="video/*"
+                    className="hidden"
+                    onChange={(e) => handleFileUpload(e, "Video")}
+                  />
+                </label>
+              </div>
+              
+              {/* Display existing attachments */}
+              {attachments && attachments.length > 0 ? (
+                <div className="space-y-4">
+                  <Label>Uploaded Files</Label>
+                  <ScrollArea className="h-60 w-full rounded-md border p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {attachments.map((attachment, index) => (
+                        <div key={index} className="flex items-center p-2 rounded-lg border bg-neutral-50">
+                          <div className="mr-3">
+                            {attachment.type?.includes('image') ? (
+                              <Image className="h-6 w-6 text-primary" />
+                            ) : attachment.type?.includes('video') ? (
+                              <Video className="h-6 w-6 text-primary" />
+                            ) : (
+                              <File className="h-6 w-6 text-primary" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-neutral-900 truncate">{attachment.name}</p>
+                            <p className="text-xs text-neutral-500">
+                              {new Date(attachment.dateAdded).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <a 
+                              href={attachment.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-primary hover:text-primary-dark text-sm px-2 py-1 rounded hover:bg-neutral-200 transition-colors"
+                            >
+                              View
+                            </a>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={async () => {
+                                try {
+                                  const response = await fetch(`/api/visits/${visitId}/attachments/${index}`, {
+                                    method: 'DELETE',
+                                  });
+                                  
+                                  if (response.ok) {
+                                    // Remove the attachment from the local state
+                                    const updatedAttachments = [...attachments];
+                                    updatedAttachments.splice(index, 1);
+                                    setAttachments(updatedAttachments);
+                                    
+                                    toast({
+                                      title: "Success",
+                                      description: "Attachment deleted successfully.",
+                                    });
+                                  } else {
+                                    throw new Error("Failed to delete attachment");
+                                  }
+                                } catch (error) {
+                                  console.error("Error deleting attachment:", error);
+                                  toast({
+                                    title: "Error",
+                                    description: "Failed to delete attachment.",
+                                    variant: "destructive",
+                                  });
+                                }
+                              }}
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </div>
+              ) : (
+                <p className="text-sm text-neutral-500">No attachments yet. Add photos or videos using the buttons above.</p>
+              )}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Consent Forms Section */}
+          <div className="rounded-xl bg-white p-6 shadow-md border border-gray-100">
+            <h3 className="section-title mb-5">Patient Consent Forms</h3>
+            <div className="space-y-4">
+              <div className="flex items-start mb-4">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-teal-500 h-5 w-5 mr-2 mt-0.5"
+                >
+                  <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+                  <rect x="9" y="3" width="6" height="4" rx="2"/>
+                  <path d="M9 12h6"/>
+                  <path d="M9 16h6"/>
+                </svg>
+                <div>
+                  <Label className="text-foreground/80 font-medium">Treatment Consent Documentation</Label>
+                  <p className="text-xs text-foreground/60 mt-0.5">Have patients sign procedure-specific consent forms</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex flex-col items-center justify-center py-4 h-auto rounded-xl hover:bg-teal-50 hover:border-teal-200 border-dashed transition-colors"
+                  onClick={() => setShowConsentForm("extraction")}
+                >
+                  <div className="w-10 h-10 rounded-full bg-teal-50 flex items-center justify-center mb-2">
+                    <FileCheck className="h-5 w-5 text-teal-600" />
+                  </div>
+                  <span className="font-medium">Extraction Consent</span>
+                  <span className="text-xs text-foreground/60 mt-1">Tooth removal consent</span>
+                </Button>
+                
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex flex-col items-center justify-center py-4 h-auto rounded-xl hover:bg-blue-50 hover:border-blue-200 border-dashed transition-colors"
+                  onClick={() => setShowConsentForm("root_canal")}
+                >
+                  <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center mb-2">
+                    <FileCheck className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <span className="font-medium">Root Canal Consent</span>
+                  <span className="text-xs text-foreground/60 mt-1">Endodontic treatment</span>
+                </Button>
+                
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex flex-col items-center justify-center py-4 h-auto rounded-xl hover:bg-purple-50 hover:border-purple-200 border-dashed transition-colors"
+                  onClick={() => setShowConsentForm("custom")}
+                >
+                  <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center mb-2">
+                    <Upload className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <span className="font-medium">Upload Custom Form</span>
+                  <span className="text-xs text-foreground/60 mt-1">Other procedures</span>
+                </Button>
+              </div>
+              
+              {/* Display existing consent forms */}
+              {visit?.consentForms && Array.isArray(visit.consentForms) && visit.consentForms.length > 0 ? (
+                <div className="space-y-4">
+                  <Label>Signed Consent Forms</Label>
+                  <ScrollArea className="h-60 w-full rounded-md border p-4">
+                    <div className="space-y-3">
+                      {visit.consentForms.map((form: any, index: number) => (
+                        <div key={index} className="flex items-center p-3 rounded-lg border bg-neutral-50">
+                          <div className="mr-3">
+                            <FileText className="h-6 w-6 text-primary" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center">
+                              <p className="text-sm font-medium text-neutral-900">
+                                {form.formType === 'extraction' 
+                                  ? 'Extraction Consent' 
+                                  : form.formType === 'root_canal'
+                                    ? 'Root Canal Consent'
+                                    : 'Custom Consent Form'}
+                              </p>
+                              <Badge variant="outline" className="ml-2">
+                                {form.type === 'signature' ? 'Signed' : 'Uploaded'}
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-neutral-500">
+                              {new Date(form.timestamp).toLocaleString()}
+                            </p>
+                            {form.patientInfo && (
+                              <div className="mt-1 text-xs text-neutral-600">
+                                <p>Name: {form.patientInfo.name}</p>
+                                <p>Phone: {form.patientInfo.phone}</p>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            {/* View button for detailed view */}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                // For signature type, show the details
+                                const consentDetails = form.type === 'signature' 
+                                  ? {
+                                      ...form,
+                                      patientInfo: form.patientInfo || { 
+                                        name: 'Not provided', 
+                                        address: 'Not provided',
+                                        phone: 'Not provided',
+                                        date: new Date(form.timestamp)
+                                      },
+                                      title: form.formType === 'extraction' 
+                                        ? 'Extraction Consent' 
+                                        : form.formType === 'root_canal'
+                                          ? 'Root Canal Consent'
+                                          : 'Custom Consent Form'
+                                    }
+                                  : { 
+                                      ...form,
+                                      title: 'Uploaded Consent Form' 
+                                    };
+                                    
+                                // Open a dialog to show the full consent form
+                                if (form.type === 'signature') {
+                                  // Show modal with the signed form image
+                                  if (form.patientSignature) {
+                                    const formTitle = form.formType === 'extraction' 
+                                      ? 'Extraction Consent Form' 
+                                      : form.formType === 'root_canal'
+                                        ? 'Root Canal Consent Form'
+                                        : 'Custom Consent Form';
+                                        
+                                    // Set the preview form data for the dialog
+                                    setPreviewForm({
+                                      image: form.patientSignature,
+                                      title: formTitle,
+                                      timestamp: form.timestamp,
+                                      doctorSignature: form.doctorSignature,
+                                      doctorName: form.doctorName || "Doctor",
+                                      patientInfo: form.patientInfo || {
+                                        name: 'Not provided',
+                                        address: 'Not provided',
+                                        phone: 'Not provided',
+                                        date: form.timestamp
+                                      }
+                                    });
+                                    // Open the dialog
+                                    setShowPreviewDialog(true);
+                                  } else {
+                                    // Fallback if no image
+                                    toast({
+                                      title: "Error",
+                                      description: "Signed form image not found.",
+                                      variant: "destructive",
+                                    });
+                                  }
+                                } else {
+                                  // For uploaded forms, show in dialog or open in new tab
+                                  if (form.data) {
+                                    window.open(form.data, '_blank');
+                                  } else {
+                                    toast({
+                                      title: "Error",
+                                      description: "Form not found or was not properly uploaded.",
+                                      variant: "destructive",
+                                    });
+                                  }
+                                }
+                              }}
+                              className="text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            
+                            {/* Delete button */}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={async () => {
+                                try {
+                                  const response = await fetch(`/api/visits/${visitId}/consent-forms/${index}`, {
+                                    method: 'DELETE',
+                                  });
+                                  
+                                  if (response.ok) {
+                                    // Refresh data through invalidation
+                                    queryClient.invalidateQueries({ queryKey: [`/api/visits/${visitId}`] });
+                                    
+                                    toast({
+                                      title: "Success",
+                                      description: "Consent form deleted successfully.",
+                                    });
+                                  } else {
+                                    throw new Error("Failed to delete consent form");
+                                  }
+                                } catch (error) {
+                                  console.error("Error deleting consent form:", error);
+                                  toast({
+                                    title: "Error",
+                                    description: "Failed to delete consent form.",
+                                    variant: "destructive",
+                                  });
+                                }
+                              }}
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </div>
+              ) : (
+                <p className="text-sm text-neutral-500">No consent forms yet. Use the buttons above to add patient consent forms.</p>
+              )}
+            </div>
+          </div>
+        </CardContent>
       </CardContent>
     </Card>
   );
