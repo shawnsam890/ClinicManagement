@@ -1114,6 +1114,128 @@ export default function Settings() {
             </CardContent>
           </Card>
         </TabsContent>
+        
+        <TabsContent value="signatures">
+          <Card>
+            <CardHeader>
+              <CardTitle>Doctor Signatures</CardTitle>
+              <CardDescription>
+                Manage signatures used in consent forms
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-6 space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="doctorName">Doctor Name</Label>
+                  <Input
+                    id="doctorName"
+                    value={doctorName}
+                    onChange={(e) => setDoctorName(e.target.value)}
+                    placeholder="Enter doctor name"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Signature</Label>
+                  <div className="border border-gray-300 rounded-md overflow-hidden">
+                    <SignatureCanvas
+                      ref={signatureRef}
+                      canvasProps={{
+                        className: "w-full h-40 bg-white",
+                      }}
+                    />
+                  </div>
+                  <div className="flex justify-end space-x-2 mt-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        if (signatureRef.current) {
+                          signatureRef.current.clear();
+                        }
+                      }}
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="flex justify-end">
+                  {editingSignatureId ? (
+                    <div className="space-x-2">
+                      <Button 
+                        variant="outline" 
+                        onClick={handleCancelSignatureEdit}
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={handleUpdateSignature}
+                        disabled={updateSignatureMutation.isPending}
+                      >
+                        <Save className="mr-2 h-4 w-4" />
+                        {updateSignatureMutation.isPending ? "Updating..." : "Update Signature"}
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button 
+                      onClick={handleAddSignature}
+                      disabled={createSignatureMutation.isPending}
+                    >
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      {createSignatureMutation.isPending ? "Saving..." : "Add Signature"}
+                    </Button>
+                  )}
+                </div>
+              </div>
+              
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold mb-3">Saved Signatures</h3>
+                {isLoadingSignatures ? (
+                  <div className="flex justify-center py-4">
+                    <p>Loading signatures...</p>
+                  </div>
+                ) : doctorSignatures && doctorSignatures.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {doctorSignatures.map((signature: any) => (
+                      <div key={signature.id} className="border rounded-lg p-4 bg-white">
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="font-medium">{signature.doctorName}</h4>
+                          <div className="flex space-x-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditSignature(signature)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => deleteSignatureMutation.mutate(signature.id)}
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="h-24 border rounded flex items-center justify-center bg-neutral-50 p-2">
+                          <img 
+                            src={signature.signatureImage} 
+                            alt={`${signature.doctorName}'s signature`}
+                            className="max-h-full object-contain"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-neutral-600 text-center py-4">No signatures saved yet.</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </Layout>
   );
