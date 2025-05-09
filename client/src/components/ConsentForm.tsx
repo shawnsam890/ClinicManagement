@@ -5,6 +5,8 @@ import { Download, Upload, File } from "lucide-react";
 import SignatureCanvas from "react-signature-canvas";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+// Import root canal consent form image
+import rootCanalConsentFormImg from "../assets/root_canal_consent.jpg";
 
 interface ConsentFormProps {
   visitId: number;
@@ -187,6 +189,50 @@ export default function ConsentForm({
               Upload Form
             </Button>
           </div>
+        ) : formType === 'root_canal' ? (
+          <>
+            <div className="mb-6 p-4 bg-neutral-50 rounded-lg border border-neutral-200">
+              {/* Malayalam Root Canal Consent Form */}
+              <div className="flex justify-center">
+                <img 
+                  src={rootCanalConsentFormImg} 
+                  alt="Root Canal Consent Form in Malayalam" 
+                  className="max-w-full rounded-md border border-gray-200 shadow-sm"
+                />
+              </div>
+            </div>
+            
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-neutral-700 mb-1">
+                Patient Signature
+              </label>
+              <div className="border border-neutral-300 rounded-lg bg-white">
+                <SignatureCanvas
+                  ref={signatureRef}
+                  canvasProps={{
+                    className: "w-full h-40 rounded-lg"
+                  }}
+                  backgroundColor="white"
+                />
+              </div>
+              <div className="flex mt-2 space-x-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={clearSignature}
+                >
+                  Clear
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={saveSignature}
+                >
+                  Capture Signature
+                </Button>
+              </div>
+            </div>
+          </>
         ) : (
           <>
             <div className="mb-6 p-4 bg-neutral-50 rounded-lg border border-neutral-200">

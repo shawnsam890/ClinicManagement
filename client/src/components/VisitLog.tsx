@@ -192,7 +192,7 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
   // Initialize attachments from visit data
   useEffect(() => {
     if (visit && visit.attachments) {
-      setAttachments(visit.attachments);
+      setAttachments(Array.isArray(visit.attachments) ? visit.attachments : []);
     }
   }, [visit]);
 
@@ -517,7 +517,7 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
           </div>
 
           {/* Display existing consent forms */}
-          {visit?.consentForms && visit.consentForms.length > 0 ? (
+          {visit?.consentForms && Array.isArray(visit.consentForms) && visit.consentForms.length > 0 ? (
             <div className="space-y-4">
               <Label>Signed Consent Forms</Label>
               <ScrollArea className="h-60 w-full rounded-md border p-4">
