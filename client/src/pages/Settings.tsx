@@ -404,16 +404,31 @@ export default function Settings() {
       return;
     }
     
-    if (!signatureRef.current || signatureRef.current.isEmpty()) {
-      toast({
-        title: "Error",
-        description: "Please provide a signature",
-        variant: "destructive",
-      });
-      return;
-    }
+    let signatureImage;
     
-    const signatureImage = signatureRef.current.toDataURL("image/png");
+    if (useImageUpload) {
+      // Use uploaded image if available
+      if (!uploadedSignatureImage) {
+        toast({
+          title: "Error",
+          description: "Please upload a signature image",
+          variant: "destructive",
+        });
+        return;
+      }
+      signatureImage = uploadedSignatureImage;
+    } else {
+      // Use drawn signature if available
+      if (!signatureRef.current || signatureRef.current.isEmpty()) {
+        toast({
+          title: "Error",
+          description: "Please provide a signature by drawing or uploading an image",
+          variant: "destructive",
+        });
+        return;
+      }
+      signatureImage = signatureRef.current.toDataURL("image/png");
+    }
     
     createSignatureMutation.mutate({
       doctorName,
@@ -424,6 +439,16 @@ export default function Settings() {
   const handleEditSignature = (signature: any) => {
     setDoctorName(signature.doctorName);
     setEditingSignatureId(signature.id);
+    
+    // Reset any existing signature method
+    setUseImageUpload(false);
+    if (signatureRef.current) {
+      signatureRef.current.clear();
+    }
+    setUploadedSignatureImage(null);
+    if (signatureFileInputRef.current) {
+      signatureFileInputRef.current.value = "";
+    }
   };
   
   const handleUpdateSignature = () => {
@@ -432,7 +457,12 @@ export default function Settings() {
     }
     
     let signatureImage;
-    if (signatureRef.current && !signatureRef.current.isEmpty()) {
+    if (useImageUpload) {
+      // Use uploaded image if available
+      if (uploadedSignatureImage) {
+        signatureImage = uploadedSignatureImage;
+      }
+    } else if (signatureRef.current && !signatureRef.current.isEmpty()) {
       signatureImage = signatureRef.current.toDataURL("image/png");
     }
     
@@ -448,9 +478,41 @@ export default function Settings() {
   const handleCancelSignatureEdit = () => {
     setEditingSignatureId(null);
     setDoctorName("");
+    setUseImageUpload(false);
+    setUploadedSignatureImage(null);
+    
     if (signatureRef.current) {
       signatureRef.current.clear();
     }
+    if (signatureFileInputRef.current) {
+      signatureFileInputRef.current.value = "";
+    }
+  };
+  
+  // Handle file upload
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Check if file is a PNG image
+    if (file.type !== "image/png") {
+      toast({
+        title: "Error",
+        description: "Only PNG images are supported",
+        variant: "destructive",
+      });
+      e.target.value = "";
+      return;
+    }
+    
+    // Read file and convert to base64
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        setUploadedSignatureImage(event.target.result as string);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleDeleteOption = (category: string, value: string) => {
@@ -1138,29 +1200,99 @@ export default function Settings() {
                   />
                 </div>
                 
-                <div className="space-y-2">
-                  <Label>Signature</Label>
-                  <div className="border border-gray-300 rounded-md overflow-hidden">
-                    <SignatureCanvas
-                      ref={signatureRef}
-                      canvasProps={{
-                        className: "w-full h-40 bg-white",
-                      }}
-                    />
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <Label>Signature Method</Label>
+                    <div className="flex rounded-md overflow-hidden">
+                      <Button
+                        type="button"
+                        variant={!useImageUpload ? "default" : "outline"}
+                        size="sm"
+                        className="rounded-r-none"
+                        onClick={() => setUseImageUpload(false)}
+                      >
+                        Draw Signature
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={useImageUpload ? "default" : "outline"}
+                        size="sm"
+                        className="rounded-l-none"
+                        onClick={() => setUseImageUpload(true)}
+                      >
+                        Upload Image
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex justify-end space-x-2 mt-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        if (signatureRef.current) {
-                          signatureRef.current.clear();
-                        }
-                      }}
-                    >
-                      Clear
-                    </Button>
-                  </div>
+
+                  {useImageUpload ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2">
+                        <Input
+                          ref={signatureFileInputRef}
+                          type="file"
+                          accept="image/png"
+                          onChange={handleFileUpload}
+                          className="max-w-md"
+                        />
+                        {uploadedSignatureImage && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setUploadedSignatureImage(null);
+                              if (signatureFileInputRef.current) {
+                                signatureFileInputRef.current.value = '';
+                              }
+                            }}
+                          >
+                            Clear
+                          </Button>
+                        )}
+                      </div>
+                      
+                      {uploadedSignatureImage && (
+                        <div className="border rounded-md p-4 bg-gray-50 max-w-xs">
+                          <p className="text-sm font-medium mb-2">Preview:</p>
+                          <div className="h-32 flex items-center justify-center">
+                            <img 
+                              src={uploadedSignatureImage} 
+                              alt="Signature Preview" 
+                              className="max-h-full max-w-full object-contain"
+                            />
+                          </div>
+                        </div>
+                      )}
+                      
+                      <p className="text-sm text-muted-foreground">
+                        Upload a transparent PNG image of the doctor's signature.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="border border-gray-300 rounded-md overflow-hidden">
+                        <SignatureCanvas
+                          ref={signatureRef}
+                          canvasProps={{
+                            className: "w-full h-40 bg-white",
+                          }}
+                        />
+                      </div>
+                      <div className="flex justify-end space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            if (signatureRef.current) {
+                              signatureRef.current.clear();
+                            }
+                          }}
+                        >
+                          Clear
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="flex justify-end">
