@@ -345,6 +345,7 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
       <Invoice 
         patientId={patientId} 
         visitId={visitId}
+        patientName={visit?.patientName || "Patient"}
         onBack={() => setShowInvoice(false)}
       />
     );
@@ -461,7 +462,7 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
                   <SelectValue placeholder="Select complaint" />
                 </SelectTrigger>
                 <SelectContent>
-                  {complaintOptions.map((option, index) => (
+                  {complaintOptions.map((option: string, index: number) => (
                     <SelectItem key={index} value={option}>{option}</SelectItem>
                   ))}
                 </SelectContent>
@@ -477,7 +478,7 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
                   <SelectValue placeholder="Select area" />
                 </SelectTrigger>
                 <SelectContent>
-                  {areaOptions.map((option, index) => (
+                  {areaOptions.map((option: string, index: number) => (
                     <SelectItem key={index} value={option}>{option}</SelectItem>
                   ))}
                 </SelectContent>
