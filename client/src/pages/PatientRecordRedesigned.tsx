@@ -49,16 +49,8 @@ export default function PatientRecord() {
     dentalHistory: '',
     drugAllergy: ''
   });
-  const [visitForm, setVisitForm] = useState<any>({
-    chiefComplaint: '',
-    areaOfComplaint: '',
-    treatmentDone: '',
-    treatmentPlan: '',
-    advice: '',
-    notes: ''
-  });
-  const [showEditVisitDialog, setShowEditVisitDialog] = useState(false);
-  const [editingVisitId, setEditingVisitId] = useState<number | null>(null);
+  // We've removed the visit form and edit dialog state variables
+  // as we're now editing directly in the visit log
   const [newMedicalHistoryOption, setNewMedicalHistoryOption] = useState('');
   const [newDentalHistoryOption, setNewDentalHistoryOption] = useState('');
   const [medicalHistoryOptions, setMedicalHistoryOptions] = useState<string[]>([]);
@@ -332,7 +324,6 @@ export default function PatientRecord() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/patients/${patientId}/visits`] });
-      setShowEditVisitDialog(false);
       toast({
         title: "Success",
         description: "Visit updated successfully",
@@ -380,13 +371,7 @@ export default function PatientRecord() {
     }));
   };
   
-  // Handle visit form changes
-  const handleVisitFormChange = (field: string, value: string) => {
-    setVisitForm(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
+  // We've removed the handleVisitFormChange function as we're now editing directly in the VisitLog
 
   // Save patient details
   const handleSavePatientDetails = () => {
