@@ -42,7 +42,7 @@ export default function ConsentForm({
   const { toast } = useToast();
   const [patientSignature, setPatientSignature] = useState<string | null>(null);
   const [selectedDoctorId, setSelectedDoctorId] = useState<number | null>(null);
-  const [signatureMode, setSignatureMode] = useState<'patient' | 'doctor' | null>(null);
+  const [signatureMode, setSignatureMode] = useState<boolean>(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [formImage, setFormImage] = useState<string | null>(null);
   const [patientInfo, setPatientInfo] = useState<PatientFormInfo>({
@@ -148,11 +148,11 @@ export default function ConsentForm({
     }
   }, [formType]);
 
-  const clearPatientSignature = () => {
+  const clearSignature = () => {
     if (signatureCanvasRef.current) {
       signatureCanvasRef.current.clear();
       setPatientSignature(null);
-      setSignatureMode(null);
+      setSignatureMode(false);
     }
   };
 
@@ -179,18 +179,11 @@ export default function ConsentForm({
     }
   };
 
-  const startPatientSignature = () => {
+  const startSignature = () => {
     if (signatureCanvasRef.current) {
       signatureCanvasRef.current.clear();
     }
-    setSignatureMode('patient');
-  };
-
-  const startDoctorSignature = () => {
-    if (signatureCanvasRef.current) {
-      signatureCanvasRef.current.clear();
-    }
-    setSignatureMode('doctor');
+    setSignatureMode(true);
   };
 
   const finishDrawing = async () => {
@@ -209,11 +202,11 @@ export default function ConsentForm({
     if (signedFormImage) {
       setFormImage(signedFormImage);
       setPatientSignature(signedFormImage); // Store the signed form
-      setSignatureMode(null);
+      setSignatureMode(false);
       
       toast({
         title: "Signature Completed",
-        description: `${signatureMode === 'patient' ? 'Patient' : 'Doctor'} signature has been added to the form.`,
+        description: "Signature has been added to the form.",
       });
     }
   };
@@ -386,8 +379,8 @@ export default function ConsentForm({
                       canvasProps={{
                         className: "w-full h-full absolute inset-0 z-20",
                         style: { 
-                          // Highlight the signature areas based on mode
-                          border: `3px solid ${signatureMode === 'patient' ? 'rgba(59, 130, 246, 0.5)' : 'rgba(239, 68, 68, 0.5)'}`
+                          // Highlight the signature area
+                          border: "3px solid rgba(59, 130, 246, 0.5)"
                         }
                       }}
                       backgroundColor="transparent"
@@ -400,34 +393,22 @@ export default function ConsentForm({
               <div className="mt-4 flex flex-wrap gap-2 justify-between items-center">
                 <div className="flex space-x-2">
                   {!signatureMode ? (
-                    <>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={startPatientSignature}
-                        disabled={!!patientSignature}
-                        className="flex items-center text-blue-600 border-blue-300"
-                      >
-                        <PenTool className="mr-2 h-4 w-4" />
-                        Sign as Patient
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={startDoctorSignature}
-                        disabled={!!patientSignature}
-                        className="flex items-center text-red-600 border-red-300"
-                      >
-                        <PenTool className="mr-2 h-4 w-4" />
-                        Sign as Doctor
-                      </Button>
-                    </>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={startSignature}
+                      disabled={!!patientSignature}
+                      className="flex items-center text-blue-600 border-blue-300"
+                    >
+                      <PenTool className="mr-2 h-4 w-4" />
+                      Sign Form
+                    </Button>
                   ) : (
                     <>
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={clearPatientSignature}
+                        onClick={clearSignature}
                         className="flex items-center"
                       >
                         <Eraser className="mr-2 h-4 w-4" />
@@ -447,7 +428,7 @@ export default function ConsentForm({
                 
                 {signatureMode && (
                   <div className="text-sm font-medium text-neutral-700">
-                    {signatureMode === 'patient' ? 'Adding Patient Signature' : 'Adding Doctor Signature'}
+                    Adding Signature
                   </div>
                 )}
               </div>
@@ -677,7 +658,7 @@ export default function ConsentForm({
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={clearPatientSignature}
+                  onClick={clearSignature}
                 >
                   Clear
                 </Button>
