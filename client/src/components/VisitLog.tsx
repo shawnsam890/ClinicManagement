@@ -579,12 +579,105 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
                         <p className="text-xs text-neutral-500">
                           {new Date(form.timestamp).toLocaleString()}
                         </p>
+                        {form.patientInfo && (
+                          <div className="mt-1 text-xs text-neutral-600">
+                            <p>Name: {form.patientInfo.name}</p>
+                            <p>Phone: {form.patientInfo.phone}</p>
+                          </div>
+                        )}
                       </div>
-                      {form.type === 'signature' && (
+                      <div className="flex items-center space-x-2">
+                        {/* View button for detailed view */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            // For signature type, show the details
+                            const consentDetails = form.type === 'signature' 
+                              ? {
+                                  ...form,
+                                  patientInfo: form.patientInfo || { 
+                                    name: 'Not provided', 
+                                    address: 'Not provided',
+                                    phone: 'Not provided',
+                                    date: new Date(form.timestamp)
+                                  },
+                                  title: form.formType === 'extraction' 
+                                    ? 'Extraction Consent' 
+                                    : form.formType === 'root_canal'
+                                      ? 'Root Canal Consent'
+                                      : 'Custom Consent Form'
+                                }
+                              : { 
+                                  ...form,
+                                  title: 'Uploaded Consent Form' 
+                                };
+                                
+                            // Open a dialog with a modal to show the full consent form
+                            // Use temporary window.alert for now
+                            if (form.type === 'signature') {
+                              const message = `
+                                ${consentDetails.title}
+                                Date: ${form.patientInfo?.date ? new Date(form.patientInfo.date).toLocaleDateString() : new Date(form.timestamp).toLocaleDateString()}
+                                Patient: ${form.patientInfo?.name || 'Not provided'}
+                                Address: ${form.patientInfo?.address || 'Not provided'}
+                                Phone: ${form.patientInfo?.phone || 'Not provided'}
+                              `;
+                              window.alert(message);
+                            } else {
+                              // For uploaded forms, open in a new tab
+                              if (form.data) {
+                                window.open(form.data, '_blank');
+                              }
+                            }
+                          }}
+                          className="text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        
+                        {/* Delete button */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={async () => {
+                            try {
+                              const response = await fetch(`/api/visits/${visitId}/consent-forms/${index}`, {
+                                method: 'DELETE',
+                              });
+                              
+                              if (response.ok) {
+                                // Refresh data through invalidation
+                                queryClient.invalidateQueries({ queryKey: [`/api/visits/${visitId}`] });
+                                
+                                toast({
+                                  title: "Success",
+                                  description: "Consent form deleted successfully.",
+                                });
+                              } else {
+                                throw new Error("Failed to delete consent form");
+                              }
+                            } catch (error) {
+                              console.error("Error deleting consent form:", error);
+                              toast({
+                                title: "Error",
+                                description: "Failed to delete consent form.",
+                                variant: "destructive",
+                              });
+                            }
+                          }}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      
+                      {/* Show signature preview */}
+                      {form.type === 'signature' && form.patientSignature && (
                         <div className="ml-2">
                           <img 
-                            src={form.data} 
-                            alt="Signature" 
+                            src={form.patientSignature} 
+                            alt="Patient Signature" 
                             className="h-10 border rounded p-1"
                           />
                         </div>

@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useSettings } from "@/hooks/useSettings";
 import Layout from "@/components/Layout";
+import SignatureCanvas from "react-signature-canvas";
 
 import {
   Card,
@@ -50,6 +51,8 @@ import {
   Trash2,
   X,
   Check,
+  Edit,
+  Pen,
 } from "lucide-react";
 
 export default function Settings() {
@@ -60,6 +63,11 @@ export default function Settings() {
   const [newOptionValue, setNewOptionValue] = useState("");
   const [newOptionCategory, setNewOptionCategory] = useState("medicalHistory");
   const [isAddingOption, setIsAddingOption] = useState(false);
+  
+  // Signature states
+  const signatureRef = useRef<SignatureCanvas | null>(null);
+  const [doctorName, setDoctorName] = useState("");
+  const [editingSignatureId, setEditingSignatureId] = useState<number | null>(null);
   
   // Medication management states
   const [medicationName, setMedicationName] = useState("");
@@ -81,6 +89,11 @@ export default function Settings() {
   // Fetch medications
   const { data: medications, isLoading: isLoadingMedications } = useQuery({
     queryKey: ["/api/medications"],
+  });
+  
+  // Fetch doctor signatures
+  const { data: doctorSignatures = [], isLoading: isLoadingSignatures } = useQuery({
+    queryKey: ["/api/doctor-signatures"],
   });
 
   // Clinic Info State
@@ -243,6 +256,80 @@ export default function Settings() {
       });
     },
   });
+  
+  // Doctor signature mutations
+  const createSignatureMutation = useMutation({
+    mutationFn: async (values: any) => {
+      return apiRequest("POST", "/api/doctor-signatures", values);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/doctor-signatures"] });
+      toast({
+        title: "Success",
+        description: "Doctor signature added successfully",
+      });
+      // Reset form
+      if (signatureRef.current) {
+        signatureRef.current.clear();
+      }
+      setDoctorName("");
+    },
+    onError: (error) => {
+      console.error("Error creating doctor signature:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add doctor signature",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  const updateSignatureMutation = useMutation({
+    mutationFn: async ({ id, values }: { id: number; values: any }) => {
+      return apiRequest("PUT", `/api/doctor-signatures/${id}`, values);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/doctor-signatures"] });
+      toast({
+        title: "Success",
+        description: "Doctor signature updated successfully",
+      });
+      setEditingSignatureId(null);
+      if (signatureRef.current) {
+        signatureRef.current.clear();
+      }
+      setDoctorName("");
+    },
+    onError: (error) => {
+      console.error("Error updating doctor signature:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update doctor signature",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  const deleteSignatureMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return apiRequest("DELETE", `/api/doctor-signatures/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/doctor-signatures"] });
+      toast({
+        title: "Success",
+        description: "Doctor signature removed successfully",
+      });
+    },
+    onError: (error) => {
+      console.error("Error deleting doctor signature:", error);
+      toast({
+        title: "Error",
+        description: "Failed to remove doctor signature",
+        variant: "destructive",
+      });
+    }
+  });
 
   const handleSaveClinicInfo = () => {
     updateClinicInfoMutation.mutate(clinicInfoState);
@@ -301,6 +388,66 @@ export default function Settings() {
     setMedicationQuantity(0);
     setMedicationThreshold(10);
     setMedicationNotes("");
+  };
+  
+  // Signature operations
+  const handleAddSignature = () => {
+    if (!doctorName.trim()) {
+      toast({
+        title: "Error",
+        description: "Doctor name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!signatureRef.current || signatureRef.current.isEmpty()) {
+      toast({
+        title: "Error",
+        description: "Please provide a signature",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const signatureImage = signatureRef.current.toDataURL("image/png");
+    
+    createSignatureMutation.mutate({
+      doctorName,
+      signatureImage,
+    });
+  };
+  
+  const handleEditSignature = (signature: any) => {
+    setDoctorName(signature.doctorName);
+    setEditingSignatureId(signature.id);
+  };
+  
+  const handleUpdateSignature = () => {
+    if (!doctorName.trim() || !editingSignatureId) {
+      return;
+    }
+    
+    let signatureImage;
+    if (signatureRef.current && !signatureRef.current.isEmpty()) {
+      signatureImage = signatureRef.current.toDataURL("image/png");
+    }
+    
+    updateSignatureMutation.mutate({
+      id: editingSignatureId,
+      values: {
+        doctorName,
+        ...(signatureImage ? { signatureImage } : {})
+      }
+    });
+  };
+  
+  const handleCancelSignatureEdit = () => {
+    setEditingSignatureId(null);
+    setDoctorName("");
+    if (signatureRef.current) {
+      signatureRef.current.clear();
+    }
   };
 
   const handleDeleteOption = (category: string, value: string) => {
@@ -398,7 +545,7 @@ export default function Settings() {
   return (
     <Layout title="Settings" showBackButton={true} backTo="/dashboard">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="general" className="flex items-center gap-2">
             <SettingsIcon className="h-4 w-4" />
             General Settings
@@ -421,6 +568,10 @@ export default function Settings() {
               <path d="M8 14a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z"></path>
             </svg>
             Medications
+          </TabsTrigger>
+          <TabsTrigger value="signatures" className="flex items-center gap-2">
+            <Pen className="h-4 w-4" />
+            Doctor Signatures
           </TabsTrigger>
         </TabsList>
         
