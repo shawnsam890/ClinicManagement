@@ -73,11 +73,39 @@ export default function PatientRecord() {
     queryKey: ['/api/medications'],
   });
 
-  // Fetch patient invoices
-  const { data: invoices = [] } = useQuery<InvoiceType[]>({
+  // Fetch patient invoices with items
+  const { data: rawInvoices = [], isLoading: isLoadingInvoices } = useQuery<InvoiceType[]>({
     queryKey: [`/api/patients/${patientId}/invoices`],
     enabled: !!patientId,
   });
+  
+  // Track which invoices we've loaded items for
+  const [invoicesWithItems, setInvoicesWithItems] = useState<(InvoiceType & { items: any[] })[]>([]);
+  
+  // Load invoice items when invoices change
+  useEffect(() => {
+    if (rawInvoices.length > 0) {
+      const loadInvoiceItems = async () => {
+        const invoicesWithItemsData = await Promise.all(
+          rawInvoices.map(async (invoice) => {
+            try {
+              const res = await fetch(`/api/invoices/${invoice.id}/items`);
+              const items = await res.json();
+              return { ...invoice, items };
+            } catch (error) {
+              console.error(`Failed to load items for invoice ${invoice.id}:`, error);
+              return { ...invoice, items: [] };
+            }
+          })
+        );
+        setInvoicesWithItems(invoicesWithItemsData);
+      };
+      
+      loadInvoiceItems();
+    } else {
+      setInvoicesWithItems([]);
+    }
+  }, [rawInvoices]);
 
   // Fetch prescriptions for selected visit
   const { data: prescriptions = [], isLoading: isLoadingPrescriptions } = useQuery<Prescription[]>({
@@ -454,7 +482,7 @@ export default function PatientRecord() {
           visitId={selectedVisitId || undefined}
           patientId={patientId!}
           patientName={patient?.name || ""}
-          invoices={invoices}
+          invoices={invoicesWithItems}
           onBack={() => {
             setShowInvoice(false);
             if (selectedVisitId) {

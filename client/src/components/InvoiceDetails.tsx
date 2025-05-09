@@ -265,7 +265,7 @@ export default function InvoiceDetails({ invoice, onUpdate, patientName }: Invoi
                 {invoice.items.map((item) => (
                   <tr key={item.id} className="border-b">
                     <td className="p-2">{item.description}</td>
-                    <td className="text-right p-2">{(item as any).rate ? (item as any).rate.toFixed(2) : '-'}</td>
+                    <td className="text-right p-2">-</td>
                     <td className="text-right p-2">{item.amount.toFixed(2)}</td>
                   </tr>
                 ))}

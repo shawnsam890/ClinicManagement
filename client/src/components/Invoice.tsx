@@ -190,7 +190,7 @@ export default function InvoiceComponent({ patientId, visitId, patientName, invo
               Back
             </Button>
           )}
-          <CardTitle>{visitId ? 'Visit Invoice' : 'All Invoices'}</CardTitle>
+          <CardTitle>{visitId ? 'Visit Invoice' : `All Invoices for ${patientName}`}</CardTitle>
         </div>
         <Button onClick={() => setShowForm(true)} size="sm">
           <Plus className="h-4 w-4 mr-2" />
