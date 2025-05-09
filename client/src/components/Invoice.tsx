@@ -12,7 +12,7 @@ import { Invoice, InvoiceItem } from "@shared/schema";
 
 interface InvoiceProps {
   patientId: string;
-  visitId: number;
+  visitId?: number;
   patientName: string;
   invoices?: (Invoice & { items: InvoiceItem[] })[];
   onBack?: () => void;
@@ -190,7 +190,7 @@ export default function InvoiceComponent({ patientId, visitId, patientName, invo
               Back
             </Button>
           )}
-          <CardTitle>Invoices</CardTitle>
+          <CardTitle>{visitId ? 'Visit Invoice' : 'All Invoices'}</CardTitle>
         </div>
         <Button onClick={() => setShowForm(true)} size="sm">
           <Plus className="h-4 w-4 mr-2" />

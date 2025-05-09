@@ -18,6 +18,7 @@ import { Invoice, InvoiceItem } from "@shared/schema";
 // Define color mapping for invoice status
 const statusColors: Record<string, string> = {
   Paid: "bg-green-100 text-green-800 hover:bg-green-200",
+  "Partially Paid": "bg-blue-100 text-blue-800 hover:bg-blue-200",
   Pending: "bg-yellow-100 text-yellow-800 hover:bg-yellow-200",
   Cancelled: "bg-red-100 text-red-800 hover:bg-red-200"
 };
@@ -137,7 +138,7 @@ export default function InvoiceDetails({ invoice, onUpdate, patientName }: Invoi
             ${invoice.items.map(item => `
               <tr>
                 <td>${item.description}</td>
-                <td>${item.rate.toFixed(2)}</td>
+                <td>${item.rate ? item.rate.toFixed(2) : '-'}</td>
                 <td>${item.amount.toFixed(2)}</td>
               </tr>
             `).join('')}
@@ -231,13 +232,18 @@ export default function InvoiceDetails({ invoice, onUpdate, patientName }: Invoi
             <p className="text-sm text-muted-foreground">{invoice.patientId}</p>
           </div>
           
-          {invoice.status === 'Paid' && (
+          {(invoice.status === 'Paid' || invoice.status === 'Partially Paid') && (
             <div>
               <h3 className="font-semibold text-sm text-muted-foreground mb-1">Payment Details</h3>
               <p className="font-medium">{invoice.paymentMethod}</p>
               {invoice.paymentDate && (
                 <p className="text-sm text-muted-foreground">
-                  Paid on {format(new Date(invoice.paymentDate), 'dd/MM/yyyy')}
+                  {invoice.status === 'Paid' ? 'Paid' : 'Partially paid'} on {format(new Date(invoice.paymentDate), 'dd/MM/yyyy')}
+                </p>
+              )}
+              {invoice.status === 'Partially Paid' && (
+                <p className="text-sm font-medium text-blue-600 mt-1">
+                  Balance due: ₹{(invoice.balanceAmount || 0).toFixed(2)}
                 </p>
               )}
             </div>
@@ -259,7 +265,7 @@ export default function InvoiceDetails({ invoice, onUpdate, patientName }: Invoi
                 {invoice.items.map((item) => (
                   <tr key={item.id} className="border-b">
                     <td className="p-2">{item.description}</td>
-                    <td className="text-right p-2">{item.rate.toFixed(2)}</td>
+                    <td className="text-right p-2">{(item as any).rate ? (item as any).rate.toFixed(2) : '-'}</td>
                     <td className="text-right p-2">{item.amount.toFixed(2)}</td>
                   </tr>
                 ))}
