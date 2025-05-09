@@ -336,15 +336,15 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
     }
   };
 
+  // Fetch patient info - must be called in every render, not conditionally
+  const { data: patientData } = useQuery<{ id: number; name: string; patientId: string }>({
+    queryKey: [`/api/patients/patientId/${patientId}`],
+    enabled: !!patientId,
+  });
+
   if (isLoading) {
     return <div className="p-4">Loading visit data...</div>;
   }
-
-  // Fetch patient info
-  const { data: patientData } = useQuery<{ id: number; name: string; patientId: string }>({
-    queryKey: [`/api/patients/patientId/${patientId}`],
-    enabled: !!patientId && showInvoice,
-  });
 
   if (showInvoice) {
     return (
