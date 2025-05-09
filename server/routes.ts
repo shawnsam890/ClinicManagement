@@ -1633,19 +1633,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/doctor-signatures', upload.single('signatureImage'), async (req, res) => {
+  app.post('/api/doctor-signatures', async (req, res) => {
     try {
-      if (!req.file) {
-        return res.status(400).json({ message: 'Signature image is required' });
-      }
-
-      const doctorName = req.body.doctorName;
+      const { doctorName, signatureImage } = req.body;
+      
       if (!doctorName) {
         return res.status(400).json({ message: 'Doctor name is required' });
       }
 
-      // Convert image to data URL
-      const signatureImage = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+      if (!signatureImage) {
+        return res.status(400).json({ message: 'Signature image is required' });
+      }
       
       // Check if doctor already has a signature
       const [existingSignature] = await db.select().from(doctorSignatures).where(eq(doctorSignatures.doctorName, doctorName));
@@ -1670,6 +1668,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.status(201).json(signature);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Validation error', errors: error.errors });
+      }
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.put('/api/doctor-signatures/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid ID' });
+      }
+      
+      const { doctorName, signatureImage } = req.body;
+      
+      if (!doctorName) {
+        return res.status(400).json({ message: 'Doctor name is required' });
+      }
+      
+      // Find the signature
+      const [existingSignature] = await db.select().from(doctorSignatures).where(eq(doctorSignatures.id, id));
+      if (!existingSignature) {
+        return res.status(404).json({ message: 'Doctor signature not found' });
+      }
+      
+      // Prepare update data
+      const updateData: any = { doctorName };
+      if (signatureImage) {
+        updateData.signatureImage = signatureImage;
+      }
+      
+      // Update the signature
+      const [updatedSignature] = await db.update(doctorSignatures)
+        .set(updateData)
+        .where(eq(doctorSignatures.id, id))
+        .returning();
+      
+      res.json(updatedSignature);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: 'Validation error', errors: error.errors });

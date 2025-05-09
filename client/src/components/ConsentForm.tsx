@@ -257,7 +257,8 @@ export default function ConsentForm({
           return;
         }
 
-        if (!selectedDoctorId && formType !== 'custom') {
+        // Only check for doctor selection if there are doctors available to select
+        if (doctorSignatures.length > 0 && !selectedDoctorId && formType !== 'custom') {
           toast({
             title: "Doctor Selection Required",
             description: "Please select a doctor for the consent form.",
