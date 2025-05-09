@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Download, Upload, File, Calendar, Trash, X } from "lucide-react";
+import { Download, Upload, File, Calendar, Trash, X, Eraser, CheckCircle2, PenTool } from "lucide-react";
 import SignatureCanvas from "react-signature-canvas";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -13,9 +13,11 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { DoctorSignature } from "@shared/schema";
+import { mergeRefs } from "@/lib/utils";
+import html2canvas from 'html2canvas';
 
 // Import root canal consent form image
-import rootCanalConsentFormImg from "../assets/root_canal_consent.jpg";
+import rootCanalConsentFormImg from "@assets/root canal consent form.jpg";
 
 interface ConsentFormProps {
   visitId: number;
@@ -38,13 +40,21 @@ export default function ConsentForm({
   const { toast } = useToast();
   const [patientSignature, setPatientSignature] = useState<string | null>(null);
   const [selectedDoctorId, setSelectedDoctorId] = useState<number | null>(null);
+  const [signatureMode, setSignatureMode] = useState<'patient' | 'doctor' | null>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [formImage, setFormImage] = useState<string | null>(null);
   const [patientInfo, setPatientInfo] = useState<PatientFormInfo>({
     name: '',
     address: '',
     phone: '',
     date: new Date(),
   });
+  
+  // Refs
   const patientSignatureRef = useRef<SignatureCanvas | null>(null);
+  const doctorSignatureRef = useRef<SignatureCanvas | null>(null);
+  const signatureCanvasRef = useRef<SignatureCanvas | null>(null);
+  const formContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch doctor signatures
@@ -114,26 +124,80 @@ export default function ConsentForm({
 
   const formTemplate = getFormTemplate();
 
+  // New form and signature handling methods
+  useEffect(() => {
+    if (formType === 'root_canal') {
+      // Initialize with the original form
+      setFormImage(rootCanalConsentFormImg);
+    }
+  }, [formType]);
+
   const clearPatientSignature = () => {
-    if (patientSignatureRef.current) {
-      patientSignatureRef.current.clear();
+    if (signatureCanvasRef.current) {
+      signatureCanvasRef.current.clear();
       setPatientSignature(null);
+      setSignatureMode(null);
     }
   };
 
-  const savePatientSignature = () => {
-    if (patientSignatureRef.current && !patientSignatureRef.current.isEmpty()) {
-      const dataURL = patientSignatureRef.current.toDataURL("image/png");
-      setPatientSignature(dataURL);
-      toast({
-        title: "Signature Captured",
-        description: "Your signature has been successfully captured.",
+  const captureFormWithSignatures = async () => {
+    if (!formContainerRef.current) return null;
+    
+    try {
+      const canvas = await html2canvas(formContainerRef.current, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
       });
-    } else {
+      
+      return canvas.toDataURL('image/png');
+    } catch (error) {
+      console.error('Error capturing form:', error);
+      toast({
+        title: "Error",
+        description: "Failed to capture signed form",
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
+  const startPatientSignature = () => {
+    if (signatureCanvasRef.current) {
+      signatureCanvasRef.current.clear();
+    }
+    setSignatureMode('patient');
+  };
+
+  const startDoctorSignature = () => {
+    if (signatureCanvasRef.current) {
+      signatureCanvasRef.current.clear();
+    }
+    setSignatureMode('doctor');
+  };
+
+  const finishDrawing = async () => {
+    if (!signatureCanvasRef.current || signatureCanvasRef.current.isEmpty()) {
       toast({
         title: "Empty Signature",
-        description: "Please provide your signature before saving.",
+        description: "Please provide a signature before finishing.",
         variant: "destructive",
+      });
+      return;
+    }
+
+    // Capture the current state of the form with the signature
+    const signedFormImage = await captureFormWithSignatures();
+    
+    if (signedFormImage) {
+      setFormImage(signedFormImage);
+      setPatientSignature(signedFormImage); // Store the signed form
+      setSignatureMode(null);
+      
+      toast({
+        title: "Signature Completed",
+        description: `${signatureMode === 'patient' ? 'Patient' : 'Doctor'} signature has been added to the form.`,
       });
     }
   };
@@ -282,14 +346,88 @@ export default function ConsentForm({
           </div>
         ) : formType === 'root_canal' ? (
           <>
+            {/* Form with direct drawing functionality */}
             <div className="mb-6 p-4 bg-neutral-50 rounded-lg border border-neutral-200">
-              {/* Malayalam Root Canal Consent Form */}
-              <div className="flex justify-center">
+              <div className="relative" ref={formContainerRef}>
+                {/* Base image or previously captured image with signatures */}
                 <img 
-                  src={rootCanalConsentFormImg} 
+                  src={formImage || rootCanalConsentFormImg} 
                   alt="Root Canal Consent Form in Malayalam" 
                   className="max-w-full rounded-md border border-gray-200 shadow-sm"
                 />
+                
+                {/* Overlay for signature drawing - only shown when in signature mode */}
+                {signatureMode && (
+                  <div className="absolute inset-0 z-10 pointer-events-auto">
+                    <SignatureCanvas
+                      ref={signatureCanvasRef}
+                      canvasProps={{
+                        className: "w-full h-full absolute inset-0 z-20",
+                        style: { 
+                          // Highlight the signature areas based on mode
+                          border: `3px solid ${signatureMode === 'patient' ? 'rgba(59, 130, 246, 0.5)' : 'rgba(239, 68, 68, 0.5)'}`
+                        }
+                      }}
+                      backgroundColor="transparent"
+                    />
+                  </div>
+                )}
+              </div>
+              
+              {/* Signature controls */}
+              <div className="mt-4 flex flex-wrap gap-2 justify-between items-center">
+                <div className="flex space-x-2">
+                  {!signatureMode ? (
+                    <>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={startPatientSignature}
+                        disabled={!!patientSignature}
+                        className="flex items-center text-blue-600 border-blue-300"
+                      >
+                        <PenTool className="mr-2 h-4 w-4" />
+                        Sign as Patient
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={startDoctorSignature}
+                        disabled={!!patientSignature}
+                        className="flex items-center text-red-600 border-red-300"
+                      >
+                        <PenTool className="mr-2 h-4 w-4" />
+                        Sign as Doctor
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={clearPatientSignature}
+                        className="flex items-center"
+                      >
+                        <Eraser className="mr-2 h-4 w-4" />
+                        Clear
+                      </Button>
+                      <Button 
+                        size="sm"
+                        onClick={finishDrawing}
+                        className="flex items-center"
+                      >
+                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                        Done
+                      </Button>
+                    </>
+                  )}
+                </div>
+                
+                {signatureMode && (
+                  <div className="text-sm font-medium text-neutral-700">
+                    {signatureMode === 'patient' ? 'Adding Patient Signature' : 'Adding Doctor Signature'}
+                  </div>
+                )}
               </div>
             </div>
             
@@ -354,75 +492,45 @@ export default function ConsentForm({
             </div>
 
             {/* Doctor Selection */}
-            <div className="mb-6">
-              <Label htmlFor="doctorSelect">Select Doctor</Label>
-              <Select
-                value={selectedDoctorId?.toString() || ''}
-                onValueChange={(value) => setSelectedDoctorId(parseInt(value))}
-              >
-                <SelectTrigger id="doctorSelect">
-                  <SelectValue placeholder="Select Doctor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {doctorSignatures.length > 0 ? (
-                    doctorSignatures.map((doctor) => (
-                      <SelectItem key={doctor.id} value={doctor.id.toString()}>
-                        {doctor.doctorName}
+            {!patientSignature && (
+              <div className="mb-6">
+                <Label htmlFor="doctorSelect">Select Doctor (Optional Pre-set Signature)</Label>
+                <Select
+                  value={selectedDoctorId?.toString() || ''}
+                  onValueChange={(value) => setSelectedDoctorId(parseInt(value))}
+                >
+                  <SelectTrigger id="doctorSelect">
+                    <SelectValue placeholder="Select Doctor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {doctorSignatures.length > 0 ? (
+                      doctorSignatures.map((doctor) => (
+                        <SelectItem key={doctor.id} value={doctor.id.toString()}>
+                          {doctor.doctorName}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="none" disabled>
+                        No doctors available
                       </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="none" disabled>
-                      No doctors available
-                    </SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
+                    )}
+                  </SelectContent>
+                </Select>
 
-              {selectedDoctorId && (
-                <div className="mt-2">
-                  <Label>Doctor's Signature Preview</Label>
-                  <div className="mt-1 p-2 border rounded-lg bg-white">
-                    <img 
-                      src={doctorSignatures.find(d => d.id === selectedDoctorId)?.signatureImage || ''}
-                      alt="Doctor's Signature"
-                      className="max-h-16 object-contain"
-                    />
+                {selectedDoctorId && (
+                  <div className="mt-2">
+                    <Label>Doctor's Signature Preview</Label>
+                    <div className="mt-1 p-2 border rounded-lg bg-white">
+                      <img 
+                        src={doctorSignatures.find(d => d.id === selectedDoctorId)?.signatureImage || ''}
+                        alt="Doctor's Signature"
+                        className="max-h-16 object-contain"
+                      />
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-            
-            {/* Patient Signature */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
-                Patient Signature
-              </label>
-              <div className="border border-neutral-300 rounded-lg bg-white">
-                <SignatureCanvas
-                  ref={patientSignatureRef}
-                  canvasProps={{
-                    className: "w-full h-40 rounded-lg"
-                  }}
-                  backgroundColor="white"
-                />
+                )}
               </div>
-              <div className="flex mt-2 space-x-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={clearPatientSignature}
-                >
-                  Clear
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={savePatientSignature}
-                >
-                  Capture Signature
-                </Button>
-              </div>
-            </div>
+            )}
           </>
         ) : (
           <>
@@ -554,7 +662,22 @@ export default function ConsentForm({
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={savePatientSignature}
+                  onClick={() => {
+                    if (patientSignatureRef.current && !patientSignatureRef.current.isEmpty()) {
+                      const dataURL = patientSignatureRef.current.toDataURL("image/png");
+                      setPatientSignature(dataURL);
+                      toast({
+                        title: "Signature Captured",
+                        description: "Your signature has been successfully captured.",
+                      });
+                    } else {
+                      toast({
+                        title: "Empty Signature",
+                        description: "Please provide your signature before saving.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
                 >
                   Capture Signature
                 </Button>
