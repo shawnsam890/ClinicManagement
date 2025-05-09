@@ -62,6 +62,12 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
     enabled: !!visitId,
   });
 
+  // Fetch visit-specific invoices
+  const { data: visitInvoices = [] } = useQuery<Invoice[]>({
+    queryKey: [`/api/visits/${visitId}/invoices`],
+    enabled: !!visitId,
+  });
+
   // Fetch all dropdown options from central settings
   const { data: dropdownOptions = {} } = useQuery({
     queryKey: ['/api/settings/key/dropdown_options'],
