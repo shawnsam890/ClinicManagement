@@ -20,19 +20,21 @@ import AuthPage from "@/pages/auth-page-fixed";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 
+import SimpleDashboard from "@/pages/SimpleDashboard";
+
 function Router() {
   return (
     <Switch>
-      <ProtectedRoute path="/" component={HomePage} />
-      <ProtectedRoute path="/dashboard" component={Dashboard} />
-      <ProtectedRoute path="/patients" component={PatientDatabase} />
-      <ProtectedRoute path="/patients/new" component={NewPatientForm} />
-      <ProtectedRoute path="/patients/record/:patientId" component={PatientRecord} />
-      <ProtectedRoute path="/patients/list" component={ExistingPatients} />
-      <ProtectedRoute path="/lab-works" component={LabWorks} />
-      <ProtectedRoute path="/revenue" component={Revenue} />
-      <ProtectedRoute path="/staff" component={StaffManagement} />
-      <ProtectedRoute path="/settings" component={Settings} />
+      <Route path="/" component={SimpleDashboard} />
+      <Route path="/dashboard" component={SimpleDashboard} />
+      <Route path="/patients" component={PatientDatabase} />
+      <Route path="/patients/new" component={NewPatientForm} />
+      <Route path="/patients/record/:patientId" component={PatientRecord} />
+      <Route path="/patients/list" component={ExistingPatients} />
+      <Route path="/lab-works" component={LabWorks} />
+      <Route path="/revenue" component={Revenue} />
+      <Route path="/staff" component={StaffManagement} />
+      <Route path="/settings" component={Settings} />
       {/* Appointments route removed */}
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
