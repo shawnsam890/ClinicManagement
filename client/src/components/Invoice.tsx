@@ -33,24 +33,29 @@ export default function InvoiceComponent({ patientId, visitId, patientName, invo
       try {
         // Create the invoice with paidAmount and balanceAmount
         console.log("Creating invoice:", invoice);
-        const invoiceRes = await apiRequest("POST", "/api/invoices", {
+        
+        // Ensure all fields are properly formatted
+        const invoiceData = {
           patientId: invoice.patientId,
           visitId: invoice.visitId || null,
           date: invoice.date,
-          totalAmount: invoice.totalAmount,
-          paidAmount: invoice.paidAmount || 0,
-          balanceAmount: invoice.balanceAmount || 0,
-          status: invoice.status,
-          paymentMethod: invoice.paymentMethod,
-          notes: invoice.notes
-        });
+          totalAmount: Number(invoice.totalAmount) || 0,
+          paidAmount: Number(invoice.paidAmount) || 0,
+          balanceAmount: Number(invoice.balanceAmount) || 0,
+          status: invoice.status || "Pending",
+          paymentMethod: invoice.paymentMethod || null,
+          notes: invoice.notes || ""
+        };
+        
+        console.log("Sending invoice data:", invoiceData);
+        const invoiceRes = await apiRequest("POST", "/api/invoices", invoiceData);
         const newInvoice = await invoiceRes.json();
         
         // Create each line item
         const itemPromises = invoice.items.map((item: any) => 
           apiRequest("POST", "/api/invoice-items", {
-            description: item.description,
-            amount: item.amount,
+            description: item.description || "",
+            amount: Number(item.amount) || 0,
             invoiceId: newInvoice.id
           })
         );
@@ -86,16 +91,21 @@ export default function InvoiceComponent({ patientId, visitId, patientName, invo
       try {
         // Update the invoice with paid and balance amounts
         console.log("Updating invoice:", invoice);
-        const invoiceRes = await apiRequest("PUT", `/api/invoices/${invoice.id}`, {
+        
+        // Ensure all fields are properly formatted
+        const invoiceData = {
           date: invoice.date,
-          status: invoice.status,
-          totalAmount: invoice.totalAmount,
-          paidAmount: invoice.paidAmount || 0,
-          balanceAmount: invoice.balanceAmount || 0,
-          paymentMethod: invoice.paymentMethod,
-          paymentDate: invoice.paymentDate,
-          notes: invoice.notes,
-        });
+          status: invoice.status || "Pending",
+          totalAmount: Number(invoice.totalAmount) || 0,
+          paidAmount: Number(invoice.paidAmount) || 0,
+          balanceAmount: Number(invoice.balanceAmount) || 0,
+          paymentMethod: invoice.paymentMethod || null,
+          paymentDate: invoice.paymentDate || null,
+          notes: invoice.notes || "",
+        };
+        
+        console.log("Sending update data:", invoiceData);
+        const invoiceRes = await apiRequest("PUT", `/api/invoices/${invoice.id}`, invoiceData);
         
         const updatedInvoice = await invoiceRes.json();
         
@@ -113,16 +123,16 @@ export default function InvoiceComponent({ patientId, visitId, patientName, invo
         // Update existing items
         const updatePromises = itemsToUpdate.map((item: any) => 
           apiRequest("PUT", `/api/invoice-items/${item.id}`, {
-            description: item.description,
-            amount: item.amount,
+            description: item.description || "",
+            amount: Number(item.amount) || 0,
           })
         );
         
         // Add new items
         const addPromises = itemsToAdd.map((item: any) => 
           apiRequest("POST", "/api/invoice-items", {
-            description: item.description,
-            amount: item.amount,
+            description: item.description || "",
+            amount: Number(item.amount) || 0,
             invoiceId: invoice.id
           })
         );
