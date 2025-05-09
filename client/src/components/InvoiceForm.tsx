@@ -313,6 +313,7 @@ export default function InvoiceForm({ patientId, initialData, onSave, onCancel }
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="Paid">Paid</SelectItem>
+                  <SelectItem value="Partially Paid">Partially Paid</SelectItem>
                   <SelectItem value="Pending">Pending</SelectItem>
                   <SelectItem value="Cancelled">Cancelled</SelectItem>
                 </SelectContent>
@@ -322,8 +323,8 @@ export default function InvoiceForm({ patientId, initialData, onSave, onCancel }
           )}
         />
         
-        {/* Payment Method - show only if status is Paid */}
-        {form.watch("status") === "Paid" && (
+        {/* Payment Method - show if status is Paid or Partially Paid */}
+        {(form.watch("status") === "Paid" || form.watch("status") === "Partially Paid") && (
           <FormField
             control={form.control}
             name="paymentMethod"
