@@ -340,12 +340,18 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
     return <div className="p-4">Loading visit data...</div>;
   }
 
+  // Fetch patient info
+  const { data: patientData } = useQuery<{ id: number; name: string; patientId: string }>({
+    queryKey: [`/api/patients/patientId/${patientId}`],
+    enabled: !!patientId && showInvoice,
+  });
+
   if (showInvoice) {
     return (
       <Invoice 
         patientId={patientId} 
         visitId={visitId}
-        patientName={visit?.patientName || "Patient"}
+        patientName={patientData?.name || "Patient"}
         onBack={() => setShowInvoice(false)}
       />
     );
@@ -535,7 +541,7 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
               <SelectValue placeholder="Select treatment plan" />
             </SelectTrigger>
             <SelectContent>
-              {treatmentPlanOptions.map((option, index) => (
+              {treatmentPlanOptions.map((option: string, index: number) => (
                 <SelectItem key={index} value={option}>{option}</SelectItem>
               ))}
             </SelectContent>
@@ -558,7 +564,7 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
               <SelectValue placeholder="Select treatment done" />
             </SelectTrigger>
             <SelectContent>
-              {treatmentDoneOptions.map((option, index) => (
+              {treatmentDoneOptions.map((option: string, index: number) => (
                 <SelectItem key={index} value={option}>{option}</SelectItem>
               ))}
             </SelectContent>
@@ -592,7 +598,7 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
               <SelectValue placeholder="Select advice" />
             </SelectTrigger>
             <SelectContent>
-              {adviceOptions.map((option, index) => (
+              {adviceOptions.map((option: string, index: number) => (
                 <SelectItem key={index} value={option}>{option}</SelectItem>
               ))}
             </SelectContent>

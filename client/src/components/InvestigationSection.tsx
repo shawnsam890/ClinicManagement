@@ -141,7 +141,7 @@ export default function InvestigationSection({ visitId }: InvestigationSectionPr
                   <SelectValue placeholder="Select investigation type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {investigationTypes.map((type, index) => (
+                  {investigationTypes.map((type: string, index: number) => (
                     <SelectItem key={index} value={type}>{type}</SelectItem>
                   ))}
                 </SelectContent>

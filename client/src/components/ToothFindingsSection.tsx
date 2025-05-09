@@ -140,7 +140,7 @@ export default function ToothFindingsSection({ visitId }: ToothFindingsSectionPr
                 <SelectValue placeholder="Select a finding" />
               </SelectTrigger>
               <SelectContent>
-                {findingOptions.map((option, index) => (
+                {findingOptions.map((option: string, index: number) => (
                   <SelectItem key={index} value={option}>{option}</SelectItem>
                 ))}
               </SelectContent>
