@@ -68,9 +68,15 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
     select: (data: any) => data?.settingValue || {},
   });
 
+  // Fetch area options from dedicated setting
+  const { data: areaOptionsData = [] } = useQuery<string[]>({
+    queryKey: ['/api/settings/key/area_options'],
+    select: (data: any) => data?.settingValue || [],
+  });
+
   // Extract specific option arrays
   const complaintOptions = dropdownOptions.chiefComplaint || [];
-  const areaOptions = dropdownOptions.area_options || dropdownOptions.areaOptions || [];
+  const areaOptions = areaOptionsData;
   const treatmentDoneOptions = dropdownOptions.treatmentDone || [];
   const treatmentPlanOptions = dropdownOptions.treatmentPlan || [];
   const adviceOptions = dropdownOptions.advice || [];
