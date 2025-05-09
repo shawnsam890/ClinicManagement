@@ -23,7 +23,7 @@ import Invoice from "@/components/Invoice";
 import ConsentForm from "@/components/ConsentForm";
 
 import { Image, Video, Upload, FileCheck, X, FileText, Camera, File, Trash, Eye, Printer } from "lucide-react";
-import { PatientVisit, InsertPatientVisit } from "@shared/schema";
+import { PatientVisit, InsertPatientVisit, Invoice as InvoiceType } from "@shared/schema";
 
 interface VisitLogProps {
   visitId: number;
@@ -63,10 +63,40 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
   });
 
   // Fetch visit-specific invoices
-  const { data: visitInvoices = [] } = useQuery<Invoice[]>({
+  const { data: rawVisitInvoices = [] } = useQuery<InvoiceType[]>({
     queryKey: [`/api/visits/${visitId}/invoices`],
     enabled: !!visitId,
   });
+  
+  // State to store the invoices with their items
+  const [visitInvoices, setVisitInvoices] = useState<(InvoiceType & { items: any[] })[]>([]);
+  
+  // Load items for each invoice
+  useEffect(() => {
+    if (rawVisitInvoices.length > 0) {
+      const loadInvoiceItems = async () => {
+        const invoicesWithItems = [];
+        
+        for (const invoice of rawVisitInvoices) {
+          try {
+            const itemsRes = await fetch(`/api/invoices/${invoice.id}/items`);
+            if (itemsRes.ok) {
+              const items = await itemsRes.json();
+              invoicesWithItems.push({ ...invoice, items });
+            }
+          } catch (error) {
+            console.error(`Error loading items for invoice ${invoice.id}:`, error);
+          }
+        }
+        
+        setVisitInvoices(invoicesWithItems);
+      };
+      
+      loadInvoiceItems();
+    } else {
+      setVisitInvoices([]);
+    }
+  }, [rawVisitInvoices]);
 
   // Fetch all dropdown options from central settings
   const { data: dropdownOptions = {} } = useQuery({
@@ -358,6 +388,7 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
         patientId={patientId} 
         visitId={visitId}
         patientName={patientData?.name || "Patient"}
+        invoices={visitInvoices}
         onBack={() => setShowInvoice(false)}
       />
     );

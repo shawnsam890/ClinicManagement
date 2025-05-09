@@ -69,7 +69,11 @@ export default function InvoiceComponent({ patientId, visitId, patientName, invo
       }
     },
     onSuccess: () => {
+      // Invalidate both the patient and visit specific invoice queries
       queryClient.invalidateQueries({ queryKey: [`/api/patients/${patientId}/invoices`] });
+      if (visitId) {
+        queryClient.invalidateQueries({ queryKey: [`/api/visits/${visitId}/invoices`] });
+      }
       toast({
         title: "Invoice created",
         description: "New invoice has been created successfully.",
@@ -151,7 +155,11 @@ export default function InvoiceComponent({ patientId, visitId, patientName, invo
       }
     },
     onSuccess: () => {
+      // Invalidate both patient and visit specific invoice queries
       queryClient.invalidateQueries({ queryKey: [`/api/patients/${patientId}/invoices`] });
+      if (visitId) {
+        queryClient.invalidateQueries({ queryKey: [`/api/visits/${visitId}/invoices`] });
+      }
     },
     onError: (error: any) => {
       toast({
