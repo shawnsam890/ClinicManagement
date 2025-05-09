@@ -205,6 +205,14 @@ export const settings = pgTable("settings", {
   category: text("category").notNull(),
 });
 
+// Doctor signatures
+export const doctorSignatures = pgTable("doctor_signatures", {
+  id: serial("id").primaryKey(),
+  doctorName: text("doctor_name").notNull().unique(),
+  signatureImage: text("signature_image").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Create insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
 export const insertPatientSchema = createInsertSchema(patients).omit({ id: true, createdAt: true });
@@ -224,6 +232,7 @@ export const insertToothFindingSchema = createInsertSchema(toothFindings).omit({
 export const insertGeneralizedFindingSchema = createInsertSchema(generalizedFindings).omit({ id: true });
 export const insertInvestigationSchema = createInsertSchema(investigations).omit({ id: true });
 export const insertFollowUpSchema = createInsertSchema(followUps).omit({ id: true, createdAt: true });
+export const insertDoctorSignatureSchema = createInsertSchema(doctorSignatures).omit({ id: true, createdAt: true });
 
 // Export types
 export type User = typeof users.$inferSelect;
@@ -279,3 +288,6 @@ export type InsertInvestigation = z.infer<typeof insertInvestigationSchema>;
 
 export type FollowUp = typeof followUps.$inferSelect;
 export type InsertFollowUp = z.infer<typeof insertFollowUpSchema>;
+
+export type DoctorSignature = typeof doctorSignatures.$inferSelect;
+export type InsertDoctorSignature = z.infer<typeof insertDoctorSignatureSchema>;

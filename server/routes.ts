@@ -7,7 +7,8 @@ import { insertPatientSchema, insertPatientVisitSchema, insertLabWorkSchema,
   insertStaffSalarySchema, insertInvoiceSchema, insertInvoiceItemSchema, 
   insertSettingSchema, insertMedicationSchema, insertPrescriptionSchema,
   insertAppointmentSchema, patientVisits, insertToothFindingSchema,
-  insertGeneralizedFindingSchema, insertInvestigationSchema, insertFollowUpSchema } from "@shared/schema";
+  insertGeneralizedFindingSchema, insertInvestigationSchema, insertFollowUpSchema,
+  insertDoctorSignatureSchema, doctorSignatures } from "@shared/schema";
 import { z } from "zod";
 import path from 'path';
 import fs from 'fs';
