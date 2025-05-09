@@ -13,7 +13,7 @@ import { Invoice, InvoiceItem } from "@shared/schema";
 interface InvoiceProps {
   patientId: string;
   visitId: number;
-  patientName?: string;
+  patientName: string;
   invoices?: (Invoice & { items: InvoiceItem[] })[];
   onBack?: () => void;
 }
@@ -30,21 +30,38 @@ export default function InvoiceComponent({ patientId, visitId, patientName, invo
   // Create invoice mutation
   const createInvoiceMutation = useMutation({
     mutationFn: async (invoice: any) => {
-      // Create the invoice
-      const invoiceRes = await apiRequest("POST", "/api/invoices", invoice);
-      const newInvoice = await invoiceRes.json();
-      
-      // Create each line item
-      const itemPromises = invoice.items.map((item: any) => 
-        apiRequest("POST", "/api/invoice-items", {
-          ...item,
-          invoiceId: newInvoice.id
-        })
-      );
-      
-      await Promise.all(itemPromises);
-      
-      return newInvoice;
+      try {
+        // Create the invoice with paidAmount and balanceAmount
+        console.log("Creating invoice:", invoice);
+        const invoiceRes = await apiRequest("POST", "/api/invoices", {
+          patientId: invoice.patientId,
+          visitId: invoice.visitId || null,
+          date: invoice.date,
+          totalAmount: invoice.totalAmount,
+          paidAmount: invoice.paidAmount || 0,
+          balanceAmount: invoice.balanceAmount || 0,
+          status: invoice.status,
+          paymentMethod: invoice.paymentMethod,
+          notes: invoice.notes
+        });
+        const newInvoice = await invoiceRes.json();
+        
+        // Create each line item
+        const itemPromises = invoice.items.map((item: any) => 
+          apiRequest("POST", "/api/invoice-items", {
+            description: item.description,
+            amount: item.amount,
+            invoiceId: newInvoice.id
+          })
+        );
+        
+        await Promise.all(itemPromises);
+        
+        return newInvoice;
+      } catch (error) {
+        console.error("Error creating invoice:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/patients/${patientId}/invoices`] });
@@ -66,55 +83,62 @@ export default function InvoiceComponent({ patientId, visitId, patientName, invo
   // Update invoice mutation
   const updateInvoiceMutation = useMutation({
     mutationFn: async (invoice: any) => {
-      // Update the invoice
-      const invoiceRes = await apiRequest("PUT", `/api/invoices/${invoice.id}`, {
-        date: invoice.date,
-        status: invoice.status,
-        totalAmount: invoice.totalAmount,
-        paymentMethod: invoice.paymentMethod,
-        paymentDate: invoice.paymentDate,
-        notes: invoice.notes,
-      });
-      
-      const updatedInvoice = await invoiceRes.json();
-      
-      // Handle items - first get existing items
-      const existingItemsRes = await apiRequest("GET", `/api/invoices/${invoice.id}/items`);
-      const existingItems = await existingItemsRes.json();
-      
-      // Identify items to update, add, or delete
-      const itemsToUpdate = invoice.items.filter((item: any) => item.id);
-      const itemsToAdd = invoice.items.filter((item: any) => !item.id);
-      const itemsToDelete = existingItems.filter(
-        (existingItem: any) => !invoice.items.some((item: any) => item.id === existingItem.id)
-      );
-      
-      // Update existing items
-      const updatePromises = itemsToUpdate.map((item: any) => 
-        apiRequest("PUT", `/api/invoice-items/${item.id}`, {
-          description: item.description,
-          quantity: item.quantity,
-          rate: item.rate,
-          amount: item.amount,
-        })
-      );
-      
-      // Add new items
-      const addPromises = itemsToAdd.map((item: any) => 
-        apiRequest("POST", "/api/invoice-items", {
-          ...item,
-          invoiceId: invoice.id
-        })
-      );
-      
-      // Delete removed items
-      const deletePromises = itemsToDelete.map((item: any) => 
-        apiRequest("DELETE", `/api/invoice-items/${item.id}`)
-      );
-      
-      await Promise.all([...updatePromises, ...addPromises, ...deletePromises]);
-      
-      return updatedInvoice;
+      try {
+        // Update the invoice with paid and balance amounts
+        console.log("Updating invoice:", invoice);
+        const invoiceRes = await apiRequest("PUT", `/api/invoices/${invoice.id}`, {
+          date: invoice.date,
+          status: invoice.status,
+          totalAmount: invoice.totalAmount,
+          paidAmount: invoice.paidAmount || 0,
+          balanceAmount: invoice.balanceAmount || 0,
+          paymentMethod: invoice.paymentMethod,
+          paymentDate: invoice.paymentDate,
+          notes: invoice.notes,
+        });
+        
+        const updatedInvoice = await invoiceRes.json();
+        
+        // Handle items - first get existing items
+        const existingItemsRes = await apiRequest("GET", `/api/invoices/${invoice.id}/items`);
+        const existingItems = await existingItemsRes.json();
+        
+        // Identify items to update, add, or delete
+        const itemsToUpdate = invoice.items.filter((item: any) => item.id);
+        const itemsToAdd = invoice.items.filter((item: any) => !item.id);
+        const itemsToDelete = existingItems.filter(
+          (existingItem: any) => !invoice.items.some((item: any) => item.id === existingItem.id)
+        );
+        
+        // Update existing items
+        const updatePromises = itemsToUpdate.map((item: any) => 
+          apiRequest("PUT", `/api/invoice-items/${item.id}`, {
+            description: item.description,
+            amount: item.amount,
+          })
+        );
+        
+        // Add new items
+        const addPromises = itemsToAdd.map((item: any) => 
+          apiRequest("POST", "/api/invoice-items", {
+            description: item.description,
+            amount: item.amount,
+            invoiceId: invoice.id
+          })
+        );
+        
+        // Delete removed items
+        const deletePromises = itemsToDelete.map((item: any) => 
+          apiRequest("DELETE", `/api/invoice-items/${item.id}`)
+        );
+        
+        await Promise.all([...updatePromises, ...addPromises, ...deletePromises]);
+        
+        return updatedInvoice;
+      } catch (error) {
+        console.error("Error updating invoice:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/patients/${patientId}/invoices`] });

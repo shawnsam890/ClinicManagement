@@ -35,8 +35,8 @@ const invoiceFormSchema = z.object({
   paymentMethod: z.string().optional(),
   notes: z.string().optional(),
   totalAmount: z.coerce.number(),
-  paidAmount: z.coerce.number().optional(),
-  balanceAmount: z.coerce.number().optional(),
+  paidAmount: z.coerce.number().default(0),
+  balanceAmount: z.coerce.number().default(0),
 });
 
 type InvoiceFormValues = z.infer<typeof invoiceFormSchema>;
