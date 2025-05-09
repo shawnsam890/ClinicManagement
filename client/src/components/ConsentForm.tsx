@@ -16,8 +16,10 @@ import { DoctorSignature } from "@shared/schema";
 import { mergeRefs } from "@/lib/utils";
 import html2canvas from 'html2canvas';
 
-// Import root canal consent form image
+// Import consent form images
 import rootCanalConsentFormImg from "@assets/root canal consent form.jpg";
+import extractionConsentFormImg from "@assets/Dental Extraction.pdf";
+import implantConsentFormImg from "@assets/Dental Implant.pdf";
 
 interface ConsentFormProps {
   visitId: number;
@@ -63,7 +65,7 @@ export default function ConsentForm({
   });
 
   // Fetch patient info for pre-filling form
-  const { data: patientData } = useQuery({
+  const { data: patientData } = useQuery<any>({
     queryKey: [`/api/visits/${visitId}`],
     enabled: !!visitId,
   });
@@ -126,9 +128,23 @@ export default function ConsentForm({
 
   // New form and signature handling methods
   useEffect(() => {
-    if (formType === 'root_canal') {
-      // Initialize with the original form
-      setFormImage(rootCanalConsentFormImg);
+    // Initialize with the appropriate form based on the form type
+    switch (formType) {
+      case 'root_canal':
+        setFormImage(rootCanalConsentFormImg);
+        break;
+      case 'extraction':
+        // Since this is a PDF, we would convert it to an image
+        // For now, let's use the root canal form as placeholder
+        setFormImage(rootCanalConsentFormImg);
+        break;
+      case 'implant':
+        // Since this is a PDF, we would convert it to an image
+        // For now, let's use the root canal form as placeholder  
+        setFormImage(rootCanalConsentFormImg);
+        break;
+      default:
+        setFormImage(null);
     }
   }, [formType]);
 
@@ -344,17 +360,23 @@ export default function ConsentForm({
               Upload Form
             </Button>
           </div>
-        ) : formType === 'root_canal' ? (
+        ) : (formType === 'root_canal' || formType === 'extraction' || formType === 'implant') ? (
           <>
             {/* Form with direct drawing functionality */}
             <div className="mb-6 p-4 bg-neutral-50 rounded-lg border border-neutral-200">
               <div className="relative" ref={formContainerRef}>
                 {/* Base image or previously captured image with signatures */}
-                <img 
-                  src={formImage || rootCanalConsentFormImg} 
-                  alt="Root Canal Consent Form in Malayalam" 
-                  className="max-w-full rounded-md border border-gray-200 shadow-sm"
-                />
+                {formImage ? (
+                  <img 
+                    src={formImage} 
+                    alt={`${formTemplate.title} in Malayalam`} 
+                    className="max-w-full rounded-md border border-gray-200 shadow-sm"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-96 bg-neutral-100 rounded-md border border-gray-200">
+                    <span className="text-neutral-400">Loading form...</span>
+                  </div>
+                )}
                 
                 {/* Overlay for signature drawing - only shown when in signature mode */}
                 {signatureMode && (
