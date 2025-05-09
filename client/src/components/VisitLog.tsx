@@ -34,6 +34,8 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
   const { toast } = useToast();
   const [visitData, setVisitData] = useState<Partial<PatientVisit>>({});
   const [showInvoice, setShowInvoice] = useState(false);
+  const [showConsentForm, setShowConsentForm] = useState<string | null>(null);
+  const [attachments, setAttachments] = useState<any[]>([]);
 
   // Fetch visit data
   const { data: visit, isLoading } = useQuery<PatientVisit>({
@@ -131,9 +133,6 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
       />
     );
   }
-
-  const [showConsentForm, setShowConsentForm] = useState<string | null>(null);
-  const [attachments, setAttachments] = useState<any[]>([]);
 
   // Handle consent form completion
   const handleConsentFormComplete = () => {
