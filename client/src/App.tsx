@@ -15,15 +15,39 @@ import Revenue from "@/pages/Revenue";
 import StaffManagement from "@/pages/StaffManagement";
 import Settings from "@/pages/Settings";
 import BasicDashboard from "@/pages/BasicDashboard";
+import ModernHomePage from "@/pages/ModernHomePage";
 import AuthPage from "@/pages/auth-page-fixed";
+import { AuthProvider } from "@/hooks/use-auth";
+
+function Router() {
+  return (
+    <Switch>
+      <Route path="/" component={ModernHomePage} />
+      <Route path="/dashboard" component={BasicDashboard} />
+      <Route path="/patients" component={PatientDatabase} />
+      <Route path="/patients/new" component={NewPatientForm} />
+      <Route path="/patients/record/:patientId" component={PatientRecord} />
+      <Route path="/patients/list" component={ExistingPatients} />
+      <Route path="/lab-works" component={LabWorks} />
+      <Route path="/revenue" component={Revenue} />
+      <Route path="/staff" component={StaffManagement} />
+      <Route path="/settings" component={Settings} />
+      {/* Appointments route removed */}
+      <Route path="/auth" component={AuthPage} />
+      <Route component={NotFound} />
+    </Switch>
+  );
+}
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="light">
         <TooltipProvider>
-          <Toaster />
-          <BasicDashboard />
+          <AuthProvider>
+            <Toaster />
+            <Router />
+          </AuthProvider>
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
