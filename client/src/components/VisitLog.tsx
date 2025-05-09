@@ -406,12 +406,12 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
   }
 
   return (
-    <Card className="border-none shadow-none">
+    <Card className="border-none shadow-none bg-transparent">
       {/* Consent Form Preview Dialog */}
       <Dialog open={showPreviewDialog} onOpenChange={setShowPreviewDialog}>
-        <DialogContent className="max-w-3xl h-[80vh] flex flex-col">
+        <DialogContent className="max-w-3xl h-[80vh] flex flex-col glass-card">
           <DialogHeader>
-            <DialogTitle>{previewForm?.title || 'Consent Form'}</DialogTitle>
+            <DialogTitle className="text-gradient font-bold text-2xl">{previewForm?.title || 'Consent Form'}</DialogTitle>
           </DialogHeader>
 
           <div className="flex-1 overflow-auto p-4">
@@ -490,18 +490,18 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
           )}
         </div>
       </CardHeader>
-      <CardContent className="px-0 space-y-6">
+      <CardContent className="px-0 space-y-8">
         {/* Chief Complaint Section - Two Columns */}
-        <div className="space-y-3">
-          <Label className="text-base font-semibold">Chief Complaint</Label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label>Complaint</Label>
+        <div className="rounded-xl bg-white p-6 shadow-md border border-gray-100">
+          <h3 className="section-title mb-5">Chief Complaint</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="space-y-2">
+              <Label className="text-foreground/80 font-medium">Complaint</Label>
               <Select 
                 value={visitData.chiefComplaint || ''} 
                 onValueChange={(value) => handleInputChange('chiefComplaint', value)}
               >
-                <SelectTrigger>
+                <SelectTrigger className="modern-input">
                   <SelectValue placeholder="Select complaint" />
                 </SelectTrigger>
                 <SelectContent>
@@ -511,13 +511,13 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label>Location/Area</Label>
+            <div className="space-y-2">
+              <Label className="text-foreground/80 font-medium">Location/Area</Label>
               <Select 
                 value={visitData.areaOfComplaint || ''} 
                 onValueChange={(value) => handleInputChange('areaOfComplaint', value)}
               >
-                <SelectTrigger>
+                <SelectTrigger className="modern-input">
                   <SelectValue placeholder="Select area" />
                 </SelectTrigger>
                 <SelectContent>
@@ -528,9 +528,10 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
               </Select>
             </div>
           </div>
-          <div className="flex justify-end">
+          <div className="flex justify-end mt-4">
             <Button 
               size="sm" 
+              className="bg-primary hover:bg-primary/90 font-medium"
               onClick={() => {
                 // Save both fields at once
                 updateVisitMutation.mutate({
@@ -539,7 +540,7 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
                 });
               }}
             >
-              Save
+              Save Changes
             </Button>
           </div>
         </div>
@@ -568,54 +569,102 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
         <Separator />
 
         {/* Treatment Plan Section */}
-        <div className="space-y-3">
-          <Label className="text-base font-semibold">Treatment Plan</Label>
-          <Select 
-            value={visitData.treatmentPlan || ''} 
-            onValueChange={(value) => handleInputChange('treatmentPlan', value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select treatment plan" />
-            </SelectTrigger>
-            <SelectContent>
-              {treatmentPlanOptions.map((option: string, index: number) => (
-                <SelectItem key={index} value={option}>{option}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button size="sm" onClick={() => handleSave('treatmentPlan')}>
-            Save
-          </Button>
+        <div className="rounded-xl bg-white p-6 shadow-md border border-gray-100">
+          <h3 className="section-title mb-5">Treatment Plan</h3>
+          <div className="space-y-3">
+            <Label className="text-foreground/80 font-medium">Recommended Plan</Label>
+            <Select 
+              value={visitData.treatmentPlan || ''} 
+              onValueChange={(value) => handleInputChange('treatmentPlan', value)}
+            >
+              <SelectTrigger className="modern-input">
+                <SelectValue placeholder="Select treatment plan" />
+              </SelectTrigger>
+              <SelectContent>
+                {treatmentPlanOptions.map((option: string, index: number) => (
+                  <SelectItem key={index} value={option}>{option}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex justify-end mt-3">
+              <Button 
+                size="sm" 
+                className="bg-primary hover:bg-primary/90 font-medium"
+                onClick={() => handleSave('treatmentPlan')}
+              >
+                Save Changes
+              </Button>
+            </div>
+          </div>
         </div>
 
         <Separator />
 
         {/* Treatment Done Section */}
-        <div className="space-y-3">
-          <Label className="text-base font-semibold">Treatment Done</Label>
-          <Select 
-            value={visitData.treatmentDone || ''} 
-            onValueChange={(value) => handleInputChange('treatmentDone', value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select treatment done" />
-            </SelectTrigger>
-            <SelectContent>
-              {treatmentDoneOptions.map((option: string, index: number) => (
-                <SelectItem key={index} value={option}>{option}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button size="sm" onClick={() => handleSave('treatmentDone')}>
-            Save
-          </Button>
+        <div className="rounded-xl bg-white p-6 shadow-md border border-gray-100">
+          <h3 className="section-title mb-5">Completed Treatment</h3>
+          <div className="space-y-4">
+            <div className="flex items-start mb-2">
+              <CheckCircle className="text-green-500 h-5 w-5 mr-2 mt-0.5" />
+              <div>
+                <Label className="text-foreground/80 font-medium">Procedure Performed</Label>
+                <p className="text-xs text-foreground/60 mt-0.5">Record the treatment that was actually performed during this visit</p>
+              </div>
+            </div>
+            <Select 
+              value={visitData.treatmentDone || ''} 
+              onValueChange={(value) => handleInputChange('treatmentDone', value)}
+            >
+              <SelectTrigger className="modern-input">
+                <SelectValue placeholder="Select treatment done" />
+              </SelectTrigger>
+              <SelectContent>
+                {treatmentDoneOptions.map((option: string, index: number) => (
+                  <SelectItem key={index} value={option}>{option}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex justify-end mt-3">
+              <Button 
+                size="sm" 
+                className="bg-primary hover:bg-primary/90 font-medium"
+                onClick={() => handleSave('treatmentDone')}
+              >
+                Save Changes
+              </Button>
+            </div>
+          </div>
         </div>
 
         <Separator />
 
         {/* Prescription Section */}
-        <div className="space-y-3">
-          <Label className="text-base font-semibold">Rx (Prescription)</Label>
+        <div className="rounded-xl bg-white p-6 shadow-md border border-gray-100">
+          <h3 className="section-title mb-5">Rx (Prescription)</h3>
+          <div className="bg-purple-50/50 border border-purple-100 rounded-lg p-3 mb-4">
+            <div className="flex items-start">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-purple-500 mt-0.5 mr-2"
+              >
+                <path d="m3 2 2 5h6L9 2" /><path d="M4 7v12a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V7" /><path d="M12 13a3 3 0 0 0 3-3" /><path d="M13 10h5" /><path d="M13 14h5" /><path d="M13 18h5" /><path d="M9 13v5" /><path d="M6 13h6" />
+              </svg>
+              <div className="text-sm text-purple-800">
+                <p className="font-medium mb-1">Medications & Instructions</p>
+                <p className="text-purple-700/80 text-xs">
+                  Prescribe medications with complete instructions for patient treatment
+                </p>
+              </div>
+            </div>
+          </div>
           <PrescriptionForm 
             visitId={visitId} 
             patientId={patientId}
@@ -664,18 +713,69 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
         <Separator />
 
         {/* Invoice Section */}
-        <div className="space-y-3">
-          <Label className="text-base font-semibold">Invoice</Label>
-          <Button onClick={() => setShowInvoice(true)}>
-            View Invoice
-          </Button>
+        <div className="rounded-xl bg-white p-6 shadow-md border border-gray-100">
+          <h3 className="section-title mb-5">Invoice Management</h3>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-foreground/70 mb-1">
+                Create and manage patient invoices and payment records
+              </p>
+              <div className="text-xs flex items-center text-foreground/60">
+                <span className={`inline-block h-2 w-2 rounded-full mr-1 ${visitInvoices?.length ? 'bg-green-500' : 'bg-amber-500'}`}></span>
+                {visitInvoices?.length ? `${visitInvoices.length} invoice(s) created` : 'No invoices created yet'}
+              </div>
+            </div>
+            <Button 
+              className="bg-primary hover:bg-primary/90 text-white font-medium card-hover"
+              onClick={() => setShowInvoice(true)}
+            >
+              <span className="mr-2">View Invoice</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M20 6c0 1-1 2-2 2h-4a2 2 0 0 1-2-2V4c0-1 1-2 2-2h4a2 2 0 0 1 2 2v2Z"/><path d="M18 4v4"/><path d="M20 13c0 1-1 2-2 2h-4a2 2 0 0 1-2-2v-2c0-1 1-2 2-2h4a2 2 0 0 1 2 2v2Z"/><path d="M18 11v4"/><path d="M20 20c0 1-1 2-2 2h-4a2 2 0 0 1-2-2v-2c0-1 1-2 2-2h4a2 2 0 0 1 2 2v2Z"/><path d="M18 18v4"/><path d="M9 5H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h3"/>
+              </svg>
+            </Button>
+          </div>
         </div>
 
         <Separator />
 
         {/* Follow-up Section */}
-        <div className="space-y-3">
-          <Label className="text-base font-semibold">Follow-up</Label>
+        <div className="rounded-xl bg-white p-6 shadow-md border border-gray-100">
+          <h3 className="section-title mb-5">Follow-up Scheduling</h3>
+          <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-3 mb-4">
+            <div className="flex items-start">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-blue-500 mt-0.5 mr-2"
+              >
+                <path d="M2 12h10"/><path d="M9 4L3 12l6 8"/><path d="M12 22a10 10 0 0 0 0-20"/>
+              </svg>
+              <div className="text-sm text-blue-800">
+                <p className="font-medium mb-1">Set the next visit follow-up</p>
+                <p className="text-blue-700/80 text-xs">
+                  Schedule follow-up appointments to ensure continuity of care for ongoing treatments
+                </p>
+              </div>
+            </div>
+          </div>
           <FollowUpSection visitId={visitId} patientId={patientId} />
         </div>
 
