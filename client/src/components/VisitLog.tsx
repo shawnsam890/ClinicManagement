@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 
 import ToothFindingsSection from "@/components/ToothFindingsSection";
 import GeneralizedFindingsSection from "@/components/GeneralizedFindingsSection";
@@ -17,7 +19,9 @@ import InvestigationSection from "@/components/InvestigationSection";
 import FollowUpSection from "@/components/FollowUpSection";
 import PrescriptionForm from "@/components/PrescriptionForm";
 import Invoice from "@/components/Invoice";
+import ConsentForm from "@/components/ConsentForm";
 
+import { Image, Video, Upload, FileCheck, X, FileText, Camera, File } from "lucide-react";
 import { PatientVisit, InsertPatientVisit } from "@shared/schema";
 
 interface VisitLogProps {
@@ -124,6 +128,81 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
         patientId={patientId} 
         visitId={visitId}
         onBack={() => setShowInvoice(false)}
+      />
+    );
+  }
+
+  const [showConsentForm, setShowConsentForm] = useState<string | null>(null);
+  const [attachments, setAttachments] = useState<any[]>([]);
+
+  // Handle consent form completion
+  const handleConsentFormComplete = () => {
+    setShowConsentForm(null);
+    queryClient.invalidateQueries({ queryKey: [`/api/visits/${visitId}`] });
+    toast({
+      title: "Success",
+      description: "Consent form added successfully."
+    });
+  };
+
+  // Handle file upload
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, fileType: string) => {
+    if (!event.target.files || !event.target.files[0]) {
+      return;
+    }
+
+    const file = event.target.files[0];
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("visitId", visitId.toString());
+
+    try {
+      const response = await fetch("/api/upload/patient-attachment", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to upload file");
+      }
+
+      queryClient.invalidateQueries({ queryKey: [`/api/visits/${visitId}`] });
+      toast({
+        title: "Success",
+        description: `${fileType} uploaded successfully.`,
+      });
+
+      // Re-fetch the visit data to get updated attachments
+      const visitResponse = await fetch(`/api/visits/${visitId}`);
+      const visitData = await visitResponse.json();
+      if (visitData.attachments) {
+        setAttachments(visitData.attachments);
+      }
+    } catch (error) {
+      console.error(`Error uploading ${fileType}:`, error);
+      toast({
+        title: "Error",
+        description: `Failed to upload ${fileType}.`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Initialize attachments from visit data
+  useEffect(() => {
+    if (visit && visit.attachments) {
+      setAttachments(visit.attachments);
+    }
+  }, [visit]);
+
+  // Render consent form if active
+  if (showConsentForm) {
+    return (
+      <ConsentForm
+        visitId={visitId}
+        formType={showConsentForm}
+        onComplete={handleConsentFormComplete}
       />
     );
   }
@@ -327,6 +406,161 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
         <div className="space-y-3">
           <Label className="text-base font-semibold">Follow-up</Label>
           <FollowUpSection visitId={visitId} patientId={patientId} />
+        </div>
+
+        <Separator />
+
+        {/* Attachments Section */}
+        <div className="space-y-3">
+          <Label className="text-base font-semibold">Attachments</Label>
+          <div className="flex flex-wrap gap-4 mb-4">
+            <label className="flex flex-col items-center justify-center w-32 h-32 bg-neutral-100 rounded-lg border border-neutral-300 cursor-pointer hover:bg-neutral-200 transition-colors">
+              <div className="text-center">
+                <Image className="text-neutral-500 h-8 w-8 mx-auto" />
+                <p className="text-sm text-neutral-600 mt-1">Add Image</p>
+              </div>
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => handleFileUpload(e, "Image")}
+              />
+            </label>
+            <label className="flex flex-col items-center justify-center w-32 h-32 bg-neutral-100 rounded-lg border border-neutral-300 cursor-pointer hover:bg-neutral-200 transition-colors">
+              <div className="text-center">
+                <Video className="text-neutral-500 h-8 w-8 mx-auto" />
+                <p className="text-sm text-neutral-600 mt-1">Add Video</p>
+              </div>
+              <input
+                type="file"
+                accept="video/*"
+                className="hidden"
+                onChange={(e) => handleFileUpload(e, "Video")}
+              />
+            </label>
+          </div>
+
+          {/* Display existing attachments */}
+          {attachments && attachments.length > 0 ? (
+            <div className="space-y-4">
+              <Label>Uploaded Files</Label>
+              <ScrollArea className="h-60 w-full rounded-md border p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {attachments.map((attachment, index) => (
+                    <div key={index} className="flex items-center p-2 rounded-lg border bg-neutral-50">
+                      <div className="mr-3">
+                        {attachment.type.includes('image') ? (
+                          <Image className="h-6 w-6 text-primary" />
+                        ) : attachment.type.includes('video') ? (
+                          <Video className="h-6 w-6 text-primary" />
+                        ) : (
+                          <File className="h-6 w-6 text-primary" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-neutral-900 truncate">{attachment.name}</p>
+                        <p className="text-xs text-neutral-500">
+                          {new Date(attachment.dateAdded).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <a 
+                        href={attachment.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-primary hover:text-primary-dark text-sm ml-2 px-2 py-1 rounded hover:bg-neutral-200 transition-colors"
+                      >
+                        View
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+          ) : (
+            <p className="text-sm text-neutral-500">No attachments yet. Add photos or videos using the buttons above.</p>
+          )}
+        </div>
+
+        <Separator />
+
+        {/* Consent Forms Section */}
+        <div className="space-y-3">
+          <Label className="text-base font-semibold">Consent Forms</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex items-center justify-between"
+              onClick={() => setShowConsentForm("extraction")}
+            >
+              <span>Extraction Consent</span>
+              <FileCheck className="h-4 w-4 text-primary" />
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="flex items-center justify-between"
+              onClick={() => setShowConsentForm("root_canal")}
+            >
+              <span>Root Canal Consent</span>
+              <FileCheck className="h-4 w-4 text-primary" />
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="flex items-center justify-between"
+              onClick={() => setShowConsentForm("custom")}
+            >
+              <span>Upload Custom Form</span>
+              <Upload className="h-4 w-4 text-primary" />
+            </Button>
+          </div>
+
+          {/* Display existing consent forms */}
+          {visit?.consentForms && visit.consentForms.length > 0 ? (
+            <div className="space-y-4">
+              <Label>Signed Consent Forms</Label>
+              <ScrollArea className="h-60 w-full rounded-md border p-4">
+                <div className="space-y-3">
+                  {visit.consentForms.map((form: any, index: number) => (
+                    <div key={index} className="flex items-center p-3 rounded-lg border bg-neutral-50">
+                      <div className="mr-3">
+                        <FileText className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center">
+                          <p className="text-sm font-medium text-neutral-900">
+                            {form.formType === 'extraction' 
+                              ? 'Extraction Consent' 
+                              : form.formType === 'root_canal'
+                                ? 'Root Canal Consent'
+                                : 'Custom Consent Form'}
+                          </p>
+                          <Badge variant="outline" className="ml-2">
+                            {form.type === 'signature' ? 'Signed' : 'Uploaded'}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-neutral-500">
+                          {new Date(form.timestamp).toLocaleString()}
+                        </p>
+                      </div>
+                      {form.type === 'signature' && (
+                        <div className="ml-2">
+                          <img 
+                            src={form.data} 
+                            alt="Signature" 
+                            className="h-10 border rounded p-1"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+          ) : (
+            <p className="text-sm text-neutral-500">No consent forms yet. Use the buttons above to add patient consent forms.</p>
+          )}
         </div>
       </CardContent>
     </Card>
