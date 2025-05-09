@@ -89,11 +89,14 @@ export default function InvoiceForm({ patientId, initialData, onSave, onCancel }
     
     // Calculate total amount
     const items = form.getValues("items");
-    const total = items.reduce((sum, item) => sum + (item.amount || 0), 0);
+    const total = items.reduce((sum, item) => {
+      // Ensure we're adding numbers, not concatenating strings
+      return sum + (Number(item.amount) || 0);
+    }, 0);
     form.setValue("totalAmount", total);
     
     // Calculate balance amount
-    const paidAmount = form.getValues("paidAmount") || 0;
+    const paidAmount = Number(form.getValues("paidAmount")) || 0;
     const balance = total - paidAmount;
     form.setValue("balanceAmount", balance);
     
@@ -116,6 +119,20 @@ export default function InvoiceForm({ patientId, initialData, onSave, onCancel }
     
     // Get the latest values after calculation
     const formData = form.getValues();
+    
+    // Ensure all amounts are proper numbers not strings
+    formData.totalAmount = Number(formData.totalAmount);
+    formData.paidAmount = Number(formData.paidAmount);
+    formData.balanceAmount = Number(formData.balanceAmount);
+    
+    // Convert each item amount to a number
+    if (formData.items && Array.isArray(formData.items)) {
+      formData.items = formData.items.map(item => ({
+        ...item,
+        amount: Number(item.amount),
+      }));
+    }
+    
     onSave(formData);
   };
   
@@ -179,7 +196,8 @@ export default function InvoiceForm({ patientId, initialData, onSave, onCancel }
                         min="0" 
                         placeholder="Amount" 
                         onChange={(e) => {
-                          field.onChange(e);
+                          // Ensure we store a number value not a string
+                          field.onChange(Number(e.target.value));
                           // Recalculate totals when amount changes
                           setTimeout(() => calculateTotals(), 0);
                         }}
@@ -206,7 +224,12 @@ export default function InvoiceForm({ patientId, initialData, onSave, onCancel }
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => append({ description: "", amount: 0 })}
+            onClick={() => {
+              // Ensure amount is a number when adding a new item
+              append({ description: "", amount: 0 });
+              // Recalculate totals after adding a new item
+              setTimeout(() => calculateTotals(), 0);
+            }}
             className="mt-2"
           >
             <PlusCircle className="h-4 w-4 mr-2" /> Add Item
@@ -245,7 +268,8 @@ export default function InvoiceForm({ patientId, initialData, onSave, onCancel }
                       min="0" 
                       className="w-32 text-right" 
                       onChange={(e) => {
-                        field.onChange(e);
+                        // Ensure we store a number value not a string
+                        field.onChange(Number(e.target.value));
                         // Recalculate balances when paid amount changes
                         setTimeout(() => calculateTotals(), 0);
                       }}
