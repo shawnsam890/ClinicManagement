@@ -18,8 +18,7 @@ import html2canvas from 'html2canvas';
 
 // Import consent form images
 import rootCanalConsentFormImg from "@assets/root canal consent form.jpg";
-import extractionConsentFormImg from "@assets/Dental Extraction.pdf";
-import implantConsentFormImg from "@assets/Dental Implant.pdf";
+import dentalExtractionFormImg from "@assets/Dental Extraction.jpg";
 
 interface ConsentFormProps {
   visitId: number;
@@ -134,9 +133,8 @@ export default function ConsentForm({
         setFormImage(rootCanalConsentFormImg);
         break;
       case 'extraction':
-        // Since this is a PDF, we would convert it to an image
-        // For now, let's use the root canal form as placeholder
-        setFormImage(rootCanalConsentFormImg);
+        // Use the extraction consent form image
+        setFormImage(dentalExtractionFormImg);
         break;
       case 'implant':
         // Since this is a PDF, we would convert it to an image
