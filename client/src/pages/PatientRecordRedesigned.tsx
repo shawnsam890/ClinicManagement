@@ -621,20 +621,9 @@ export default function PatientRecord() {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   
-                                  // Open the edit dialog with this visit's data
-                                  const currentVisit = visits.find(v => v.id === visit.id);
-                                  if (currentVisit) {
-                                    setVisitForm({
-                                      chiefComplaint: currentVisit.chiefComplaint || '',
-                                      areaOfComplaint: currentVisit.areaOfComplaint || '',
-                                      treatmentDone: currentVisit.treatmentDone || '',
-                                      treatmentPlan: currentVisit.treatmentPlan || '',
-                                      advice: currentVisit.advice || '',
-                                      notes: currentVisit.notes || ''
-                                    });
-                                    setEditingVisitId(visit.id);
-                                    setShowEditVisitDialog(true);
-                                  }
+                                  // Instead of opening a dialog, directly navigate to the visit log for editing
+                                  setSelectedVisitId(visit.id);
+                                  setActiveTab('visit');
                                 }}
                                 className="h-7 w-7"
                                 title="Edit visit"
@@ -861,106 +850,7 @@ export default function PatientRecord() {
             </DialogContent>
           </Dialog>
 
-          {/* Edit Visit Dialog */}
-          {showEditVisitDialog && (
-            <Dialog open={showEditVisitDialog} onOpenChange={setShowEditVisitDialog}>
-              <DialogContent className="sm:max-w-[600px]">
-                <DialogHeader>
-                  <DialogTitle>Edit Visit</DialogTitle>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="chiefComplaint" className="text-right">
-                      Chief Complaint
-                    </Label>
-                    <Input
-                      id="chiefComplaint"
-                      className="col-span-3"
-                      value={visitForm.chiefComplaint}
-                      onChange={(e) => handleVisitFormChange('chiefComplaint', e.target.value)}
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="areaOfComplaint" className="text-right">
-                      Area of Complaint
-                    </Label>
-                    <Input
-                      id="areaOfComplaint"
-                      className="col-span-3"
-                      value={visitForm.areaOfComplaint}
-                      onChange={(e) => handleVisitFormChange('areaOfComplaint', e.target.value)}
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="treatmentDone" className="text-right">
-                      Treatment Done
-                    </Label>
-                    <Textarea
-                      id="treatmentDone"
-                      className="col-span-3"
-                      value={visitForm.treatmentDone}
-                      rows={3}
-                      onChange={(e) => handleVisitFormChange('treatmentDone', e.target.value)}
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="treatmentPlan" className="text-right">
-                      Treatment Plan
-                    </Label>
-                    <Textarea
-                      id="treatmentPlan"
-                      className="col-span-3"
-                      value={visitForm.treatmentPlan}
-                      rows={3}
-                      onChange={(e) => handleVisitFormChange('treatmentPlan', e.target.value)}
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="advice" className="text-right">
-                      Advice
-                    </Label>
-                    <Textarea
-                      id="advice"
-                      className="col-span-3"
-                      value={visitForm.advice}
-                      rows={3}
-                      onChange={(e) => handleVisitFormChange('advice', e.target.value)}
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="notes" className="text-right">
-                      Notes
-                    </Label>
-                    <Textarea
-                      id="notes"
-                      className="col-span-3"
-                      value={visitForm.notes}
-                      rows={3}
-                      onChange={(e) => handleVisitFormChange('notes', e.target.value)}
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setShowEditVisitDialog(false)}>
-                    Cancel
-                  </Button>
-                  <Button 
-                    onClick={() => {
-                      if (editingVisitId) {
-                        updateVisitMutation.mutate({
-                          id: editingVisitId,
-                          ...visitForm
-                        });
-                      }
-                    }}
-                    disabled={updateVisitMutation.isPending}
-                  >
-                    {updateVisitMutation.isPending ? "Saving..." : "Save Changes"}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          )}
+          {/* Edit Visit Dialog has been removed - visits are now edited directly in the visit log */}
         </>
       )}
     </Layout>
