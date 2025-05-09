@@ -30,11 +30,14 @@ export default function ToothFindingsSection({ visitId }: ToothFindingsSectionPr
     enabled: !!visitId,
   });
 
-  // Fetch finding options from settings
-  const { data: findingOptions = [] } = useQuery<string[]>({
-    queryKey: ['/api/settings/key/tooth_finding_options'],
-    select: (data: any) => data?.settingValue || [],
+  // Fetch dropdown options from central settings
+  const { data: dropdownOptions = {} } = useQuery({
+    queryKey: ['/api/settings/key/dropdown_options'],
+    select: (data: any) => data?.settingValue || {},
   });
+  
+  // Extract tooth finding options from dropdown options
+  const findingOptions = dropdownOptions.oralExamination || [];
 
   // Create tooth finding mutation
   const createToothFindingMutation = useMutation({

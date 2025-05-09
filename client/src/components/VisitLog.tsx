@@ -62,31 +62,18 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
     enabled: !!visitId,
   });
 
-  // Fetch dropdown options from settings
-  const { data: complaintOptions = [] } = useQuery<string[]>({
-    queryKey: ['/api/settings/key/complaint_options'],
-    select: (data: any) => data?.settingValue || [],
+  // Fetch all dropdown options from central settings
+  const { data: dropdownOptions = {} } = useQuery({
+    queryKey: ['/api/settings/key/dropdown_options'],
+    select: (data: any) => data?.settingValue || {},
   });
 
-  const { data: areaOptions = [] } = useQuery<string[]>({
-    queryKey: ['/api/settings/key/area_options'],
-    select: (data: any) => data?.settingValue || [],
-  });
-
-  const { data: treatmentDoneOptions = [] } = useQuery<string[]>({
-    queryKey: ['/api/settings/key/treatment_done_options'],
-    select: (data: any) => data?.settingValue || [],
-  });
-
-  const { data: treatmentPlanOptions = [] } = useQuery<string[]>({
-    queryKey: ['/api/settings/key/treatment_plan_options'],
-    select: (data: any) => data?.settingValue || [],
-  });
-
-  const { data: adviceOptions = [] } = useQuery<string[]>({
-    queryKey: ['/api/settings/key/advice_options'],
-    select: (data: any) => data?.settingValue || [],
-  });
+  // Extract specific option arrays
+  const complaintOptions = dropdownOptions.chiefComplaint || [];
+  const areaOptions = dropdownOptions.area_options || dropdownOptions.areaOptions || [];
+  const treatmentDoneOptions = dropdownOptions.treatmentDone || [];
+  const treatmentPlanOptions = dropdownOptions.treatmentPlan || [];
+  const adviceOptions = dropdownOptions.advice || [];
 
   // Set initial form data when visit is loaded
   useEffect(() => {

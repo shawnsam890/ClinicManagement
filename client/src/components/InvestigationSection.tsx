@@ -32,11 +32,14 @@ export default function InvestigationSection({ visitId }: InvestigationSectionPr
     enabled: !!visitId,
   });
 
-  // Fetch investigation type options from settings
-  const { data: investigationTypes = [] } = useQuery<string[]>({
-    queryKey: ['/api/settings/key/investigation_types'],
-    select: (data: any) => data?.settingValue || [],
+  // Fetch investigation type options from central dropdown settings
+  const { data: dropdownOptions = {} } = useQuery({
+    queryKey: ['/api/settings/key/dropdown_options'],
+    select: (data: any) => data?.settingValue || {},
   });
+  
+  // Extract investigation types from dropdown options
+  const investigationTypes = dropdownOptions.investigation || [];
 
   // Create investigation mutation
   const createInvestigationMutation = useMutation({
