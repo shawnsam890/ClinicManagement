@@ -16,7 +16,7 @@ import Revenue from "@/pages/Revenue";
 import StaffManagement from "@/pages/StaffManagement";
 import Settings from "@/pages/Settings";
 // Appointments removed as per requirement
-import AuthPage from "@/pages/auth-page";
+import AuthPage from "@/pages/auth-page-fixed";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 
