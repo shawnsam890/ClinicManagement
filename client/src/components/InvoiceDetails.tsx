@@ -189,6 +189,36 @@ export default function InvoiceDetails({ invoice, onUpdate, patientName }: Invoi
     });
   };
   
+  // Handle status update (Mark as Paid, Mark as Pending)
+  const handleUpdateStatus = (newStatus: string) => {
+    // Always set payment method for paid status
+    let paymentMethod = invoice.paymentMethod;
+    if (newStatus === 'Paid' && !paymentMethod) {
+      paymentMethod = 'Cash'; // Default payment method
+    }
+    
+    // Create a complete object with all required fields
+    const statusUpdate = {
+      id: invoice.id,
+      status: newStatus,
+      date: invoice.date,
+      totalAmount: invoice.totalAmount,
+      paidAmount: newStatus === 'Paid' ? invoice.totalAmount : (invoice.paidAmount || 0),
+      balanceAmount: newStatus === 'Paid' ? 0 : (invoice.balanceAmount || invoice.totalAmount),
+      paymentMethod: newStatus === 'Paid' ? paymentMethod : null,
+      paymentDate: newStatus === 'Paid' ? new Date().toISOString().split('T')[0] : null,
+      items: invoice.items,
+    };
+    
+    console.log('Updating invoice status:', statusUpdate);
+    onUpdate(statusUpdate);
+    
+    toast({
+      title: `Invoice marked as ${newStatus}`,
+      description: `The invoice has been updated to ${newStatus}.`,
+    });
+  };
+  
   if (isEditing) {
     return (
       <Card className="w-full">
@@ -286,19 +316,44 @@ export default function InvoiceDetails({ invoice, onUpdate, patientName }: Invoi
         )}
       </CardContent>
       
-      <CardFooter className="flex justify-end gap-2">
-        <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-          <Edit className="h-4 w-4 mr-2" />
-          Edit
-        </Button>
-        <Button variant="outline" size="sm" onClick={handlePrint}>
-          <Printer className="h-4 w-4 mr-2" />
-          Print
-        </Button>
-        <Button variant="default" size="sm" onClick={handlePrint}>
-          <Download className="h-4 w-4 mr-2" />
-          Download PDF
-        </Button>
+      <CardFooter className="flex flex-wrap justify-between gap-2">
+        <div className="flex flex-wrap gap-2">
+          {invoice.status !== 'Paid' && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="border-green-500 text-green-700 hover:bg-green-50"
+              onClick={() => handleUpdateStatus('Paid')}
+            >
+              Mark as Paid
+            </Button>
+          )}
+          {invoice.status !== 'Pending' && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="border-yellow-500 text-yellow-700 hover:bg-yellow-50"
+              onClick={() => handleUpdateStatus('Pending')}
+            >
+              Mark as Pending
+            </Button>
+          )}
+        </div>
+        
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+            <Edit className="h-4 w-4 mr-2" />
+            Edit
+          </Button>
+          <Button variant="outline" size="sm" onClick={handlePrint}>
+            <Printer className="h-4 w-4 mr-2" />
+            Print
+          </Button>
+          <Button variant="default" size="sm" onClick={handlePrint}>
+            <Download className="h-4 w-4 mr-2" />
+            Download PDF
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   );

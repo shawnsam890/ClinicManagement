@@ -658,6 +658,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get invoices by visit ID
+  app.get('/api/visits/:visitId/invoices', async (req, res) => {
+    try {
+      const visitId = parseInt(req.params.visitId);
+      if (isNaN(visitId)) {
+        return res.status(400).json({ message: 'Invalid visit ID' });
+      }
+      
+      // Get invoices filtered by visit ID
+      const allInvoices = await storage.getInvoices();
+      const visitInvoices = allInvoices.filter(invoice => invoice.visitId === visitId);
+      res.json(visitInvoices);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
   // Admin route to reset invoice numbering - for maintenance
   app.post('/api/admin/reset-invoice-sequence', async (req, res) => {
     try {
