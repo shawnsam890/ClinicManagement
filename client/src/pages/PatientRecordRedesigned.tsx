@@ -449,13 +449,17 @@ export default function PatientRecord() {
           formType={activeConsentForm}
           onComplete={handleConsentFormComplete}
         />
-      ) : showInvoice && selectedVisitId ? (
+      ) : showInvoice ? (
         <Invoice
-          visitId={selectedVisitId}
+          visitId={selectedVisitId || undefined}
           patientId={patientId!}
+          patientName={patient?.name || ""}
+          invoices={invoices}
           onBack={() => {
             setShowInvoice(false);
-            setActiveTab("rx");
+            if (selectedVisitId) {
+              setActiveTab("rx");
+            }
           }}
         />
       ) : (
@@ -518,14 +522,26 @@ export default function PatientRecord() {
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-center">
                     <CardTitle className="text-lg">Patient Details</CardTitle>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      className="text-primary"
-                      onClick={() => setShowEditPatientDetails(true)}
-                    >
-                      <Edit className="h-4 w-4 mr-1" /> Edit
-                    </Button>
+                    <div className="flex space-x-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          setSelectedVisitId(null);
+                          setShowInvoice(true);
+                        }}
+                      >
+                        <Receipt className="h-4 w-4 mr-1" /> View Invoices
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="text-primary"
+                        onClick={() => setShowEditPatientDetails(true)}
+                      >
+                        <Edit className="h-4 w-4 mr-1" /> Edit
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
