@@ -1,10 +1,19 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Download, Upload, File } from "lucide-react";
+import { Download, Upload, File, Calendar, Trash, X } from "lucide-react";
 import SignatureCanvas from "react-signature-canvas";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
+import { DoctorSignature } from "@shared/schema";
+
 // Import root canal consent form image
 import rootCanalConsentFormImg from "../assets/root_canal_consent.jpg";
 
@@ -14,15 +23,58 @@ interface ConsentFormProps {
   onComplete: () => void;
 }
 
+interface PatientFormInfo {
+  name: string;
+  address: string;
+  phone: string;
+  date: Date;
+}
+
 export default function ConsentForm({
   visitId,
   formType,
   onComplete,
 }: ConsentFormProps) {
   const { toast } = useToast();
-  const [signature, setSignature] = useState<string | null>(null);
-  const signatureRef = useRef<SignatureCanvas | null>(null);
+  const [patientSignature, setPatientSignature] = useState<string | null>(null);
+  const [selectedDoctorId, setSelectedDoctorId] = useState<number | null>(null);
+  const [patientInfo, setPatientInfo] = useState<PatientFormInfo>({
+    name: '',
+    address: '',
+    phone: '',
+    date: new Date(),
+  });
+  const patientSignatureRef = useRef<SignatureCanvas | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch doctor signatures
+  const { data: doctorSignatures = [] } = useQuery<DoctorSignature[]>({
+    queryKey: ['/api/doctor-signatures'],
+  });
+
+  // Fetch patient info for pre-filling form
+  const { data: patientData } = useQuery({
+    queryKey: [`/api/visits/${visitId}`],
+    enabled: !!visitId,
+  });
+
+  // Fill patient info when data is loaded
+  useEffect(() => {
+    if (patientData && patientData.patientId) {
+      // Fetch patient details
+      fetch(`/api/patients/patientId/${patientData.patientId}`)
+        .then(res => res.json())
+        .then(patient => {
+          setPatientInfo(prev => ({
+            ...prev,
+            name: patient.name || '',
+            address: patient.address || '',
+            phone: patient.phoneNumber || ''
+          }));
+        })
+        .catch(err => console.error('Error fetching patient data:', err));
+    }
+  }, [patientData]);
 
   const getFormTemplate = () => {
     switch (formType) {
@@ -62,17 +114,17 @@ export default function ConsentForm({
 
   const formTemplate = getFormTemplate();
 
-  const clearSignature = () => {
-    if (signatureRef.current) {
-      signatureRef.current.clear();
-      setSignature(null);
+  const clearPatientSignature = () => {
+    if (patientSignatureRef.current) {
+      patientSignatureRef.current.clear();
+      setPatientSignature(null);
     }
   };
 
-  const saveSignature = () => {
-    if (signatureRef.current && !signatureRef.current.isEmpty()) {
-      const dataURL = signatureRef.current.toDataURL("image/png");
-      setSignature(dataURL);
+  const savePatientSignature = () => {
+    if (patientSignatureRef.current && !patientSignatureRef.current.isEmpty()) {
+      const dataURL = patientSignatureRef.current.toDataURL("image/png");
+      setPatientSignature(dataURL);
       toast({
         title: "Signature Captured",
         description: "Your signature has been successfully captured.",
@@ -84,6 +136,13 @@ export default function ConsentForm({
         variant: "destructive",
       });
     }
+  };
+
+  const handlePatientInfoChange = (field: keyof PatientFormInfo, value: string | Date) => {
+    setPatientInfo(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   const uploadCustomForm = () => {
@@ -112,12 +171,44 @@ export default function ConsentForm({
     }
   };
 
-  const submitConsentForm = async (data: string, type: 'signature' | 'uploaded') => {
+  const submitConsentForm = async (patientSigData: string, type: 'signature' | 'uploaded') => {
     try {
+      // For signature type, validate patient info and doctor selection
+      if (type === 'signature') {
+        if (!patientInfo.name || !patientInfo.address || !patientInfo.phone) {
+          toast({
+            title: "Missing Information",
+            description: "Please fill in all patient information fields.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (!selectedDoctorId && formType !== 'custom') {
+          toast({
+            title: "Doctor Selection Required",
+            description: "Please select a doctor for the consent form.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      // Get doctor signature if selected
+      let doctorSignatureImage = null;
+      if (selectedDoctorId) {
+        const selectedDoctor = doctorSignatures.find(doc => doc.id === selectedDoctorId);
+        if (selectedDoctor) {
+          doctorSignatureImage = selectedDoctor.signatureImage;
+        }
+      }
+
       const payload = {
         visitId,
         formType,
-        data,
+        patientSignature: patientSigData,
+        doctorSignature: doctorSignatureImage,
+        patientInfo: type === 'signature' ? patientInfo : undefined,
         type,
         timestamp: new Date().toISOString(),
       };
@@ -153,8 +244,8 @@ export default function ConsentForm({
   const handleSubmit = () => {
     if (formType === 'custom') {
       uploadCustomForm();
-    } else if (signature) {
-      submitConsentForm(signature, 'signature');
+    } else if (patientSignature) {
+      submitConsentForm(patientSignature, 'signature');
     } else {
       toast({
         title: "Missing Signature",
@@ -202,13 +293,113 @@ export default function ConsentForm({
               </div>
             </div>
             
+            {/* Patient Information Fields */}
+            <div className="mb-6 space-y-4">
+              <h3 className="text-base font-medium text-neutral-800">Patient Information</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="patientName">Name</Label>
+                  <Input 
+                    id="patientName"
+                    value={patientInfo.name}
+                    onChange={(e) => handlePatientInfoChange('name', e.target.value)}
+                    placeholder="Patient Name"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="patientPhone">Phone Number</Label>
+                  <Input 
+                    id="patientPhone"
+                    value={patientInfo.phone}
+                    onChange={(e) => handlePatientInfoChange('phone', e.target.value)}
+                    placeholder="Phone Number"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="patientAddress">Address</Label>
+                <Input 
+                  id="patientAddress"
+                  value={patientInfo.address}
+                  onChange={(e) => handlePatientInfoChange('address', e.target.value)}
+                  placeholder="Address"
+                />
+              </div>
+              
+              <div className="w-full md:w-1/2">
+                <Label>Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal"
+                    >
+                      <Calendar className="mr-2 h-4 w-4" />
+                      {patientInfo.date ? format(patientInfo.date, 'PPP') : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <CalendarComponent
+                      mode="single"
+                      selected={patientInfo.date}
+                      onSelect={(date) => date && handlePatientInfoChange('date', date)}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            {/* Doctor Selection */}
+            <div className="mb-6">
+              <Label htmlFor="doctorSelect">Select Doctor</Label>
+              <Select
+                value={selectedDoctorId?.toString() || ''}
+                onValueChange={(value) => setSelectedDoctorId(parseInt(value))}
+              >
+                <SelectTrigger id="doctorSelect">
+                  <SelectValue placeholder="Select Doctor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {doctorSignatures.length > 0 ? (
+                    doctorSignatures.map((doctor) => (
+                      <SelectItem key={doctor.id} value={doctor.id.toString()}>
+                        {doctor.doctorName}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="none" disabled>
+                      No doctors available
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+
+              {selectedDoctorId && (
+                <div className="mt-2">
+                  <Label>Doctor's Signature Preview</Label>
+                  <div className="mt-1 p-2 border rounded-lg bg-white">
+                    <img 
+                      src={doctorSignatures.find(d => d.id === selectedDoctorId)?.signatureImage || ''}
+                      alt="Doctor's Signature"
+                      className="max-h-16 object-contain"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* Patient Signature */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-neutral-700 mb-1">
                 Patient Signature
               </label>
               <div className="border border-neutral-300 rounded-lg bg-white">
                 <SignatureCanvas
-                  ref={signatureRef}
+                  ref={patientSignatureRef}
                   canvasProps={{
                     className: "w-full h-40 rounded-lg"
                   }}
@@ -219,14 +410,14 @@ export default function ConsentForm({
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={clearSignature}
+                  onClick={clearPatientSignature}
                 >
                   Clear
                 </Button>
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={saveSignature}
+                  onClick={savePatientSignature}
                 >
                   Capture Signature
                 </Button>
@@ -239,13 +430,113 @@ export default function ConsentForm({
               <p className="text-neutral-700 whitespace-pre-line">{formTemplate.content}</p>
             </div>
             
+            {/* Patient Information Fields */}
+            <div className="mb-6 space-y-4">
+              <h3 className="text-base font-medium text-neutral-800">Patient Information</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="patientName">Name</Label>
+                  <Input 
+                    id="patientName"
+                    value={patientInfo.name}
+                    onChange={(e) => handlePatientInfoChange('name', e.target.value)}
+                    placeholder="Patient Name"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="patientPhone">Phone Number</Label>
+                  <Input 
+                    id="patientPhone"
+                    value={patientInfo.phone}
+                    onChange={(e) => handlePatientInfoChange('phone', e.target.value)}
+                    placeholder="Phone Number"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="patientAddress">Address</Label>
+                <Input 
+                  id="patientAddress"
+                  value={patientInfo.address}
+                  onChange={(e) => handlePatientInfoChange('address', e.target.value)}
+                  placeholder="Address"
+                />
+              </div>
+              
+              <div className="w-full md:w-1/2">
+                <Label>Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal"
+                    >
+                      <Calendar className="mr-2 h-4 w-4" />
+                      {patientInfo.date ? format(patientInfo.date, 'PPP') : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <CalendarComponent
+                      mode="single"
+                      selected={patientInfo.date}
+                      onSelect={(date) => date && handlePatientInfoChange('date', date)}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            {/* Doctor Selection */}
+            <div className="mb-6">
+              <Label htmlFor="doctorSelect">Select Doctor</Label>
+              <Select
+                value={selectedDoctorId?.toString() || ''}
+                onValueChange={(value) => setSelectedDoctorId(parseInt(value))}
+              >
+                <SelectTrigger id="doctorSelect">
+                  <SelectValue placeholder="Select Doctor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {doctorSignatures.length > 0 ? (
+                    doctorSignatures.map((doctor) => (
+                      <SelectItem key={doctor.id} value={doctor.id.toString()}>
+                        {doctor.doctorName}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="none" disabled>
+                      No doctors available
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+
+              {selectedDoctorId && (
+                <div className="mt-2">
+                  <Label>Doctor's Signature Preview</Label>
+                  <div className="mt-1 p-2 border rounded-lg bg-white">
+                    <img 
+                      src={doctorSignatures.find(d => d.id === selectedDoctorId)?.signatureImage || ''}
+                      alt="Doctor's Signature"
+                      className="max-h-16 object-contain"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* Patient Signature */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-neutral-700 mb-1">
                 Patient Signature
               </label>
               <div className="border border-neutral-300 rounded-lg bg-white">
                 <SignatureCanvas
-                  ref={signatureRef}
+                  ref={patientSignatureRef}
                   canvasProps={{
                     className: "w-full h-40 rounded-lg"
                   }}
@@ -256,14 +547,14 @@ export default function ConsentForm({
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={clearSignature}
+                  onClick={clearPatientSignature}
                 >
                   Clear
                 </Button>
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={saveSignature}
+                  onClick={savePatientSignature}
                 >
                   Capture Signature
                 </Button>
@@ -281,6 +572,7 @@ export default function ConsentForm({
           </Button>
           <Button 
             onClick={handleSubmit}
+            disabled={formType !== 'custom' && !patientSignature}
           >
             Submit Form
           </Button>

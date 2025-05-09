@@ -21,7 +21,7 @@ import PrescriptionForm from "@/components/PrescriptionForm";
 import Invoice from "@/components/Invoice";
 import ConsentForm from "@/components/ConsentForm";
 
-import { Image, Video, Upload, FileCheck, X, FileText, Camera, File } from "lucide-react";
+import { Image, Video, Upload, FileCheck, X, FileText, Camera, File, Trash, Eye } from "lucide-react";
 import { PatientVisit, InsertPatientVisit } from "@shared/schema";
 
 interface VisitLogProps {
@@ -462,14 +462,51 @@ export default function VisitLog({ visitId, patientId, onBack }: VisitLogProps) 
                           {new Date(attachment.dateAdded).toLocaleDateString()}
                         </p>
                       </div>
-                      <a 
-                        href={attachment.url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-primary hover:text-primary-dark text-sm ml-2 px-2 py-1 rounded hover:bg-neutral-200 transition-colors"
-                      >
-                        View
-                      </a>
+                      <div className="flex items-center space-x-2">
+                        <a 
+                          href={attachment.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-primary hover:text-primary-dark text-sm px-2 py-1 rounded hover:bg-neutral-200 transition-colors"
+                        >
+                          View
+                        </a>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={async () => {
+                            try {
+                              const response = await fetch(`/api/visits/${visitId}/attachments/${index}`, {
+                                method: 'DELETE',
+                              });
+                              
+                              if (response.ok) {
+                                // Remove the attachment from the local state
+                                const updatedAttachments = [...attachments];
+                                updatedAttachments.splice(index, 1);
+                                setAttachments(updatedAttachments);
+                                
+                                toast({
+                                  title: "Success",
+                                  description: "Attachment deleted successfully.",
+                                });
+                              } else {
+                                throw new Error("Failed to delete attachment");
+                              }
+                            } catch (error) {
+                              console.error("Error deleting attachment:", error);
+                              toast({
+                                title: "Error",
+                                description: "Failed to delete attachment.",
+                                variant: "destructive",
+                              });
+                            }
+                          }}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>

@@ -1605,5 +1605,170 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create the HTTP server
   const httpServer = createServer(app);
   
+  // Doctor signatures routes
+  app.get('/api/doctor-signatures', async (req, res) => {
+    try {
+      const signatures = await db.select().from(doctorSignatures);
+      res.json(signatures);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get('/api/doctor-signatures/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid ID' });
+      }
+      
+      const [signature] = await db.select().from(doctorSignatures).where(eq(doctorSignatures.id, id));
+      if (!signature) {
+        return res.status(404).json({ message: 'Doctor signature not found' });
+      }
+      
+      res.json(signature);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post('/api/doctor-signatures', upload.single('signatureImage'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: 'Signature image is required' });
+      }
+
+      const doctorName = req.body.doctorName;
+      if (!doctorName) {
+        return res.status(400).json({ message: 'Doctor name is required' });
+      }
+
+      // Convert image to data URL
+      const signatureImage = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+      
+      // Check if doctor already has a signature
+      const [existingSignature] = await db.select().from(doctorSignatures).where(eq(doctorSignatures.doctorName, doctorName));
+      
+      let signature;
+      if (existingSignature) {
+        // Update existing signature
+        [signature] = await db.update(doctorSignatures)
+          .set({ signatureImage })
+          .where(eq(doctorSignatures.id, existingSignature.id))
+          .returning();
+      } else {
+        // Create new signature
+        const validatedData = insertDoctorSignatureSchema.parse({
+          doctorName,
+          signatureImage
+        });
+        
+        [signature] = await db.insert(doctorSignatures)
+          .values(validatedData)
+          .returning();
+      }
+      
+      res.status(201).json(signature);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Validation error', errors: error.errors });
+      }
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete('/api/doctor-signatures/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid ID' });
+      }
+      
+      await db.delete(doctorSignatures).where(eq(doctorSignatures.id, id));
+      res.status(204).end();
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Endpoint to delete visit attachments
+  app.delete('/api/visits/:visitId/attachments/:attachmentIndex', async (req, res) => {
+    try {
+      const visitId = parseInt(req.params.visitId);
+      const attachmentIndex = parseInt(req.params.attachmentIndex);
+      
+      if (isNaN(visitId) || isNaN(attachmentIndex)) {
+        return res.status(400).json({ message: 'Invalid visit ID or attachment index' });
+      }
+      
+      // Get the visit
+      const visit = await storage.getPatientVisitById(visitId);
+      if (!visit) {
+        return res.status(404).json({ message: 'Visit not found' });
+      }
+      
+      // Check if visit has attachments
+      if (!visit.attachments || !Array.isArray(visit.attachments)) {
+        return res.status(404).json({ message: 'No attachments found for this visit' });
+      }
+      
+      // Check if the attachment index exists
+      if (attachmentIndex < 0 || attachmentIndex >= visit.attachments.length) {
+        return res.status(404).json({ message: 'Attachment not found' });
+      }
+      
+      // Remove the attachment
+      const updatedAttachments = [...visit.attachments];
+      updatedAttachments.splice(attachmentIndex, 1);
+      
+      // Update the visit
+      await storage.updatePatientVisit(visitId, { attachments: updatedAttachments });
+      
+      res.status(200).json({ message: 'Attachment deleted successfully' });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Endpoint to delete consent forms
+  app.delete('/api/visits/:visitId/consent-forms/:formIndex', async (req, res) => {
+    try {
+      const visitId = parseInt(req.params.visitId);
+      const formIndex = parseInt(req.params.formIndex);
+      
+      if (isNaN(visitId) || isNaN(formIndex)) {
+        return res.status(400).json({ message: 'Invalid visit ID or form index' });
+      }
+      
+      // Get the visit
+      const visit = await storage.getPatientVisitById(visitId);
+      if (!visit) {
+        return res.status(404).json({ message: 'Visit not found' });
+      }
+      
+      // Check if visit has consent forms
+      if (!visit.consentForms || !Array.isArray(visit.consentForms)) {
+        return res.status(404).json({ message: 'No consent forms found for this visit' });
+      }
+      
+      // Check if the form index exists
+      if (formIndex < 0 || formIndex >= visit.consentForms.length) {
+        return res.status(404).json({ message: 'Consent form not found' });
+      }
+      
+      // Remove the consent form
+      const updatedConsentForms = [...visit.consentForms];
+      updatedConsentForms.splice(formIndex, 1);
+      
+      // Update the visit
+      await storage.updatePatientVisit(visitId, { consentForms: updatedConsentForms });
+      
+      res.status(200).json({ message: 'Consent form deleted successfully' });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   return httpServer;
 }
