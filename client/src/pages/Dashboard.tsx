@@ -3,6 +3,7 @@ import Layout from "@/components/Layout";
 import DashboardTile from "@/components/DashboardTile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, FlaskRound, BarChart4, Settings, UserCog, Calendar, Clock, Activity, CreditCard } from "lucide-react";
+import patientDatabaseImage from "@/assets/tiles/patient-database.jpg";
 
 export default function Dashboard() {
   const { data: patients } = useQuery({
@@ -148,11 +149,11 @@ export default function Dashboard() {
       <h2 className="text-2xl font-bold text-neutral-800 mb-6 font-heading">Dashboard</h2>
       
       {/* Dashboard Tiles */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         <DashboardTile
           title="Patient Database"
           description="Manage patient records, appointments, and histories"
-          imageSrc="https://images.unsplash.com/photo-1566665797739-1674de7a421a?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=300"
+          imageSrc={patientDatabaseImage}
           icon={<Users />}
           href="/patients"
         />
