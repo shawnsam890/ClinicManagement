@@ -73,13 +73,15 @@ export default function Header({
     <header className="shadow-md">
       {/* Main Header with Image Background */}
       <div 
-        className="relative bg-cover bg-center h-80 w-full overflow-hidden" 
+        className="relative bg-cover bg-center h-96 w-full overflow-hidden" 
         style={{ backgroundImage: `url(${dentalClinicImage})`, backgroundSize: 'cover', backgroundPosition: 'center 30%' }}
       >
-        {/* Search Bar */}
+        {/* Top Bar with Clinic Name and Search */}
         <div className="absolute top-4 left-0 right-0 z-20 px-4">
-          <div className="max-w-sm mx-auto bg-white/40 rounded-xl shadow-md py-1.5 px-3 backdrop-blur-sm">
-            <form onSubmit={handleSearchSubmit}>
+          <div className="max-w-3xl mx-auto bg-white/40 rounded-xl shadow-md py-1.5 px-4 backdrop-blur-sm flex items-center justify-between">
+            <h1 className="text-lg font-bold text-primary mr-4">{clinicName}</h1>
+            
+            <form onSubmit={handleSearchSubmit} className="flex-1 max-w-xs">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <input

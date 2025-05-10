@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import Layout from "@/components/Layout";
 import DashboardTile from "@/components/DashboardTile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, FlaskRound, BarChart4, Settings, UserCog, Calendar } from "lucide-react";
+import { Users, FlaskRound, BarChart4, Settings, UserCog, Calendar, Clock, Activity, CreditCard } from "lucide-react";
 
 export default function Dashboard() {
   const { data: patients } = useQuery({
@@ -45,6 +45,67 @@ export default function Dashboard() {
 
   return (
     <Layout title={clinicInfo?.settingValue?.name || "Dr. Shawn's Clinic"}>
+      {/* Today's Overview - Now positioned directly under header */}
+      <div className="-mt-6 mb-8">
+        <Card className="bg-white shadow-lg border-none">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xl font-heading flex items-center">
+              <Clock className="w-5 h-5 mr-2 text-primary" />
+              Today's Overview
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Appointments Card */}
+              <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl p-6 shadow-sm border border-primary/10 transition-all hover:shadow-md">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-sm font-medium text-neutral-600 mb-1">Appointments Today</p>
+                    <p className="text-3xl font-bold text-primary">{todayAppointmentsCount}</p>
+                  </div>
+                  <div className="bg-white rounded-full p-2 shadow-sm">
+                    <Calendar className="h-6 w-6 text-primary" />
+                  </div>
+                </div>
+                <div className="mt-4 text-xs text-neutral-500">{today.split('-').reverse().join('/')} | {new Date().toLocaleString('en-US', { weekday: 'long' })}</div>
+              </div>
+              
+              {/* Pending Lab Works Card */}
+              <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-6 shadow-sm border border-amber-200 transition-all hover:shadow-md">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-sm font-medium text-neutral-600 mb-1">Pending Lab Works</p>
+                    <p className="text-3xl font-bold text-amber-600">{pendingLabWorksCount}</p>
+                  </div>
+                  <div className="bg-white rounded-full p-2 shadow-sm">
+                    <Activity className="h-6 w-6 text-amber-500" />
+                  </div>
+                </div>
+                <div className="mt-4 text-xs text-neutral-500">
+                  {pendingLabWorksCount === 0 ? "No pending lab work" : pendingLabWorksCount === 1 ? "1 lab work pending" : `${pendingLabWorksCount} lab works pending`}
+                </div>
+              </div>
+              
+              {/* Today's Revenue Card */}
+              <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 shadow-sm border border-emerald-200 transition-all hover:shadow-md">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-sm font-medium text-neutral-600 mb-1">Today's Revenue</p>
+                    <p className="text-3xl font-bold text-emerald-600">₹{todayRevenue.toLocaleString()}</p>
+                  </div>
+                  <div className="bg-white rounded-full p-2 shadow-sm">
+                    <CreditCard className="h-6 w-6 text-emerald-500" />
+                  </div>
+                </div>
+                <div className="mt-4 text-xs text-neutral-500">
+                  {todayRevenue === 0 ? "No revenue recorded today" : "Revenue as of " + new Date().toLocaleTimeString()}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
       <h2 className="text-2xl font-bold text-neutral-800 mb-6 font-heading">Dashboard</h2>
       
       {/* Dashboard Tiles */}
@@ -91,50 +152,6 @@ export default function Dashboard() {
           href="/settings"
         />
       </div>
-      
-      {/* Quick Stats */}
-      <Card className="mt-8 bg-white shadow-md">
-        <CardHeader>
-          <CardTitle className="text-lg font-heading">Today's Overview</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-neutral-100 rounded-lg p-4">
-              <p className="text-sm text-neutral-600">Appointments Today</p>
-              <div className="flex items-center justify-between">
-                <p className="text-2xl font-semibold text-primary">{todayAppointmentsCount}</p>
-                <span className="text-primary">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </span>
-              </div>
-            </div>
-            <div className="bg-neutral-100 rounded-lg p-4">
-              <p className="text-sm text-neutral-600">Pending Lab Works</p>
-              <div className="flex items-center justify-between">
-                <p className="text-2xl font-semibold text-warning">{pendingLabWorksCount}</p>
-                <span className="text-warning">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </span>
-              </div>
-            </div>
-            <div className="bg-neutral-100 rounded-lg p-4">
-              <p className="text-sm text-neutral-600">Today's Revenue</p>
-              <div className="flex items-center justify-between">
-                <p className="text-2xl font-semibold text-success">₹{todayRevenue.toLocaleString()}</p>
-                <span className="text-success">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                  </svg>
-                </span>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </Layout>
   );
 }
