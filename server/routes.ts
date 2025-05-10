@@ -1225,6 +1225,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // File upload route for media files (multiple)
+  app.post('/api/upload/media', upload.array('files'), async (req, res) => {
+    try {
+      if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+        return res.status(400).json({ message: 'No files uploaded' });
+      }
+      
+      const { visitId } = req.body;
+      if (!visitId) {
+        return res.status(400).json({ message: 'Visit ID is required' });
+      }
+      
+      const visit = await storage.getPatientVisitById(parseInt(visitId));
+      if (!visit) {
+        return res.status(404).json({ message: 'Visit not found' });
+      }
+      
+      // Convert files to base64 and create attachment objects
+      const mediaFiles = [];
+      for (const file of req.files) {
+        const base64File = file.buffer.toString('base64');
+        const mimeType = file.mimetype;
+        const dataUri = `data:${mimeType};base64,${base64File}`;
+        
+        mediaFiles.push({
+          id: Date.now().toString() + '-' + mediaFiles.length,
+          name: file.originalname,
+          type: mimeType,
+          url: dataUri,
+          dateAdded: new Date().toISOString()
+        });
+      }
+      
+      // Update visit attachments
+      const attachments = visit.attachments || [];
+      attachments.push(...mediaFiles);
+      
+      await storage.updatePatientVisit(visit.id, {
+        attachments
+      });
+      
+      res.json({ 
+        message: `${mediaFiles.length} files uploaded successfully`, 
+        files: mediaFiles.map(file => ({ name: file.name, type: file.type }))
+      });
+    } catch (error: any) {
+      console.error('Error uploading media files:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
   // Medication routes
   app.get('/api/medications', async (req, res) => {
     try {
