@@ -1882,14 +1882,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Endpoint to delete visit attachments
-  app.delete('/api/visits/:visitId/attachments/:attachmentIndex', async (req, res) => {
+  app.delete('/api/visits/:visitId/attachments/:attachmentId', async (req, res) => {
     try {
       const visitId = parseInt(req.params.visitId);
-      const attachmentIndex = parseInt(req.params.attachmentIndex);
+      const attachmentId = req.params.attachmentId;
       
-      if (isNaN(visitId) || isNaN(attachmentIndex)) {
-        return res.status(400).json({ message: 'Invalid visit ID or attachment index' });
+      if (isNaN(visitId)) {
+        return res.status(400).json({ message: 'Invalid visit ID' });
       }
+      
+      console.log(`Deleting attachment ${attachmentId} from visit ${visitId}`);
       
       // Get the visit
       const visit = await storage.getPatientVisitById(visitId);
@@ -1897,25 +1899,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Visit not found' });
       }
       
-      // Check if visit has attachments
-      if (!visit.attachments || !Array.isArray(visit.attachments)) {
-        return res.status(404).json({ message: 'No attachments found for this visit' });
+      // Parse attachments from JSON string if needed
+      let attachments = [];
+      if (visit.attachments) {
+        if (typeof visit.attachments === 'string') {
+          try {
+            attachments = JSON.parse(visit.attachments);
+          } catch (err) {
+            console.error('Error parsing attachments:', err);
+            return res.status(500).json({ message: 'Invalid attachment data format' });
+          }
+        } else if (Array.isArray(visit.attachments)) {
+          attachments = visit.attachments;
+        }
       }
       
-      // Check if the attachment index exists
-      if (attachmentIndex < 0 || attachmentIndex >= visit.attachments.length) {
+      console.log('Current attachments:', attachments);
+      
+      // Find the attachment by ID
+      const attachmentIndex = attachments.findIndex(att => att.id === attachmentId);
+      if (attachmentIndex === -1) {
         return res.status(404).json({ message: 'Attachment not found' });
       }
       
-      // Remove the attachment
-      const updatedAttachments = [...visit.attachments];
-      updatedAttachments.splice(attachmentIndex, 1);
+      // Get the attachment to delete
+      const attachmentToDelete = attachments[attachmentIndex];
       
-      // Update the visit
-      await storage.updatePatientVisit(visitId, { attachments: updatedAttachments });
+      // Remove the attachment from the array
+      attachments.splice(attachmentIndex, 1);
       
-      res.status(200).json({ message: 'Attachment deleted successfully' });
+      // Update the visit with the new attachments array
+      await storage.updatePatientVisit(visitId, { 
+        attachments: JSON.stringify(attachments) 
+      });
+      
+      // Try to delete the file from the filesystem if it's stored there
+      try {
+        if (attachmentToDelete.url && attachmentToDelete.url.startsWith('/uploads/')) {
+          const filePath = '.' + attachmentToDelete.url;
+          fs.unlink(filePath, (err) => {
+            if (err) {
+              console.warn(`Could not delete file ${filePath}:`, err);
+            } else {
+              console.log(`Successfully deleted file ${filePath}`);
+            }
+          });
+        }
+      } catch (fileErr) {
+        console.warn('Error attempting to delete file:', fileErr);
+      }
+      
+      res.status(200).json({ 
+        message: 'Attachment deleted successfully',
+        attachments: attachments
+      });
     } catch (error: any) {
+      console.error('Error deleting attachment:', error);
       res.status(500).json({ message: error.message });
     }
   });
