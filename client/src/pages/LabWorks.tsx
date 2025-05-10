@@ -130,6 +130,25 @@ export default function LabWorks() {
     },
   });
   
+  // Define the handleCreateLabWork function before it's used in useEffect
+  const handleCreateLabWork = () => {
+    form.reset({
+      patientId: patientIdFromUrl || "",
+      workType: "",
+      status: "pending",
+      description: "",
+      startDate: new Date().toISOString().split("T")[0],
+      dueDate: "",
+      completedDate: null,
+      technician: "",
+      shade: "",
+      cost: 0,
+      notes: "",
+    });
+    setSelectedLabWork(null);
+    setIsDialogOpen(true);
+  };
+
   // If patientId is provided in the URL, automatically open the dialog to create a new lab work
   useEffect(() => {
     if (patientIdFromUrl) {
@@ -264,23 +283,7 @@ export default function LabWorks() {
     },
   });
 
-  const handleCreateLabWork = () => {
-    form.reset({
-      patientId: "",
-      workType: "",
-      status: "pending",
-      description: "",
-      startDate: new Date().toISOString().split("T")[0],
-      dueDate: "",
-      completedDate: null,
-      technician: "",
-      shade: "",
-      cost: 0,
-      notes: "",
-    });
-    setSelectedLabWork(null);
-    setIsDialogOpen(true);
-  };
+  // Function moved to the top for use in useEffect
 
   const handleEditLabWork = (labWork: any) => {
     form.reset({
