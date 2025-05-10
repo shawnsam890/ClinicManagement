@@ -619,7 +619,7 @@ export default function LabWorks() {
       {/* Dialog for Lab Work */}
       {currentTab === "works" && (
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {selectedLabWork ? "Edit Lab Work" : "Create New Lab Work"}
@@ -923,7 +923,7 @@ export default function LabWorks() {
       {/* Dialog for Inventory */}
       {currentTab === "inventory" && (
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {selectedLabWork ? "Edit Inventory Item" : "Add Inventory Item"}
