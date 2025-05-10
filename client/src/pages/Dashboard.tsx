@@ -4,6 +4,7 @@ import DashboardTile from "@/components/DashboardTile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, FlaskRound, BarChart4, Settings, UserCog, Calendar, Clock, Activity, CreditCard } from "lucide-react";
 import patientDatabaseImage from "@/assets/tiles/patient-database.jpg";
+import labWorksImage from "@/assets/tiles/lab-works.jpg";
 
 export default function Dashboard() {
   const { data: patients } = useQuery({
@@ -161,7 +162,7 @@ export default function Dashboard() {
         <DashboardTile
           title="Lab Works"
           description="Track lab orders, results, and inventory"
-          imageSrc="https://images.unsplash.com/photo-1579684385127-1ef15d508118?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=300" 
+          imageSrc={labWorksImage}
           icon={<FlaskRound />}
           href="/lab-works"
         />
