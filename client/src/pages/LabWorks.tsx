@@ -93,22 +93,22 @@ export default function LabWorks() {
   const patientIdFromUrl = searchParams.get('patientId');
 
   // Fetch all lab works
-  const { data: labWorks, isLoading: isLoadingLabWorks } = useQuery({
+  const { data: labWorks = [], isLoading: isLoadingLabWorks } = useQuery({
     queryKey: ["/api/lab-works"],
   });
 
   // Fetch all patients for the dropdown
-  const { data: patients } = useQuery({
+  const { data: patients = [] } = useQuery({
     queryKey: ["/api/patients"],
   });
 
   // Fetch lab inventory
-  const { data: inventory, isLoading: isLoadingInventory } = useQuery({
+  const { data: inventory = [], isLoading: isLoadingInventory } = useQuery({
     queryKey: ["/api/lab-inventory"],
   });
 
   // Fetch dropdown options from settings
-  const { data: dropdownOptions } = useQuery({
+  const { data: dropdownOptions = {} } = useQuery({
     queryKey: ["/api/settings/key/dropdown_options"],
   });
 
@@ -283,7 +283,6 @@ export default function LabWorks() {
     },
   });
 
-  // Function moved to the top for use in useEffect
 
   const handleEditLabWork = (labWork: any) => {
     form.reset({
@@ -337,26 +336,22 @@ export default function LabWorks() {
   };
 
   // Filter lab works based on search query and status filter
-  const filteredLabWorks = labWorks
-    ? labWorks.filter((work: any) => {
-        const matchesSearch =
-          work.patientId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          work.workType.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (work.technician && work.technician.toLowerCase().includes(searchQuery.toLowerCase()));
-        
-        const matchesStatus = statusFilter === "all" || work.status === statusFilter;
-        
-        return matchesSearch && matchesStatus;
-      })
-    : [];
+  const filteredLabWorks = labWorks.filter((work: any) => {
+    const matchesSearch =
+      work.patientId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      work.workType.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (work.technician && work.technician.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    const matchesStatus = statusFilter === "all" || work.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
 
   // Filter inventory based on search query
-  const filteredInventory = inventory
-    ? inventory.filter((item: any) =>
-        item.itemName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.supplier && item.supplier.toLowerCase().includes(searchQuery.toLowerCase()))
-      )
-    : [];
+  const filteredInventory = inventory.filter((item: any) =>
+    item.itemName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (item.supplier && item.supplier.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
   const getStatusBadge = (status: string) => {
     switch (status) {
