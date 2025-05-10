@@ -162,11 +162,20 @@ export default function ConsentForm({
   }, [formType]);
 
   const clearSignature = () => {
+    // Clear the main signature canvas
     if (signatureCanvasRef.current) {
       signatureCanvasRef.current.clear();
       setPatientSignature(null);
       setSignatureMode(false);
     }
+    
+    // Also clear the patient signature if available
+    clearPatientSignature();
+    
+    toast({
+      title: "Signature Cleared",
+      description: "Your signature has been cleared."
+    });
   };
 
   const captureFormWithSignatures = async () => {
@@ -673,8 +682,9 @@ export default function ConsentForm({
                   variant="outline" 
                   size="sm" 
                   onClick={clearSignature}
+                  className="flex items-center"
                 >
-                  Clear
+                  <Eraser className="mr-1.5 h-3.5 w-3.5" /> Clear
                 </Button>
                 <Button 
                   variant="outline" 
