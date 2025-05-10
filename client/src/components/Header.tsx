@@ -78,8 +78,8 @@ export default function Header({
       >
         {/* Top Bar */}
         <div className="absolute top-4 left-0 right-0 z-20 px-4">
-          <div className="bg-white/90 rounded-xl shadow-lg max-w-5xl mx-auto p-3 backdrop-blur-sm flex items-center justify-between">
-            <h1 className="text-xl font-bold text-primary mr-4">{clinicName}</h1>
+          <div className="bg-white/60 rounded-xl shadow-md max-w-5xl mx-auto p-2 backdrop-blur-sm flex items-center justify-between">
+            <h1 className="text-lg font-bold text-primary mr-4">{clinicName}</h1>
             
             <form onSubmit={handleSearchSubmit} className="flex-1 max-w-lg">
               <div className="relative">
@@ -137,55 +137,39 @@ export default function Header({
         <div className="container mx-auto h-full px-4 relative z-10 flex items-end pb-6">
           <div className="flex justify-between items-end w-full">
             {/* Left Side - Slogan */}
-            <div className="text-white bg-black/20 p-3 rounded-lg backdrop-blur-sm shadow-lg inline-block">
-              <p className="text-2xl font-medium drop-shadow-lg leading-tight">
+            <div className="text-white inline-block">
+              <p className="text-3xl font-medium leading-tight" style={{ textShadow: "0 2px 4px rgba(0,0,0,0.6)" }}>
                 {firstSloganLine}
               </p>
-              <p className="text-2xl font-medium drop-shadow-lg leading-tight">
+              <p className="text-3xl font-medium leading-tight" style={{ textShadow: "0 2px 4px rgba(0,0,0,0.6)" }}>
                 {secondSloganLine}
               </p>
             </div>
             
             {/* Right Side - Doctor Welcome */}
             <div className="text-white text-right">
-              <div className="bg-white/10 px-4 py-2 rounded-lg backdrop-blur-sm border border-white/20">
-                <p className="text-xl font-medium text-white leading-tight">
-                  {firstGreetingWord}
-                </p>
-                <p className="text-xl font-bold text-white leading-tight">
-                  {restGreeting}
-                </p>
-              </div>
+              <p className="text-2xl font-medium leading-tight" style={{ textShadow: "0 2px 4px rgba(0,0,0,0.6)" }}>
+                {firstGreetingWord}
+              </p>
+              <p className="text-2xl font-bold leading-tight" style={{ textShadow: "0 2px 4px rgba(0,0,0,0.6)" }}>
+                {restGreeting}
+              </p>
             </div>
           </div>
         </div>
       
-        {/* Page Title embedded in the top bar */}
-        <div className="absolute bottom-4 left-0 right-0 z-20 px-4">
-          <div className="max-w-5xl mx-auto flex justify-between items-center">
-            <div className="flex items-center">
-              {showBackButton && (
-                <button
-                  onClick={() => navigate(backTo)}
-                  className="text-white mr-3 hover:text-white/80 bg-primary/20 p-2 rounded-full backdrop-blur-sm"
-                  aria-label="Back"
-                >
-                  <ArrowLeft className="h-5 w-5" />
-                </button>
-              )}
-              <h2 className="text-white font-bold text-xl font-heading drop-shadow-md">{title}</h2>
-            </div>
-            
-            {/* Settings Button */}
-            <button 
-              onClick={() => navigate("/settings")} 
-              className="text-white hover:text-white/80 p-2 rounded-full bg-primary/20 backdrop-blur-sm"
-              aria-label="Settings"
+        {/* Only show back button if needed */}
+        {showBackButton && (
+          <div className="absolute bottom-4 left-4 z-20">
+            <button
+              onClick={() => navigate(backTo)}
+              className="text-white hover:text-white/80 bg-black/20 p-2 rounded-full"
+              aria-label="Back"
             >
-              <Settings className="h-5 w-5" />
+              <ArrowLeft className="h-5 w-5" />
             </button>
           </div>
-        </div>
+        )}
       </div>
     </header>
   );
