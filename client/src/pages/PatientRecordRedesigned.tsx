@@ -9,7 +9,6 @@ import ConsentForm from "@/components/ConsentForm";
 import PrescriptionForm from "@/components/PrescriptionForm";
 import Invoice from "@/components/Invoice";
 import VisitLog from "@/components/VisitLog";
-import VisitDetailsTabbed from "@/components/VisitDetailsTabbed";
 import ToothFindingsSection from "@/components/ToothFindingsSection";
 import GeneralizedFindingsSection from "@/components/GeneralizedFindingsSection";
 import InvestigationSection from "@/components/InvestigationSection";
@@ -20,11 +19,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { User, Phone, MessageSquare, Plus, CalendarDays, Receipt, ClipboardList, FileText, 
-  Edit, Save, X, PlusCircle, Trash2, Repeat, CheckCircle2, Activity, Pill, Stethoscope, FileEdit, Image, ExternalLink, Trash } from "lucide-react";
+  Edit, Save, X, PlusCircle, Trash2, Repeat, CheckCircle2, Activity, Pill, Stethoscope, FileEdit, Image, ExternalLink } from "lucide-react";
 import "./VisitLog.css";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Patient, PatientVisit, Prescription, Invoice as InvoiceType } from "@shared/schema";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -35,7 +34,6 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export default function PatientRecord() {
   const { patientId } = useParams();
@@ -51,977 +49,1370 @@ export default function PatientRecord() {
     address: '',
     medicalHistory: '',
     dentalHistory: '',
-    contactNumber: '',
-    email: '',
-    gender: '',
-    birthDate: '',
+    drugAllergy: ''
   });
+  // We've removed the visit form and edit dialog state variables
+  // as we're now editing directly in the visit log
   const [newMedicalHistoryOption, setNewMedicalHistoryOption] = useState('');
   const [newDentalHistoryOption, setNewDentalHistoryOption] = useState('');
   const [medicalHistoryOptions, setMedicalHistoryOptions] = useState<string[]>([]);
   const [dentalHistoryOptions, setDentalHistoryOptions] = useState<string[]>([]);
-  
-  // New state for delete media confirmation
-  const [deleteMediaDialog, setDeleteMediaDialog] = useState<{
-    isOpen: boolean;
-    visitId: number | null;
-    fileId: string | null;
-    fileName: string | null;
-  }>({
-    isOpen: false,
-    visitId: null,
-    fileId: null,
-    fileName: null
-  });
 
-  useEffect(() => {
-    if (patientId) {
-      setSelectedVisitId(null);
-      setActiveTab("overview");
-      setShowPrescriptionForm(false);
-      setActiveConsentForm(null);
-      setShowInvoice(false);
-    }
-  }, [patientId]);
-
-  // Fetch all medicine options from settings on component mount
-  useEffect(() => {
-    const fetchMedicines = async () => {
-      try {
-        const response = await fetch('/api/settings/medicines');
-        if (response.ok) {
-          const data = await response.json();
-          const options = data.map((med: any) => med.name);
-          localStorage.setItem('medicineOptions', JSON.stringify(options));
-        }
-      } catch (error) {
-        console.error('Error fetching medicines:', error);
-      }
-    };
-
-    fetchMedicines();
-  }, []);
-
-  const [invoicesWithItems, setInvoicesWithItems] = useState<(InvoiceType & { items: any[] })[]>([]);
-
-  // Patient query
-  const { 
-    data: patient,
-    isLoading: isPatientLoading, 
-    error: patientError,
-  } = useQuery<Patient>({
-    queryKey: [`/api/patients/${patientId}`],
+  // Fetch patient details
+  const { data: patient, isLoading: isLoadingPatient } = useQuery<Patient>({
+    queryKey: [`/api/patients/patientId/${patientId}`],
     enabled: !!patientId,
   });
 
-  // Patient Visits query
-  const {
-    data: visits,
-    isLoading: isVisitsLoading,
-    error: visitsError
-  } = useQuery<PatientVisit[]>({
+  // Fetch patient visits (prescriptions/Rx)
+  const { data: visits = [], isLoading: isLoadingVisits } = useQuery<PatientVisit[]>({
     queryKey: [`/api/patients/${patientId}/visits`],
     enabled: !!patientId,
   });
 
-  // Prescriptions query
-  const {
-    data: prescriptions,
-    isLoading: isPrescriptionsLoading,
-    error: prescriptionsError
-  } = useQuery<Prescription[]>({
-    queryKey: [`/api/patients/${patientId}/prescriptions`],
-    enabled: !!patientId,
+  // Fetch medications for dropdown
+  const { data: medications = [] } = useQuery<any[]>({
+    queryKey: ['/api/medications'],
   });
 
-  // Invoices query
-  const {
-    data: invoices,
-    isLoading: isInvoicesLoading,
-    error: invoicesError
-  } = useQuery<InvoiceType[]>({
+  // Fetch patient invoices with items
+  const { data: rawInvoices = [], isLoading: isLoadingInvoices } = useQuery<InvoiceType[]>({
     queryKey: [`/api/patients/${patientId}/invoices`],
     enabled: !!patientId,
   });
-
-  // Settings for medical and dental history options
+  
+  // Track which invoices we've loaded items for
+  const [invoicesWithItems, setInvoicesWithItems] = useState<(InvoiceType & { items: any[] })[]>([]);
+  
+  // Check if an invoice exists before trying to load its items
   useEffect(() => {
-    const fetchHistoryOptions = async () => {
-      try {
-        const medResponse = await fetch('/api/settings/medical-history-options');
-        const dentalResponse = await fetch('/api/settings/dental-history-options');
+    if (rawInvoices.length > 0) {
+      const loadInvoiceItems = async () => {
+        const existingInvoices = [];
         
-        if (medResponse.ok) {
-          const medData = await medResponse.json();
-          setMedicalHistoryOptions(medData.options || []);
-        }
-        
-        if (dentalResponse.ok) {
-          const dentalData = await dentalResponse.json();
-          setDentalHistoryOptions(dentalData.options || []);
-        }
-      } catch (error) {
-        console.error('Error fetching history options:', error);
-      }
-    };
-
-    fetchHistoryOptions();
-  }, []);
-
-  // Fetch invoice items for each invoice
-  useEffect(() => {
-    const fetchAllInvoiceItems = async () => {
-      if (!invoices) return;
-
-      const invoicesWithItemsData = await Promise.all(
-        invoices.map(async (invoice) => {
+        for (const invoice of rawInvoices) {
           try {
-            const response = await fetch(`/api/invoices/${invoice.id}/items`);
-            if (response.ok) {
-              const items = await response.json();
-              return { ...invoice, items };
+            // First verify if the invoice still exists
+            const checkRes = await fetch(`/api/invoices/${invoice.id}`);
+            if (checkRes.status === 404) {
+              console.log(`Invoice ${invoice.id} no longer exists, skipping`);
+              continue;
             }
-            return { ...invoice, items: [] };
+            
+            // If it exists, fetch its items
+            const itemsRes = await fetch(`/api/invoices/${invoice.id}/items`);
+            const items = await itemsRes.json();
+            existingInvoices.push({ ...invoice, items });
           } catch (error) {
-            console.error(`Error fetching items for invoice ${invoice.id}:`, error);
-            return { ...invoice, items: [] };
+            console.error(`Failed to process invoice ${invoice.id}:`, error);
           }
-        })
-      );
+        }
+        
+        setInvoicesWithItems(existingInvoices);
+        
+        // If the list of invoices has changed, refresh the raw list
+        if (existingInvoices.length !== rawInvoices.length) {
+          queryClient.invalidateQueries({ queryKey: [`/api/patients/${patientId}/invoices`] });
+        }
+      };
+      
+      loadInvoiceItems();
+    } else {
+      setInvoicesWithItems([]);
+    }
+  }, [rawInvoices, patientId, queryClient]);
 
-      setInvoicesWithItems(invoicesWithItemsData);
-    };
-
-    fetchAllInvoiceItems();
-  }, [invoices]);
-
-  // Update patient mutation
-  const updatePatientMutation = useMutation({
-    mutationFn: async (updatedPatient: any) => {
-      const response = await apiRequest('PATCH', `/api/patients/${patientId}`, updatedPatient);
-      if (!response.ok) {
-        throw new Error('Failed to update patient');
-      }
-      return await response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/patients/${patientId}`] });
-      toast({
-        title: 'Patient Updated',
-        description: 'Patient details have been successfully updated.',
-      });
-      setShowEditPatientDetails(false);
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
+  // Fetch prescriptions for selected visit
+  const { data: prescriptions = [], isLoading: isLoadingPrescriptions } = useQuery<Prescription[]>({
+    queryKey: [`/api/visits/${selectedVisitId}/prescriptions`],
+    enabled: !!selectedVisitId,
+  });
+  
+  // Fetch the selected visit data (for media gallery and other details)
+  const { data: selectedVisit } = useQuery<PatientVisit>({
+    queryKey: [`/api/visits/${selectedVisitId}`],
+    enabled: !!selectedVisitId,
+  });
+  
+  // Fetch medical history and dental history options from settings
+  const { data: settings } = useQuery<any>({
+    queryKey: ['/api/settings/category/patient_options'],
   });
 
-  // Delete media file mutation
-  const deleteMediaMutation = useMutation({
-    mutationFn: async ({ visitId, fileId }: { visitId: number, fileId: string }) => {
-      const response = await apiRequest('DELETE', `/api/visits/${visitId}/media/${fileId}`);
-      if (!response.ok) {
-        throw new Error('Failed to delete the file');
-      }
-      return await response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/patients/${patientId}/visits`] });
-      toast({
-        title: 'File Deleted',
-        description: 'The file has been successfully deleted.',
-      });
-      // Close the delete confirmation dialog
-      setDeleteMediaDialog({
-        isOpen: false,
-        visitId: null,
-        fileId: null,
-        fileName: null,
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
-
+  // Update form data when patient is loaded
   useEffect(() => {
     if (patient) {
       setPatientForm({
         address: patient.address || '',
         medicalHistory: patient.medicalHistory || '',
         dentalHistory: patient.dentalHistory || '',
-        contactNumber: patient.contactNumber || '',
-        email: patient.email || '',
-        gender: patient.gender || '',
-        birthDate: patient.birthDate ? 
-          // Format date to YYYY-MM-DD for input
-          format(new Date(patient.birthDate), 'yyyy-MM-dd') : '',
+        drugAllergy: patient.drugAllergy || ''
       });
     }
   }, [patient]);
 
-  const selectedVisit = visits?.find(visit => visit.id === selectedVisitId) || null;
+  // Load medical history and dental history options
+  useEffect(() => {
+    if (settings) {
+      const medHistory = settings.find((s: any) => s.settingKey === 'medical_history_options');
+      const dentHistory = settings.find((s: any) => s.settingKey === 'dental_history_options');
+      
+      if (medHistory && Array.isArray(medHistory.settingValue)) {
+        setMedicalHistoryOptions(medHistory.settingValue);
+      } else {
+        // Default options if none exist
+        setMedicalHistoryOptions(['Diabetes', 'Hypertension', 'Heart Disease', 'None']);
+      }
+      
+      if (dentHistory && Array.isArray(dentHistory.settingValue)) {
+        setDentalHistoryOptions(dentHistory.settingValue);
+      } else {
+        // Default options if none exist
+        setDentalHistoryOptions(['Extraction', 'RCT', 'Scaling', 'None']);
+      }
+    }
+  }, [settings]);
 
-  const handlePatientFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setPatientForm(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSavePatientDetails = (e: React.FormEvent) => {
-    e.preventDefault();
-    updatePatientMutation.mutate(patientForm);
-  };
-
-  // Function to handle the delete media confirmation dialog
-  const handleDeleteMedia = (visitId: number, fileId: string, fileName: string) => {
-    setDeleteMediaDialog({
-      isOpen: true,
-      visitId,
-      fileId,
-      fileName
-    });
-  };
-
-  // Function to confirm and execute the media deletion
-  const confirmDeleteMedia = () => {
-    if (deleteMediaDialog.visitId && deleteMediaDialog.fileId) {
-      deleteMediaMutation.mutate({
-        visitId: deleteMediaDialog.visitId,
-        fileId: deleteMediaDialog.fileId
+  // Create a new Visit (Rx)
+  const createVisitMutation = useMutation({
+    mutationFn: async (data: any) => {
+      console.log("Creating new visit for prescription:", data);
+      // Format the date as YYYY-MM-DD to prevent SQL errors
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      const formattedDate = `${year}-${month}-${day}`;
+      
+      const res = await apiRequest("POST", "/api/visits", {
+        patientId,
+        date: formattedDate,
+        chiefComplaint: data.chiefComplaint || "New prescription",
       });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      console.log("Visit created successfully:", data);
+      queryClient.invalidateQueries({ queryKey: [`/api/patients/${patientId}/visits`] });
+      
+      // Set the selected visit and make sure to show prescription form
+      setSelectedVisitId(data.id);
+      setActiveTab("rx");
+      
+      // Force showing the prescription form
+      console.log("Setting showPrescriptionForm to true");
+      setShowPrescriptionForm(true);
+      
+      toast({
+        title: "Success",
+        description: "New prescription created",
+      });
+    },
+    onError: (error) => {
+      console.error("Error creating prescription:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create new prescription",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Create a new follow-up appointment for a specific visit
+  const createFollowUpMutation = useMutation({
+    mutationFn: async (data: any) => {
+      // Format the date as YYYY-MM-DD to prevent SQL errors
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      const formattedDate = `${year}-${month}-${day}`;
+      
+      const res = await apiRequest("POST", "/api/visits", {
+        patientId,
+        date: formattedDate,
+        chiefComplaint: "Follow-up for visit #" + data.visitId,
+        previousVisitId: data.visitId,
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/patients/${patientId}/visits`] });
+      setSelectedVisitId(data.id);
+      setActiveTab("rx");
+      toast({
+        title: "Success",
+        description: "Follow-up appointment created",
+      });
+    },
+    onError: (error) => {
+      console.error("Error creating follow-up:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create follow-up appointment",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handle WhatsApp click
+  const handleWhatsApp = () => {
+    if (!patient) return;
+    // Using a type assertion to handle the property access safely
+    const phone = patient.phoneNumber || "";
+    window.open(`https://wa.me/${phone.replace(/[^0-9]/g, "")}`, "_blank");
+  };
+
+  // Handle SMS click
+  const handleSMS = () => {
+    if (!patient) return;
+    // Using a type assertion to handle the property access safely
+    const phone = patient.phoneNumber || "";
+    window.open(`sms:${phone}`, "_blank");
+  };
+
+  // Handle Phone click
+  const handlePhone = () => {
+    if (!patient) return;
+    // Using a type assertion to handle the property access safely
+    const phone = patient.phoneNumber || "";
+    window.open(`tel:${phone}`, "_blank");
+  };
+
+  // Create a new Prescription (Rx)
+  const handleCreateRx = () => {
+    console.log("Creating new prescription");
+    createVisitMutation.mutate({ chiefComplaint: "New prescription" });
+  };
+
+  // Create a follow-up for a specific visit
+  const handleCreateFollowUp = (visitId: number) => {
+    // Use the dedicated follow-up endpoint
+    apiRequest("POST", `/api/visits/${visitId}/follow-up`)
+      .then(res => res.json())
+      .then(data => {
+        // After creating a follow-up, refetch visits to update the list
+        queryClient.invalidateQueries({ queryKey: [`/api/patients/${patientId}/visits`] });
+        // Navigate to the new visit immediately
+        if (data && data.id) {
+          setSelectedVisitId(data.id);
+          setActiveTab("rx");
+          setShowPrescriptionForm(true);
+        }
+      })
+      .catch(error => {
+        console.error("Error creating follow-up:", error);
+        toast({
+          title: "Error creating follow-up",
+          description: "There was a problem creating the follow-up appointment.",
+          variant: "destructive",
+        });
+      });
+  };
+
+  // Show prescription details
+  const handleViewRx = (visitId: number) => {
+    setSelectedVisitId(visitId);
+    setActiveTab("rx");
+    setShowPrescriptionForm(true);
+  };
+
+  // Handle consent form completion
+  const handleConsentFormComplete = () => {
+    setActiveConsentForm(null);
+    if (selectedVisitId) {
+      queryClient.invalidateQueries({ queryKey: [`/api/visits/${selectedVisitId}`] });
     }
   };
 
-  // Function to close the delete confirmation dialog
-  const cancelDeleteMedia = () => {
-    setDeleteMediaDialog({
-      isOpen: false,
-      visitId: null,
-      fileId: null,
-      fileName: null
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    try {
+      if (!dateString) return "N/A";
+      const date = new Date(dateString);
+      return format(date, 'dd MMM yyyy');
+    } catch (e) {
+      return dateString;
+    }
+  };
+
+  // Get chief complaint for visit
+  const getChiefComplaint = (visit: Partial<PatientVisit>) => {
+    return visit?.chiefComplaint || "Not specified";
+  };
+
+  // Delete visit
+  const deleteVisitMutation = useMutation({
+    mutationFn: async (visitId: number) => {
+      const res = await apiRequest("DELETE", `/api/visits/${visitId}`);
+      return res;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/patients/${patientId}/visits`] });
+      // If we deleted the selected visit, clear the selection
+      if (selectedVisitId) {
+        setSelectedVisitId(null);
+        setShowPrescriptionForm(false);
+      }
+      toast({
+        title: "Success",
+        description: "Visit deleted successfully",
+      });
+    },
+    onError: (error) => {
+      console.error("Error deleting visit:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete visit",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handle delete visit
+  const handleDeleteVisit = (visitId: number, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering the row click
+    
+    // Show confirmation before deleting
+    if (window.confirm("Are you sure you want to delete this visit? This action cannot be undone.")) {
+      deleteVisitMutation.mutate(visitId);
+    }
+  };
+
+  // Update visit
+  const updateVisitMutation = useMutation({
+    mutationFn: async (data: { id: number } & Partial<PatientVisit>) => {
+      // Handle date formatting for next appointment
+      if (data.nextAppointment) {
+        try {
+          // Make sure the date is in YYYY-MM-DD format
+          const dateObj = new Date(data.nextAppointment);
+          const year = dateObj.getFullYear();
+          const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+          const day = String(dateObj.getDate()).padStart(2, '0');
+          data.nextAppointment = `${year}-${month}-${day}`;
+        } catch (err) {
+          console.error("Error formatting date:", err);
+        }
+      } else if (data.nextAppointment === '') {
+        // If nextAppointment is an empty string, set it to null to avoid SQL errors
+        data.nextAppointment = null;
+      }
+      
+      const res = await apiRequest("PUT", `/api/visits/${data.id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/patients/${patientId}/visits`] });
+      toast({
+        title: "Success",
+        description: "Visit updated successfully",
+      });
+    },
+    onError: (error) => {
+      console.error("Error updating visit:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update visit",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Update patient details
+  const updatePatientMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const res = await apiRequest("PATCH", `/api/patients/${patientId}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/patients/patientId/${patientId}`] });
+      setShowEditPatientDetails(false);
+      toast({
+        title: "Success",
+        description: "Patient details updated",
+      });
+    },
+    onError: (error) => {
+      console.error("Error updating patient:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update patient details",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handle form changes
+  const handleFormChange = (field: string, value: string) => {
+    setPatientForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+  
+  // We've removed the handleVisitFormChange function as we're now editing directly in the VisitLog
+
+  // Save patient details
+  const handleSavePatientDetails = () => {
+    updatePatientMutation.mutate(patientForm);
+  };
+
+  // Add new history option
+  const handleAddMedicalHistoryOption = () => {
+    if (!newMedicalHistoryOption.trim()) return;
+    
+    const updatedOptions = [...medicalHistoryOptions, newMedicalHistoryOption];
+    setMedicalHistoryOptions(updatedOptions);
+    
+    // Save to settings
+    apiRequest("POST", "/api/settings", {
+      settingKey: "medical_history_options",
+      settingValue: updatedOptions,
+      category: "patient_options"
+    }).then(() => {
+      queryClient.invalidateQueries({ queryKey: ['/api/settings/category/patient_options'] });
+      setNewMedicalHistoryOption('');
+    }).catch(error => {
+      console.error("Error saving medical history options:", error);
     });
   };
 
-  if (isPatientLoading) {
+  // Add new dental history option
+  const handleAddDentalHistoryOption = () => {
+    if (!newDentalHistoryOption.trim()) return;
+    
+    const updatedOptions = [...dentalHistoryOptions, newDentalHistoryOption];
+    setDentalHistoryOptions(updatedOptions);
+    
+    // Save to settings
+    apiRequest("POST", "/api/settings", {
+      settingKey: "dental_history_options",
+      settingValue: updatedOptions,
+      category: "patient_options"
+    }).then(() => {
+      queryClient.invalidateQueries({ queryKey: ['/api/settings/category/patient_options'] });
+      setNewDentalHistoryOption('');
+    }).catch(error => {
+      console.error("Error saving dental history options:", error);
+    });
+  };
+
+  // Loading state
+  if (isLoadingPatient) {
     return (
-      <Layout title="Patient Record">
-        <div className="flex items-center justify-center h-screen">
-          <div className="animate-pulse flex flex-col items-center">
-            <div className="w-32 h-32 bg-gray-200 rounded-full mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded w-48 mb-3"></div>
-            <div className="h-4 bg-gray-200 rounded w-32 mb-3"></div>
-            <div className="h-4 bg-gray-200 rounded w-40"></div>
-          </div>
+      <Layout title="Patient Record" showBackButton={true} backTo="/patients/list">
+        <div className="flex justify-center items-center h-64">
+          <p>Loading patient data...</p>
         </div>
       </Layout>
     );
   }
 
-  if (patientError) {
-    return (
-      <Layout title="Error">
-        <div className="flex flex-col items-center justify-center h-screen">
-          <h2 className="text-2xl font-semibold mb-2">Error Loading Patient</h2>
-          <p className="text-red-500">{(patientError as Error).message}</p>
-          <Button 
-            className="mt-4"
-            onClick={() => navigate('/patients')}
-          >
-            Return to Patient Database
-          </Button>
-        </div>
-      </Layout>
-    );
-  }
-
+  // Not found state
   if (!patient) {
     return (
-      <Layout title="Not Found">
-        <div className="flex flex-col items-center justify-center h-screen">
-          <h2 className="text-2xl font-semibold mb-2">Patient Not Found</h2>
-          <p className="text-muted-foreground">The patient you are looking for does not exist.</p>
-          <Button 
-            className="mt-4"
-            onClick={() => navigate('/patients')}
-          >
-            Return to Patient Database
-          </Button>
+      <Layout title="Patient Record" showBackButton={true} backTo="/patients/list">
+        <div className="flex justify-center items-center h-64">
+          <p>Patient not found. Please check the patient ID.</p>
         </div>
       </Layout>
     );
   }
 
+  // Main render
   return (
-    <Layout title="Patient Record">
-      {patient && (
+    <Layout title="Patient Record" showBackButton={true} backTo="/patients/list">
+      {activeConsentForm ? (
+        <ConsentForm
+          visitId={selectedVisitId!}
+          formType={activeConsentForm}
+          onComplete={handleConsentFormComplete}
+        />
+      ) : showInvoice ? (
+        <Invoice
+          visitId={selectedVisitId || undefined}
+          patientId={patientId!}
+          patientName={patient?.name || ""}
+          invoices={invoicesWithItems}
+          onBack={() => {
+            setShowInvoice(false);
+            if (selectedVisitId) {
+              setActiveTab("rx");
+            }
+          }}
+        />
+      ) : (
         <>
-          <div className="flex flex-col-reverse md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-            <div>
-              <h1 className="text-2xl font-bold flex items-center gap-1.5">
-                <span>{patient.name}</span>
-                <Badge 
-                  variant="outline" 
-                  className="ml-2 text-xs"
-                >
-                  {patient.patientId}
-                </Badge>
-              </h1>
-              <div className="text-muted-foreground flex flex-wrap gap-x-6 gap-y-1 mt-1.5">
-                <div className="flex items-center gap-1.5">
-                  <User className="h-3.5 w-3.5" />
-                  <span>{patient.gender && patient.age ? `${patient.gender}, ${patient.age} years` : `${patient.gender || patient.age || 'N/A'}`}</span>
+          {/* Patient Info Summary */}
+          <div className="bg-white shadow-sm border-b mb-6">
+            <div className="container mx-auto px-4 py-4">
+              <div className="flex flex-wrap items-center justify-between">
+                <div className="flex items-center mb-3 sm:mb-0">
+                  <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white text-xl font-semibold mr-3">
+                    {patient.name.split(" ").map((n: string) => n[0]).join("").toUpperCase()}
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-neutral-800">{patient.name}</h2>
+                    <div className="flex flex-wrap text-sm text-neutral-600">
+                      <span className="mr-3">{patient.patientId}</span>
+                      <span className="mr-3">{patient.age} years</span>
+                      <span className="mr-3">{patient.sex.charAt(0).toUpperCase() + patient.sex.slice(1)}</span>
+                    </div>
+                    <div className="text-sm text-neutral-600 mt-1">
+                      <span>{patient.address}</span>
+                    </div>
+                  </div>
                 </div>
-                {patient.contactNumber && (
-                  <div className="flex items-center gap-1.5">
-                    <Phone className="h-3.5 w-3.5" />
-                    <span>{patient.contactNumber}</span>
-                  </div>
-                )}
-                {patient.email && (
-                  <div className="flex items-center gap-1.5">
-                    <MessageSquare className="h-3.5 w-3.5" />
-                    <span>{patient.email}</span>
-                  </div>
-                )}
+                <div className="flex space-x-3">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={handlePhone}
+                    className="text-primary hover:text-primary-dark"
+                  >
+                    <Phone className="h-5 w-5" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={handleWhatsApp}
+                    className="text-green-500 hover:text-green-600"
+                  >
+                    <MessageSquare className="h-5 w-5" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={handleSMS}
+                    className="text-blue-500 hover:text-blue-600"
+                  >
+                    <Phone className="h-5 w-5" />
+                  </Button>
+                </div>
               </div>
-            </div>
-            <div className="flex gap-2 self-end md:self-auto">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setShowEditPatientDetails(true)}
-              >
-                <Edit className="h-3.5 w-3.5 mr-1.5" />
-                Edit Details
-              </Button>
-              <Button 
-                size="sm" 
-                onClick={() => navigate('/patients')}
-              >
-                Back to Patients
-              </Button>
             </div>
           </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <TabsList className="grid w-full grid-cols-2 md:flex md:w-auto">
-              <TabsTrigger value="overview">Patient Overview</TabsTrigger>
-              <TabsTrigger value="visits">
-                Visit Log
-                {visits && visits.length > 0 && (
-                  <Badge className="ml-2">{visits.length}</Badge>
-                )}
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="overview" className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-xl">Personal Information</CardTitle>
+          {/* Main Content - Organized in rows with wider columns */}
+          <div className="grid grid-cols-1 gap-8">
+            {/* First Row - Patient Details and Visit Log */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Patient Medical Information - Wider Column */}
+              <div>
+                <Card className="border-none shadow-md">
+                  <CardHeader className="pb-3 bg-gradient-to-r from-white to-blue-50/30">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center">
+                        <div className="bg-primary/10 p-2 rounded-lg mr-3">
+                          <User className="h-5 w-5 text-primary" />
+                        </div>
+                        <CardTitle className="text-lg">Patient Details</CardTitle>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="text-primary hover:bg-primary/10"
+                        onClick={() => setShowEditPatientDetails(true)}
+                      >
+                        <Edit className="h-4 w-4 mr-1" /> Edit
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
-                      <h3 className="font-medium text-sm text-muted-foreground mb-1">Address</h3>
-                      <p>{patient.address || 'Not provided'}</p>
-                    </div>
-                    
-                    <div>
-                      <h3 className="font-medium text-sm text-muted-foreground mb-1">Birth Date</h3>
-                      <p>
-                        {patient.birthDate 
-                          ? format(new Date(patient.birthDate), 'PPP') 
-                          : 'Not provided'}
+                      <h3 className="text-sm font-medium mb-2 flex items-center">
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary/70 mr-2"></span>
+                        Address
+                      </h3>
+                      <p className="text-sm p-3 bg-muted/30 rounded-md">
+                        {patient.address || "Not specified"}
                       </p>
                     </div>
-                    
-                    <Separator />
-                    
                     <div>
-                      <h3 className="font-medium text-sm text-muted-foreground mb-1">Medical History</h3>
-                      <p>{patient.medicalHistory || 'None recorded'}</p>
+                      <h3 className="text-sm font-medium mb-2 flex items-center">
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary/70 mr-2"></span>
+                        Medical History
+                      </h3>
+                      <p className="text-sm p-3 bg-muted/30 rounded-md">
+                        {patient.medicalHistory || "Not specified"}
+                      </p>
                     </div>
-                    
                     <div>
-                      <h3 className="font-medium text-sm text-muted-foreground mb-1">Dental History</h3>
-                      <p>{patient.dentalHistory || 'None recorded'}</p>
+                      <h3 className="text-sm font-medium mb-2 flex items-center">
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary/70 mr-2"></span>
+                        Dental History
+                      </h3>
+                      <p className="text-sm p-3 bg-muted/30 rounded-md">
+                        {patient.dentalHistory || "Not specified"}
+                      </p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium mb-2 flex items-center">
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary/70 mr-2"></span>
+                        Drug Allergy
+                      </h3>
+                      <p className="text-sm p-3 bg-muted/30 rounded-md">
+                        {patient.drugAllergy || "None"}
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
-
-                <div className="space-y-6">
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                      <CardTitle className="text-xl">Prescriptions</CardTitle>
-                      <Button
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => setShowPrescriptionForm(true)}
-                      >
-                        <Plus className="h-3.5 w-3.5 mr-1.5" />
-                        New Prescription
-                      </Button>
-                    </CardHeader>
-                    <CardContent>
-                      {prescriptionsError ? (
-                        <div className="text-center py-4">
-                          <p className="text-red-500">Error loading prescriptions</p>
-                        </div>
-                      ) : isPrescriptionsLoading ? (
-                        <div className="animate-pulse space-y-2">
-                          <div className="h-12 bg-muted rounded-md"></div>
-                          <div className="h-12 bg-muted rounded-md"></div>
-                        </div>
-                      ) : prescriptions && prescriptions.length > 0 ? (
-                        <div className="space-y-3">
-                          {prescriptions.map(prescription => (
-                            <div 
-                              key={prescription.id} 
-                              className="flex items-center justify-between border rounded-md p-3"
-                            >
-                              <div>
-                                <p className="font-medium">
-                                  {new Date(prescription.date).toLocaleDateString()}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                  {prescription.medicines?.length || 0} medicine(s)
-                                </p>
-                              </div>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="ml-2"
-                                onClick={() => {
-                                  setShowPrescriptionForm(true);
-                                  // This assumes you have a way to select a prescription for viewing
-                                  // You might need additional state for this
-                                }}
-                              >
-                                <FileText className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="text-center py-6 text-muted-foreground">
-                          <Pill className="h-10 w-10 mx-auto mb-2 opacity-20" />
-                          <p>No prescriptions yet</p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                      <CardTitle className="text-xl">Invoices</CardTitle>
-                      <Button
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => setShowInvoice(true)}
-                      >
-                        <Plus className="h-3.5 w-3.5 mr-1.5" />
-                        New Invoice
-                      </Button>
-                    </CardHeader>
-                    <CardContent>
-                      {invoicesError ? (
-                        <div className="text-center py-4">
-                          <p className="text-red-500">Error loading invoices</p>
-                        </div>
-                      ) : isInvoicesLoading ? (
-                        <div className="animate-pulse space-y-2">
-                          <div className="h-12 bg-muted rounded-md"></div>
-                          <div className="h-12 bg-muted rounded-md"></div>
-                        </div>
-                      ) : invoicesWithItems && invoicesWithItems.length > 0 ? (
-                        <div className="space-y-3">
-                          {invoicesWithItems.map(invoice => {
-                            // Calculate total amount from invoice items
-                            const total = invoice.items?.reduce((sum, item) => 
-                              sum + (parseFloat(item.amount) || 0), 0) || 0;
-                              
-                            return (
-                              <div 
-                                key={invoice.id} 
-                                className="flex items-center justify-between border rounded-md p-3"
-                              >
-                                <div>
-                                  <div className="flex items-center gap-2">
-                                    <p className="font-medium">
-                                      {new Date(invoice.date).toLocaleDateString()}
-                                    </p>
-                                    <Badge
-                                      variant={invoice.status === 'Paid' ? 'default' : 'outline'}
-                                      className="text-xs font-normal py-0"
-                                    >
-                                      {invoice.status}
-                                    </Badge>
-                                  </div>
-                                  <p className="text-sm text-muted-foreground">
-                                    ₹{total.toFixed(2)} for {invoice.items?.length || 0} item(s)
-                                  </p>
-                                </div>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  className="ml-2"
-                                  onClick={() => {
-                                    setShowInvoice(true);
-                                    // Assuming you need to set the selected invoice
-                                  }}
-                                >
-                                  <Receipt className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div className="text-center py-6 text-muted-foreground">
-                          <Receipt className="h-10 w-10 mx-auto mb-2 opacity-20" />
-                          <p>No invoices yet</p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
               </div>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-xl">Consent Forms</CardTitle>
-                  <CardDescription>
-                    Digital consent forms signed by this patient
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <Card className="cursor-pointer hover:border-primary transition-colors"
-                          onClick={() => setActiveConsentForm("extraction")}>
-                      <CardHeader className="p-4">
-                        <CardTitle className="text-base">Tooth Extraction</CardTitle>
-                      </CardHeader>
-                    </Card>
-                    
-                    <Card className="cursor-pointer hover:border-primary transition-colors"
-                          onClick={() => setActiveConsentForm("implant")}>
-                      <CardHeader className="p-4">
-                        <CardTitle className="text-base">Dental Implant</CardTitle>
-                      </CardHeader>
-                    </Card>
-                    
-                    <Card className="cursor-pointer hover:border-primary transition-colors"
-                          onClick={() => setActiveConsentForm("rct")}>
-                      <CardHeader className="p-4">
-                        <CardTitle className="text-base">Root Canal Treatment</CardTitle>
-                      </CardHeader>
-                    </Card>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+              
+              {/* Visit Log - Wider Column */}
+              <div>
+                <VisitLog 
+                  visits={visits} 
+                  isLoadingVisits={isLoadingVisits}
+                  selectedVisitId={selectedVisitId}
+                  onCreateVisit={handleCreateRx}
+                  onViewVisit={handleViewRx}
+                  onEditVisit={(id) => {
+                    setSelectedVisitId(id);
+                    setActiveTab('visit');
+                  }}
+                  onDeleteVisit={handleDeleteVisit}
+                  onCreateFollowUp={handleCreateFollowUp}
+                  formatDate={formatDate}
+                  getChiefComplaint={getChiefComplaint}
+                />
+              </div>
+            </div>
             
-            <TabsContent value="visits">
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader className="pb-3">
+            {/* Second Row - Invoices and Lab Orders */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Invoices Section */}
+              <div>
+                <Card className="border-none shadow-md h-full">
+                  <CardHeader className="pb-3 bg-gradient-to-r from-white to-green-50/30">
+                    <div className="flex items-center">
+                      <div className="bg-emerald-100 p-2 rounded-lg mr-3">
+                        <Receipt className="h-5 w-5 text-emerald-600" />
+                      </div>
+                      <CardTitle className="text-lg">Billing & Invoices</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-col items-center justify-center text-center p-4">
+                      <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-4">
+                        <Receipt className="h-8 w-8 text-emerald-500" />
+                      </div>
+                      <h3 className="font-medium mb-2">Payment History</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        {invoicesWithItems.length > 0 
+                          ? `${invoicesWithItems.length} invoice${invoicesWithItems.length !== 1 ? 's' : ''} available` 
+                          : "No invoices yet"}
+                      </p>
+                      <Button 
+                        className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-md"
+                        onClick={() => {
+                          setSelectedVisitId(null);
+                          setShowInvoice(true);
+                        }}
+                      >
+                        <Receipt className="h-4 w-4 mr-2" /> View Invoices
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              {/* Lab Orders Section */}
+              <div>
+                <Card className="border-none shadow-md h-full">
+                  <CardHeader className="pb-3 bg-gradient-to-r from-white to-purple-50/30">
+                    <div className="flex items-center">
+                      <div className="bg-purple-100 p-2 rounded-lg mr-3">
+                        <FileText className="h-5 w-5 text-purple-600" />
+                      </div>
+                      <CardTitle className="text-lg">Lab Orders</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-col items-center justify-center text-center p-4">
+                      <div className="w-20 h-20 bg-purple-50 rounded-full flex items-center justify-center mb-4">
+                        <Activity className="h-8 w-8 text-purple-500" />
+                      </div>
+                      <h3 className="font-medium mb-2">Diagnostic Tests</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Track and manage lab work for this patient
+                      </p>
+                      <Button 
+                        className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-md"
+                        onClick={() => {
+                          // Redirect to the lab works page with the patient ID as a query parameter
+                          navigate(`/lab-works?patientId=${patientId}`);
+                        }}
+                      >
+                        <FileText className="h-4 w-4 mr-2" /> View Lab Orders
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+            
+            {/* Showing the prescription details when a visit is selected */}
+            <div className={selectedVisitId ? "" : "hidden"}>
+              {selectedVisitId ? (
+                <Card className="border-none shadow-md">
+                  <CardHeader className="bg-gradient-to-r from-white to-indigo-50/30">
                     <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-xl">Visit History</CardTitle>
-                        <CardDescription>
-                          Record of all patient visits and treatments
-                        </CardDescription>
+                      <div className="flex items-start">
+                        <div className="bg-indigo-100 p-2 rounded-lg mr-3">
+                          <ClipboardList className="h-5 w-5 text-indigo-600" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg">
+                            {getChiefComplaint(visits.find((v: any) => v.id === selectedVisitId) || {})}
+                          </CardTitle>
+                          <CardDescription>
+                            {formatDate(visits.find((v: any) => v.id === selectedVisitId)?.date || '')}
+                          </CardDescription>
+                        </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600"
+                          onClick={() => handleCreateFollowUp(selectedVisitId)}
+                        >
+                          <CalendarDays className="h-3.5 w-3.5 mr-1" /> Add Follow-Up
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="border-emerald-200 hover:bg-emerald-50 hover:text-emerald-600"
+                          onClick={() => setShowInvoice(true)}
+                        >
+                          <Receipt className="h-3.5 w-3.5 mr-1" /> Invoice
+                        </Button>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    {visitsError ? (
-                      <div className="text-center py-4">
-                        <p className="text-red-500">Error loading visits</p>
+                    <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="mt-2">
+                      <TabsList className="grid w-full grid-cols-4">
+                        <TabsTrigger value="rx">Rx</TabsTrigger>
+                        <TabsTrigger value="visit">Visit Details</TabsTrigger>
+                        <TabsTrigger value="files">Forms</TabsTrigger>
+                        <TabsTrigger value="media">Media</TabsTrigger>
+                      </TabsList>
+                      <div className="mt-4">
+                        {activeTab === 'rx' && (
+                          <PrescriptionForm 
+                            visitId={selectedVisitId}
+                            patientId={patientId}
+                            existingPrescriptions={prescriptions}
+                            onAddPrescription={(data) => {
+                              apiRequest("POST", `/api/visits/${selectedVisitId}/prescriptions`, data)
+                                .then(() => {
+                                  queryClient.invalidateQueries({ queryKey: [`/api/visits/${selectedVisitId}/prescriptions`] });
+                                  toast({
+                                    title: "Success",
+                                    description: "Prescription added successfully",
+                                  });
+                                })
+                                .catch((error) => {
+                                  console.error("Error adding prescription:", error);
+                                  toast({
+                                    title: "Error",
+                                    description: "Failed to add prescription",
+                                    variant: "destructive",
+                                  });
+                                });
+                            }}
+                            onDeletePrescription={(id) => {
+                              apiRequest("DELETE", `/api/prescriptions/${id}`)
+                                .then(() => {
+                                  queryClient.invalidateQueries({ queryKey: [`/api/visits/${selectedVisitId}/prescriptions`] });
+                                  toast({
+                                    title: "Success",
+                                    description: "Prescription deleted successfully",
+                                  });
+                                })
+                                .catch((error) => {
+                                  console.error("Error deleting prescription:", error);
+                                  toast({
+                                    title: "Error",
+                                    description: "Failed to delete prescription",
+                                    variant: "destructive",
+                                  });
+                                });
+                            }}
+                            onUpdatePrescription={(id, data) => {
+                              apiRequest("PUT", `/api/prescriptions/${id}`, data)
+                                .then(() => {
+                                  queryClient.invalidateQueries({ queryKey: [`/api/visits/${selectedVisitId}/prescriptions`] });
+                                  toast({
+                                    title: "Success",
+                                    description: "Prescription updated successfully",
+                                  });
+                                })
+                                .catch((error) => {
+                                  console.error("Error updating prescription:", error);
+                                  toast({
+                                    title: "Error",
+                                    description: "Failed to update prescription",
+                                    variant: "destructive",
+                                  });
+                                });
+                            }}
+                          />
+                        )}
+                        {activeTab === 'visit' && (
+                          <div className="space-y-4">
+                            {visits.find((v: any) => v.id === selectedVisitId) && (
+                              <form onSubmit={(e) => {
+                                e.preventDefault();
+                                const form = e.target as HTMLFormElement;
+                                const formData = new FormData(form);
+                                const data: any = {};
+                                
+                                formData.forEach((value, key) => {
+                                  data[key] = value;
+                                });
+                                
+                                updateVisitMutation.mutate({
+                                  id: selectedVisitId,
+                                  ...data
+                                });
+                              }}>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                  <div>
+                                    <Label htmlFor="chiefComplaint">Chief Complaint</Label>
+                                    <Select 
+                                      name="chiefComplaint" 
+                                      defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.chiefComplaint || ""}
+                                    >
+                                      <SelectTrigger className="mt-1">
+                                        <SelectValue placeholder="Select complaint" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="Pain">Pain</SelectItem>
+                                        <SelectItem value="Swelling">Swelling</SelectItem>
+                                        <SelectItem value="Bleeding">Bleeding</SelectItem>
+                                        <SelectItem value="Sensitivity">Sensitivity</SelectItem>
+                                        <SelectItem value="Routine Check-up">Routine Check-up</SelectItem>
+                                        <SelectItem value="Cleaning">Cleaning</SelectItem>
+                                        <SelectItem value="Cosmetic">Cosmetic</SelectItem>
+                                        <SelectItem value="Bad Breath">Bad Breath</SelectItem>
+                                        <SelectItem value="Missing Tooth">Missing Tooth</SelectItem>
+                                        <SelectItem value="Loose Tooth">Loose Tooth</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="areaOfComplaint">Area of Complaint</Label>
+                                    <Select 
+                                      name="areaOfComplaint" 
+                                      defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.areaOfComplaint || ""}
+                                    >
+                                      <SelectTrigger className="mt-1">
+                                        <SelectValue placeholder="Select area" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="Upper right">Upper right</SelectItem>
+                                        <SelectItem value="Upper left">Upper left</SelectItem>
+                                        <SelectItem value="Lower right">Lower right</SelectItem>
+                                        <SelectItem value="Lower left">Lower left</SelectItem>
+                                        <SelectItem value="Front teeth">Front teeth</SelectItem>
+                                        <SelectItem value="Back teeth">Back teeth</SelectItem>
+                                        <SelectItem value="Gums">Gums</SelectItem>
+                                        <SelectItem value="Jaw">Jaw</SelectItem>
+                                        <SelectItem value="Entire mouth">Entire mouth</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="oralExamination">Oral Examination</Label>
+                                    <Select 
+                                      name="oralExamination" 
+                                      defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.oralExamination || ""}
+                                    >
+                                      <SelectTrigger className="mt-1">
+                                        <SelectValue placeholder="Select finding" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="Caries">Caries</SelectItem>
+                                        <SelectItem value="Pulpitis">Pulpitis</SelectItem>
+                                        <SelectItem value="Periodontitis">Periodontitis</SelectItem>
+                                        <SelectItem value="Gingivitis">Gingivitis</SelectItem>
+                                        <SelectItem value="Dental Abscess">Dental Abscess</SelectItem>
+                                        <SelectItem value="Impacted Tooth">Impacted Tooth</SelectItem>
+                                        <SelectItem value="Malocclusion">Malocclusion</SelectItem>
+                                        <SelectItem value="Missing Teeth">Missing Teeth</SelectItem>
+                                        <SelectItem value="Fractured Tooth">Fractured Tooth</SelectItem>
+                                        <SelectItem value="Normal">Normal</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="investigation">Investigation</Label>
+                                    <Select 
+                                      name="investigation" 
+                                      defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.investigation || ""}
+                                    >
+                                      <SelectTrigger className="mt-1">
+                                        <SelectValue placeholder="Select investigation" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="IOPA X-ray">IOPA X-ray</SelectItem>
+                                        <SelectItem value="OPG">OPG</SelectItem>
+                                        <SelectItem value="CBCT">CBCT</SelectItem>
+                                        <SelectItem value="Vitality Test">Vitality Test</SelectItem>
+                                        <SelectItem value="Blood Test">Blood Test</SelectItem>
+                                        <SelectItem value="Biopsy">Biopsy</SelectItem>
+                                        <SelectItem value="None">None</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="treatmentPlan">Treatment Plan</Label>
+                                    <Select 
+                                      name="treatmentPlan" 
+                                      defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.treatmentPlan || ""}
+                                    >
+                                      <SelectTrigger className="mt-1">
+                                        <SelectValue placeholder="Select treatment plan" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="Restoration">Restoration</SelectItem>
+                                        <SelectItem value="Root Canal Treatment">Root Canal Treatment</SelectItem>
+                                        <SelectItem value="Extraction">Extraction</SelectItem>
+                                        <SelectItem value="Scaling and Root Planing">Scaling and Root Planing</SelectItem>
+                                        <SelectItem value="Dental Implant">Dental Implant</SelectItem>
+                                        <SelectItem value="Crown">Crown</SelectItem>
+                                        <SelectItem value="Bridge">Bridge</SelectItem>
+                                        <SelectItem value="Orthodontic Treatment">Orthodontic Treatment</SelectItem>
+                                        <SelectItem value="Medication only">Medication only</SelectItem>
+                                        <SelectItem value="Observe">Observe</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="treatmentDone">Treatment Done</Label>
+                                    <Select 
+                                      name="treatmentDone" 
+                                      defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.treatmentDone || ""}
+                                    >
+                                      <SelectTrigger className="mt-1">
+                                        <SelectValue placeholder="Select treatment done" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="Restoration">Restoration</SelectItem>
+                                        <SelectItem value="Root Canal Treatment">Root Canal Treatment</SelectItem>
+                                        <SelectItem value="Extraction">Extraction</SelectItem>
+                                        <SelectItem value="Scaling and Root Planing">Scaling and Root Planing</SelectItem>
+                                        <SelectItem value="Dental Implant">Dental Implant</SelectItem>
+                                        <SelectItem value="Crown">Crown</SelectItem>
+                                        <SelectItem value="Bridge">Bridge</SelectItem>
+                                        <SelectItem value="Braces Adjustment">Braces Adjustment</SelectItem>
+                                        <SelectItem value="Medication Prescribed">Medication Prescribed</SelectItem>
+                                        <SelectItem value="None">None</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="advice">Advice</Label>
+                                    <Select 
+                                      name="advice" 
+                                      defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.advice || ""}
+                                    >
+                                      <SelectTrigger className="mt-1">
+                                        <SelectValue placeholder="Select advice" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="Proper Brushing">Proper Brushing</SelectItem>
+                                        <SelectItem value="Flossing">Flossing</SelectItem>
+                                        <SelectItem value="Soft Diet">Soft Diet</SelectItem>
+                                        <SelectItem value="Avoid Hot Food">Avoid Hot Food</SelectItem>
+                                        <SelectItem value="Cold Compress">Cold Compress</SelectItem>
+                                        <SelectItem value="Regular Check-up">Regular Check-up</SelectItem>
+                                        <SelectItem value="Avoid Smoking">Avoid Smoking</SelectItem>
+                                        <SelectItem value="Mouthwash">Mouthwash</SelectItem>
+                                        <SelectItem value="None">None</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="notes">Notes</Label>
+                                    <Textarea 
+                                      id="notes"
+                                      name="notes"
+                                      defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.notes || ""}
+                                      className="mt-1"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="nextAppointment">Next Appointment</Label>
+                                    <Input 
+                                      id="nextAppointment"
+                                      name="nextAppointment"
+                                      type="date"
+                                      defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.nextAppointment || ""}
+                                      className="mt-1"
+                                    />
+                                  </div>
+                                </div>
+                                <Button type="submit" className="mr-2 bg-gradient-to-r from-primary to-primary/90">
+                                  <Save className="h-4 w-4 mr-1" /> Save Changes
+                                </Button>
+                              </form>
+                            )}
+                          </div>
+                        )}
+                        {activeTab === 'files' && (
+                          <div className="space-y-6">
+                            <div className="bg-muted/20 rounded-lg p-4 border border-dashed border-muted-foreground/50">
+                              <h3 className="text-base font-medium mb-3">Upload Consent Form</h3>
+                              <div className="flex space-x-4">
+                                <div className="flex-1">
+                                  <Input 
+                                    type="file" 
+                                    accept=".pdf,.jpg,.jpeg,.png" 
+                                    id="consent-form-upload"
+                                    className="cursor-pointer"
+                                  />
+                                  <p className="text-sm text-muted-foreground mt-2">
+                                    Accepted formats: PDF, JPG, PNG (max 5MB)
+                                  </p>
+                                </div>
+                                <Button 
+                                  onClick={() => {
+                                    const input = document.getElementById('consent-form-upload') as HTMLInputElement;
+                                    if (input.files && input.files.length > 0) {
+                                      const file = input.files[0];
+                                      const formData = new FormData();
+                                      formData.append('file', file);
+                                      formData.append('visitId', selectedVisitId?.toString() || '');
+                                      formData.append('type', 'consent');
+                                      
+                                      fetch('/api/upload/consent', {
+                                        method: 'POST',
+                                        body: formData
+                                      })
+                                      .then(response => response.json())
+                                      .then(data => {
+                                        toast({
+                                          title: "Success",
+                                          description: "Consent form uploaded successfully",
+                                        });
+                                        queryClient.invalidateQueries({ queryKey: [`/api/visits/${selectedVisitId}`] });
+                                      })
+                                      .catch(error => {
+                                        console.error('Error uploading consent form:', error);
+                                        toast({
+                                          title: "Error",
+                                          description: "Failed to upload consent form",
+                                          variant: "destructive",
+                                        });
+                                      });
+                                    }
+                                  }}
+                                  className="bg-primary"
+                                >
+                                  <FileText className="h-4 w-4 mr-2" /> Upload
+                                </Button>
+                              </div>
+                            </div>
+                            
+                            <Separator className="my-4" />
+                            
+                            <ConsentForm 
+                              visitId={selectedVisitId}
+                              patientName={patient.name}
+                              onClearSignature={() => {
+                                // Add function to clear patient signature here
+                                const sigCanvas = document.querySelector('.patient-signature-pad') as HTMLCanvasElement;
+                                if (sigCanvas) {
+                                  const context = sigCanvas.getContext('2d');
+                                  if (context) {
+                                    context.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+                                  }
+                                }
+                              }}
+                            />
+                          </div>
+                        )}
+                        
+                        {activeTab === 'media' && (
+                          <div className="space-y-6">
+                            <div className="bg-muted/20 rounded-lg p-4 border border-dashed border-muted-foreground/50">
+                              <h3 className="text-base font-medium mb-3">Upload Images & Videos</h3>
+                              <div className="flex space-x-4">
+                                <div className="flex-1">
+                                  <Input 
+                                    type="file" 
+                                    accept=".jpg,.jpeg,.png,.mp4,.mov,.avi" 
+                                    id="media-upload"
+                                    className="cursor-pointer"
+                                    multiple
+                                  />
+                                  <p className="text-sm text-muted-foreground mt-2">
+                                    Accepted formats: JPG, PNG, MP4, MOV (max 50MB)
+                                  </p>
+                                </div>
+                                <Button 
+                                  onClick={() => {
+                                    const input = document.getElementById('media-upload') as HTMLInputElement;
+                                    if (input.files && input.files.length > 0) {
+                                      const formData = new FormData();
+                                      for (let i = 0; i < input.files.length; i++) {
+                                        formData.append('files', input.files[i]);
+                                      }
+                                      formData.append('visitId', selectedVisitId?.toString() || '');
+                                      formData.append('type', 'media');
+                                      
+                                      fetch('/api/upload/media', {
+                                        method: 'POST',
+                                        body: formData
+                                      })
+                                      .then(response => response.json())
+                                      .then(data => {
+                                        toast({
+                                          title: "Success",
+                                          description: `${input.files?.length} file(s) uploaded successfully`,
+                                        });
+                                        queryClient.invalidateQueries({ queryKey: [`/api/visits/${selectedVisitId}`] });
+                                      })
+                                      .catch(error => {
+                                        console.error('Error uploading media:', error);
+                                        toast({
+                                          title: "Error",
+                                          description: "Failed to upload media files",
+                                          variant: "destructive",
+                                        });
+                                      });
+                                    }
+                                  }}
+                                  className="bg-gradient-to-r from-purple-500 to-purple-600"
+                                >
+                                  <FileText className="h-4 w-4 mr-2" /> Upload
+                                </Button>
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-3">
+                              <h3 className="text-base font-medium">Media Gallery</h3>
+                              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                {(() => {
+                                  // Parse attachments which might be stored as JSON string
+                                  let attachmentsArray: any[] = [];
+                                  try {
+                                    if (selectedVisit && selectedVisit.attachments) {
+                                      if (typeof selectedVisit.attachments === 'string') {
+                                        attachmentsArray = JSON.parse(selectedVisit.attachments);
+                                      } else if (Array.isArray(selectedVisit.attachments)) {
+                                        attachmentsArray = selectedVisit.attachments;
+                                      }
+                                    }
+                                  } catch (error) {
+                                    console.error("Error parsing attachments:", error);
+                                  }
+                                  
+                                  return attachmentsArray.length > 0 ? (
+                                    attachmentsArray.map((attachment: any, index: number) => {
+                                      const isImage = attachment.type?.startsWith('image/');
+                                      return (
+                                        <div 
+                                          key={attachment.id || index} 
+                                          className="rounded-lg border overflow-hidden aspect-square bg-muted/30 flex items-center justify-center relative group"
+                                        >
+                                          {isImage ? (
+                                            <img 
+                                              src={attachment.url}
+                                              alt={attachment.name}
+                                              className="object-cover w-full h-full"
+                                            />
+                                          ) : (
+                                            <div className="flex flex-col items-center justify-center p-2 text-center">
+                                              <FileText className="h-8 w-8 text-muted-foreground mb-1" />
+                                              <span className="text-xs text-muted-foreground line-clamp-2">
+                                                {attachment.name}
+                                              </span>
+                                            </div>
+                                          )}
+                                          
+                                          {/* Hover overlay with actions */}
+                                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                            <Button 
+                                              variant="ghost" 
+                                              size="icon" 
+                                              className="text-white h-8 w-8"
+                                              onClick={() => window.open(attachment.url, '_blank')}
+                                            >
+                                              <ExternalLink className="h-4 w-4" />
+                                            </Button>
+                                          </div>
+                                        </div>
+                                      );
+                                    })
+                                  ) : (
+                                    <div className="col-span-full text-center py-8 text-muted-foreground">
+                                      No media files have been uploaded yet.
+                                    </div>
+                                  );
+                                })()}
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    ) : isVisitsLoading ? (
-                      <div className="animate-pulse space-y-3">
-                        <div className="h-16 bg-muted rounded-md"></div>
-                        <div className="h-16 bg-muted rounded-md"></div>
-                        <div className="h-16 bg-muted rounded-md"></div>
-                      </div>
-                    ) : visits && visits.length > 0 ? (
-                      <VisitLog 
-                        patientId={parseInt(patientId!)}
-                        visits={visits}
-                        onSelectVisit={(visitId) => setSelectedVisitId(visitId)}
-                        selectedVisitId={selectedVisitId}
-                      />
-                    ) : (
-                      <div className="text-center py-12 border rounded-md border-dashed">
-                        <CalendarDays className="h-12 w-12 mx-auto mb-3 text-muted-foreground/60" />
-                        <h3 className="text-lg font-medium mb-1">No Visit Records Yet</h3>
-                        <p className="text-muted-foreground max-w-md mx-auto mb-4">
-                          Create a new visit record to track treatments, findings, and patient progress.
-                        </p>
-                      </div>
-                    )}
+                    </Tabs>
                   </CardContent>
                 </Card>
+              ) : (
+                <div className="h-full flex items-center justify-center border rounded-lg p-8 bg-muted/10">
+                  <div className="text-center">
+                    <ClipboardList className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No Visit Selected</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Select a visit from the list or create a new one.
+                    </p>
+                    <Button onClick={handleCreateRx}>
+                      <Plus className="h-4 w-4 mr-2" /> Create New Visit
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
 
-                {selectedVisit && (
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <CardTitle>Visit Details</CardTitle>
-                          <CardDescription>
-                            {new Date(selectedVisit.date).toLocaleDateString()} - {selectedVisit.visitType}
-                          </CardDescription>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      <div className="space-y-3">
-                        <h3 className="text-base font-medium">Chief Complaint</h3>
-                        <p className="text-sm leading-relaxed">
-                          {selectedVisit.chiefComplaint || 'No chief complaint recorded'}
-                        </p>
-                      </div>
-
-                      {selectedVisit.findings && (
-                        <div className="space-y-3">
-                          <Accordion type="single" collapsible defaultValue="tooth-findings">
-                            <AccordionItem value="tooth-findings">
-                              <AccordionTrigger className="text-base font-medium py-1.5">
-                                Tooth-related Findings
-                              </AccordionTrigger>
-                              <AccordionContent>
-                                <ToothFindingsSection selectedVisit={selectedVisit} />
-                              </AccordionContent>
-                            </AccordionItem>
-                            
-                            <AccordionItem value="generalized-findings">
-                              <AccordionTrigger className="text-base font-medium py-1.5">
-                                Generalized Findings
-                              </AccordionTrigger>
-                              <AccordionContent>
-                                <GeneralizedFindingsSection selectedVisit={selectedVisit} />
-                              </AccordionContent>
-                            </AccordionItem>
-                            
-                            <AccordionItem value="investigation">
-                              <AccordionTrigger className="text-base font-medium py-1.5">
-                                Investigation
-                              </AccordionTrigger>
-                              <AccordionContent>
-                                <InvestigationSection selectedVisit={selectedVisit} />
-                              </AccordionContent>
-                            </AccordionItem>
-                            
-                            <AccordionItem value="follow-up">
-                              <AccordionTrigger className="text-base font-medium py-1.5">
-                                Follow-up
-                              </AccordionTrigger>
-                              <AccordionContent>
-                                <FollowUpSection selectedVisit={selectedVisit} />
-                              </AccordionContent>
-                            </AccordionItem>
-                          </Accordion>
-                        </div>
-                      )}
-                      
-                      <div className="space-y-3">
-                        <h3 className="text-base font-medium">Treatment Done</h3>
-                        <p className="text-sm leading-relaxed">
-                          {selectedVisit.treatmentDone || 'No treatment recorded'}
-                        </p>
-                      </div>
-                      
-                      <div className="space-y-3">
-                        <h3 className="text-base font-medium">Visit Notes</h3>
-                        <p className="text-sm leading-relaxed">
-                          {selectedVisit.notes || 'No additional notes'}
-                        </p>
-                      </div>
-                      
-                      <div className="space-y-3">
-                        <h3 className="text-base font-medium">Media Gallery</h3>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                          {(() => {
-                            // Parse attachments which might be stored as JSON string
-                            let attachmentsArray: any[] = [];
-                            try {
-                              if (selectedVisit.attachments) {
-                                if (typeof selectedVisit.attachments === 'string') {
-                                  attachmentsArray = JSON.parse(selectedVisit.attachments);
-                                } else if (Array.isArray(selectedVisit.attachments)) {
-                                  attachmentsArray = selectedVisit.attachments;
-                                }
-                              }
-                            } catch (error) {
-                              console.error("Error parsing attachments:", error);
-                            }
-                            
-                            return attachmentsArray.length > 0 ? (
-                              attachmentsArray.map((attachment: any, index: number) => {
-                                const isImage = attachment.type?.startsWith('image/');
-                                return (
-                                  <div 
-                                    key={attachment.id || index} 
-                                    className="rounded-lg border overflow-hidden aspect-square bg-muted/30 flex items-center justify-center relative group"
-                                  >
-                                    {isImage ? (
-                                      <img 
-                                        src={attachment.url}
-                                        alt={attachment.name}
-                                        className="object-cover w-full h-full"
-                                      />
-                                    ) : (
-                                      <div className="flex flex-col items-center justify-center p-2 text-center">
-                                        <FileText className="h-8 w-8 text-muted-foreground mb-1" />
-                                        <span className="text-xs text-muted-foreground line-clamp-2">
-                                          {attachment.name}
-                                        </span>
-                                      </div>
-                                    )}
-                                    
-                                    {/* Hover overlay with actions */}
-                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity">
-                                      <Button 
-                                        variant="ghost" 
-                                        size="icon" 
-                                        className="text-white h-8 w-8"
-                                        onClick={() => window.open(attachment.url, '_blank')}
-                                      >
-                                        <ExternalLink className="h-4 w-4" />
-                                      </Button>
-                                      <Button 
-                                        variant="ghost" 
-                                        size="icon" 
-                                        className="text-white h-8 w-8 hover:text-red-400"
-                                        onClick={() => handleDeleteMedia(
-                                          selectedVisit.id, 
-                                          attachment.id, 
-                                          attachment.name
-                                        )}
-                                      >
-                                        <Trash className="h-4 w-4" />
-                                      </Button>
-                                    </div>
-                                  </div>
-                                );
-                              })
-                            ) : (
-                              <div className="col-span-full text-center py-8 text-muted-foreground">
-                                No media files have been uploaded yet.
-                              </div>
-                            );
-                          })()}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            </TabsContent>
-          </Tabs>
-
-          {/* Confirmation Dialog for Media Deletion */}
-          <AlertDialog open={deleteMediaDialog.isOpen} onOpenChange={(isOpen) => {
-            if (!isOpen) cancelDeleteMedia();
-          }}>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete Media File</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to delete "{deleteMediaDialog.fileName}"? This action cannot be undone and the file will be permanently removed from the server.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel disabled={deleteMediaMutation.isPending}>Cancel</AlertDialogCancel>
-                <AlertDialogAction 
-                  onClick={confirmDeleteMedia}
-                  disabled={deleteMediaMutation.isPending}
-                  className="bg-red-500 hover:bg-red-600"
-                >
-                  {deleteMediaMutation.isPending ? (
-                    <div className="flex items-center">
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Deleting...
-                    </div>
-                  ) : (
-                    <div className="flex items-center">
-                      <Trash className="h-4 w-4 mr-2" /> Delete
-                    </div>
-                  )}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-
-          {/* Patient Edit Dialog */}
+          {/* Edit Patient Details Dialog */}
           <Dialog open={showEditPatientDetails} onOpenChange={setShowEditPatientDetails}>
-            <DialogContent className="sm:max-w-[600px]">
+            <DialogContent className="sm:max-w-[550px]">
               <DialogHeader>
                 <DialogTitle>Edit Patient Details</DialogTitle>
               </DialogHeader>
-              <form onSubmit={handleSavePatientDetails}>
-                <div className="grid grid-cols-1 gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="gender" className="text-right">
-                      Gender
-                    </Label>
+              
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="address">Address</Label>
+                  <Textarea
+                    id="address"
+                    value={patientForm.address}
+                    onChange={(e) => handleFormChange('address', e.target.value)}
+                    rows={2}
+                  />
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="medicalHistory">Medical History</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Select
-                      name="gender"
-                      value={patientForm.gender}
-                      onValueChange={(value) => 
-                        setPatientForm(prev => ({ ...prev, gender: value }))
-                      }
+                      value={patientForm.medicalHistory}
+                      onValueChange={(value) => handleFormChange('medicalHistory', value)}
                     >
-                      <SelectTrigger className="col-span-3">
-                        <SelectValue placeholder="Select gender" />
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select medical history" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Male">Male</SelectItem>
-                        <SelectItem value="Female">Female</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
+                        {medicalHistoryOptions.map((option) => (
+                          <SelectItem key={option} value={option}>
+                            {option}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="birthDate" className="text-right">
-                      Birth Date
-                    </Label>
-                    <Input
-                      id="birthDate"
-                      name="birthDate"
-                      type="date"
-                      value={patientForm.birthDate}
-                      onChange={handlePatientFormChange}
-                      className="col-span-3"
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="address" className="text-right">
-                      Address
-                    </Label>
-                    <Textarea
-                      id="address"
-                      name="address"
-                      value={patientForm.address}
-                      onChange={handlePatientFormChange}
-                      className="col-span-3"
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="contactNumber" className="text-right">
-                      Contact Number
-                    </Label>
-                    <Input
-                      id="contactNumber"
-                      name="contactNumber"
-                      type="tel"
-                      value={patientForm.contactNumber}
-                      onChange={handlePatientFormChange}
-                      className="col-span-3"
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="email" className="text-right">
-                      Email
-                    </Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={patientForm.email}
-                      onChange={handlePatientFormChange}
-                      className="col-span-3"
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="medicalHistory" className="text-right">
-                      Medical History
-                    </Label>
-                    <Textarea
-                      id="medicalHistory"
-                      name="medicalHistory"
-                      value={patientForm.medicalHistory}
-                      onChange={handlePatientFormChange}
-                      className="col-span-3"
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="dentalHistory" className="text-right">
-                      Dental History
-                    </Label>
-                    <Textarea
-                      id="dentalHistory"
-                      name="dentalHistory"
-                      value={patientForm.dentalHistory}
-                      onChange={handlePatientFormChange}
-                      className="col-span-3"
-                    />
+                    
+                    <div className="flex space-x-2">
+                      <Input
+                        placeholder="Add new option"
+                        value={newMedicalHistoryOption}
+                        onChange={(e) => setNewMedicalHistoryOption(e.target.value)}
+                      />
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="icon"
+                        onClick={handleAddMedicalHistoryOption}
+                      >
+                        <PlusCircle className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
-                <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setShowEditPatientDetails(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={updatePatientMutation.isPending}>
-                    {updatePatientMutation.isPending ? (
-                      <span className="flex items-center">
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Saving...
-                      </span>
-                    ) : (
-                      <span className="flex items-center">
-                        <Save className="h-4 w-4 mr-1" /> Save Changes
-                      </span>
-                    )}
-                  </Button>
-                </DialogFooter>
-              </form>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="dentalHistory">Dental History</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <Select
+                      value={patientForm.dentalHistory}
+                      onValueChange={(value) => handleFormChange('dentalHistory', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select dental history" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {dentalHistoryOptions.map((option) => (
+                          <SelectItem key={option} value={option}>
+                            {option}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    <div className="flex space-x-2">
+                      <Input
+                        placeholder="Add new option"
+                        value={newDentalHistoryOption}
+                        onChange={(e) => setNewDentalHistoryOption(e.target.value)}
+                      />
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="icon"
+                        onClick={handleAddDentalHistoryOption}
+                      >
+                        <PlusCircle className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="drugAllergy">Drug Allergy</Label>
+                  <Textarea
+                    id="drugAllergy"
+                    value={patientForm.drugAllergy}
+                    onChange={(e) => handleFormChange('drugAllergy', e.target.value)}
+                    rows={2}
+                  />
+                </div>
+              </div>
+              
+              <DialogFooter>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowEditPatientDetails(false)}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  onClick={handleSavePatientDetails}
+                  disabled={updatePatientMutation.isPending}
+                >
+                  {updatePatientMutation.isPending ? (
+                    <span className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Saving...
+                    </span>
+                  ) : (
+                    <span className="flex items-center">
+                      <Save className="h-4 w-4 mr-1" /> Save Changes
+                    </span>
+                  )}
+                </Button>
+              </DialogFooter>
             </DialogContent>
           </Dialog>
-
-          {/* Prescription Form Dialog */}
-          {showPrescriptionForm && (
-            <PrescriptionForm
-              patientId={parseInt(patientId!)}
-              onClose={() => setShowPrescriptionForm(false)}
-            />
-          )}
-
-          {/* Consent Form Dialog */}
-          {activeConsentForm && (
-            <ConsentForm
-              patientId={parseInt(patientId!)}
-              patientName={patient.name}
-              formType={activeConsentForm}
-              onClose={() => setActiveConsentForm(null)}
-            />
-          )}
-
-          {/* Invoice Form Dialog */}
-          {showInvoice && (
-            <Invoice
-              patientId={parseInt(patientId!)}
-              patientName={patient.name}
-              onClose={() => setShowInvoice(false)}
-            />
-          )}
 
           {/* Edit Visit Dialog has been removed - visits are now edited directly in the visit log */}
         </>
