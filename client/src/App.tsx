@@ -9,7 +9,7 @@ import HomePage from "@/pages/HomePage";
 import Dashboard from "@/pages/Dashboard";
 import PatientDatabase from "@/pages/PatientDatabase";
 import NewPatientForm from "@/pages/NewPatientForm";
-import PatientRecord from "@/pages/PatientRecordRedesigned";
+import PatientRecord from "@/pages/PatientRecordFixed";
 import ExistingPatients from "@/pages/ExistingPatients";
 import LabWorks from "@/pages/LabWorks";
 import Revenue from "@/pages/Revenue";

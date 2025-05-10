@@ -1301,6 +1301,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           name: file.originalname,
           type: file.mimetype,
           url: fileUrl,
+          filename: uniqueFilename,
           dateAdded: new Date().toISOString()
         });
       }
@@ -1334,6 +1335,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error('Error uploading media files:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Delete media file endpoint
+  app.delete('/api/visits/:visitId/media/:fileId', async (req, res) => {
+    try {
+      const visitId = parseInt(req.params.visitId);
+      const fileId = req.params.fileId;
+      
+      if (isNaN(visitId)) {
+        return res.status(400).json({ message: 'Invalid visit ID' });
+      }
+      
+      if (!fileId) {
+        return res.status(400).json({ message: 'File ID is required' });
+      }
+      
+      const visit = await storage.getPatientVisitById(visitId);
+      if (!visit) {
+        return res.status(404).json({ message: 'Visit not found' });
+      }
+      
+      // Parse attachments
+      let attachments = [];
+      try {
+        if (visit.attachments) {
+          if (typeof visit.attachments === 'string') {
+            attachments = JSON.parse(visit.attachments);
+          } else if (Array.isArray(visit.attachments)) {
+            attachments = visit.attachments;
+          }
+        }
+      } catch (error) {
+        console.error("Error parsing attachments:", error);
+        return res.status(500).json({ message: 'Error parsing attachments' });
+      }
+      
+      // Find the file to delete
+      const fileIndex = attachments.findIndex((file: any) => file.id === fileId);
+      
+      if (fileIndex === -1) {
+        return res.status(404).json({ message: 'File not found' });
+      }
+      
+      const fileToDelete = attachments[fileIndex];
+      
+      // Delete the file from disk if it has a filename
+      if (fileToDelete.filename) {
+        const filePath = path.join(process.cwd(), 'uploads', fileToDelete.filename);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      }
+      
+      // Remove the file from the attachments array
+      attachments.splice(fileIndex, 1);
+      
+      // Update the visit with the new attachments array
+      await storage.updatePatientVisit(visitId, {
+        attachments: JSON.stringify(attachments)
+      });
+      
+      res.json({ message: 'File deleted successfully' });
+    } catch (error: any) {
+      console.error('Error deleting media file:', error);
       res.status(500).json({ message: error.message });
     }
   });
