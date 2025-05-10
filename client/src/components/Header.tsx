@@ -76,12 +76,10 @@ export default function Header({
         className="relative bg-cover bg-center h-80 w-full overflow-hidden" 
         style={{ backgroundImage: `url(${dentalClinicImage})`, backgroundSize: 'cover', backgroundPosition: 'center 30%' }}
       >
-        {/* Top Bar */}
+        {/* Search Bar */}
         <div className="absolute top-4 left-0 right-0 z-20 px-4">
-          <div className="bg-white/40 rounded-xl shadow-md max-w-3xl mx-auto py-1.5 px-3 backdrop-blur-sm flex items-center justify-between">
-            <h1 className="text-lg font-bold text-primary mr-4">{clinicName}</h1>
-            
-            <form onSubmit={handleSearchSubmit} className="flex-1 max-w-md">
+          <div className="max-w-sm mx-auto bg-white/40 rounded-xl shadow-md py-1.5 px-3 backdrop-blur-sm">
+            <form onSubmit={handleSearchSubmit}>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <input
@@ -93,65 +91,68 @@ export default function Header({
                 />
               </div>
             </form>
-            
-            <div className="relative">
-              <div 
-                className="flex items-center cursor-pointer bg-primary text-white rounded-full px-3 py-1 hover:bg-primary/90 transition-all"
-                onClick={() => setShowDropdown(!showDropdown)}
-              >
-                <div className="w-8 h-8 bg-white rounded-full mr-2 flex items-center justify-center text-primary font-semibold">
-                  Dr
-                </div>
-                <span className="text-white text-sm hidden md:inline-block">Dr. Shawn</span>
-                <ChevronDown className="text-white ml-1 h-4 w-4" />
+          </div>
+        </div>
+        
+        {/* User Avatar */}
+        <div className="absolute top-4 right-4 z-20">
+          <div className="relative">
+            <div 
+              className="flex items-center cursor-pointer bg-primary text-white rounded-full px-3 py-1 hover:bg-primary/90 transition-all"
+              onClick={() => setShowDropdown(!showDropdown)}
+            >
+              <div className="w-8 h-8 bg-white rounded-full mr-2 flex items-center justify-center text-primary font-semibold">
+                Dr
               </div>
-              
-              {/* Dropdown Menu */}
-              {showDropdown && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-50 animate-in fade-in slide-in-from-top-5 duration-200">
-                  <div className="px-4 py-2 border-b">
-                    <p className="text-sm font-medium">Dr. Shawn Sam</p>
-                    <p className="text-xs text-gray-500">shawnsam890</p>
-                  </div>
-                  <button className="flex items-center w-full px-4 py-2 text-sm text-left hover:bg-gray-100">
-                    <User className="h-4 w-4 mr-2" /> My Account
-                  </button>
-                  <button onClick={handleLogout} className="flex items-center w-full px-4 py-2 text-sm text-left hover:bg-gray-100">
-                    <LogOut className="h-4 w-4 mr-2" /> Log Out
-                  </button>
-                  <div className="border-t">
-                    <button className="flex items-center w-full px-4 py-2 text-sm text-left hover:bg-gray-100">
-                      <Info className="h-4 w-4 mr-2" /> Software Info
-                    </button>
-                  </div>
-                </div>
-              )}
+              <span className="text-white text-sm hidden md:inline-block">Dr. Shawn</span>
+              <ChevronDown className="text-white ml-1 h-4 w-4" />
             </div>
+            
+            {/* Dropdown Menu */}
+            {showDropdown && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-50 animate-in fade-in slide-in-from-top-5 duration-200">
+                <div className="px-4 py-2 border-b">
+                  <p className="text-sm font-medium">Dr. Shawn Sam</p>
+                  <p className="text-xs text-gray-500">shawnsam890</p>
+                </div>
+                <button className="flex items-center w-full px-4 py-2 text-sm text-left hover:bg-gray-100">
+                  <User className="h-4 w-4 mr-2" /> My Account
+                </button>
+                <button onClick={handleLogout} className="flex items-center w-full px-4 py-2 text-sm text-left hover:bg-gray-100">
+                  <LogOut className="h-4 w-4 mr-2" /> Log Out
+                </button>
+                <div className="border-t">
+                  <button className="flex items-center w-full px-4 py-2 text-sm text-left hover:bg-gray-100">
+                    <Info className="h-4 w-4 mr-2" /> Software Info
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
         
         {/* Light subtle overlay for text legibility */}
         <div className="absolute inset-0 bg-black/10"></div>
         
-        {/* Content Container */}
-        <div className="container mx-auto h-full px-4 relative z-10 flex items-end pb-6">
-          <div className="flex justify-between items-end w-full">
+        {/* Content Container - Moved higher up */}
+        <div className="container mx-auto h-full px-4 relative z-10 flex items-center pt-20">
+          <div className="flex justify-between items-center w-full">
             {/* Left Side - Slogan with DM Sans font */}
             <div className="text-white inline-block">
-              <p className="text-4xl font-medium leading-tight font-dm-sans" style={{ textShadow: "0 2px 4px rgba(0,0,0,0.6)" }}>
+              <p className="text-5xl leading-tight font-dm-sans" style={{ textShadow: "0 2px 4px rgba(0,0,0,0.6)" }}>
                 {firstSloganLine}
               </p>
-              <p className="text-4xl font-medium leading-tight font-dm-sans" style={{ textShadow: "0 2px 4px rgba(0,0,0,0.6)" }}>
+              <p className="text-5xl leading-tight font-dm-sans" style={{ textShadow: "0 2px 4px rgba(0,0,0,0.6)" }}>
                 {secondSloganLine}
               </p>
             </div>
             
             {/* Right Side - Doctor Welcome with Canva Sans (Open Sans) font */}
             <div className="text-white text-right">
-              <p className="text-xl font-medium leading-tight font-canva-sans" style={{ textShadow: "0 2px 4px rgba(0,0,0,0.6)" }}>
+              <p className="text-2xl leading-tight font-canva-sans" style={{ textShadow: "0 2px 4px rgba(0,0,0,0.6)" }}>
                 {firstGreetingWord}
               </p>
-              <p className="text-3xl font-bold leading-tight font-canva-sans" style={{ textShadow: "0 2px 4px rgba(0,0,0,0.6)" }}>
+              <p className="text-4xl font-bold leading-tight font-canva-sans" style={{ textShadow: "0 2px 4px rgba(0,0,0,0.6)" }}>
                 {restGreeting}
               </p>
             </div>
