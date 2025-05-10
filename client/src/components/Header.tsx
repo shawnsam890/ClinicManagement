@@ -1,7 +1,7 @@
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Bell, ChevronDown, Settings, User } from "lucide-react";
-import dentalClinicImage from "@/assets/dental-clinic.jpg";
+import dentalClinicImage from "@assets/Dental Extraction.jpg";
 
 interface HeaderProps {
   title: string;
@@ -16,7 +16,20 @@ export default function Header({
 }: HeaderProps) {
   const [, navigate] = useLocation();
   
-  const { data: clinicInfo } = useQuery({
+  const { data: clinicInfo } = useQuery<{
+    id: number;
+    settingKey: string;
+    settingValue: {
+      name?: string;
+      logo?: string;
+      slogan?: string;
+      doctorGreeting?: string;
+      email?: string;
+      phone?: string;
+      address?: string;
+    };
+    category: string;
+  }>({
     queryKey: ["/api/settings/key/clinic_info"],
   });
 

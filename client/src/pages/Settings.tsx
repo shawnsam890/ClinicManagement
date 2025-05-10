@@ -105,6 +105,8 @@ export default function Settings() {
     address: "",
     phone: "",
     email: "",
+    slogan: "",
+    doctorGreeting: "",
   });
 
   // Patient ID Format State
@@ -123,6 +125,8 @@ export default function Settings() {
         address: clinicInfo.settingValue.address || "",
         phone: clinicInfo.settingValue.phone || "",
         email: clinicInfo.settingValue.email || "",
+        slogan: clinicInfo.settingValue.slogan || "Creating Smiles, Creating Happiness",
+        doctorGreeting: clinicInfo.settingValue.doctorGreeting || "Welcome Dr. Shawn",
       });
     }
   });
