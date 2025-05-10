@@ -381,9 +381,14 @@ export default function PatientRecord() {
 
   // Handle deleting media file
   const handleDeleteMedia = async (mediaId: string) => {
-    if (!selectedVisit || !selectedVisitId) return;
+    if (!selectedVisit || !selectedVisitId) {
+      console.error("Cannot delete media: No visit selected");
+      return;
+    }
     
     try {
+      console.log("Deleting media with ID:", mediaId);
+      
       // Parse current attachments
       let attachments = [];
       try {
@@ -399,17 +404,28 @@ export default function PatientRecord() {
         attachments = [];
       }
       
+      console.log("Original attachments:", attachments);
+      
       // Filter out the attachment to be deleted
       const updatedAttachments = attachments.filter((attachment: any) => attachment.id !== mediaId);
       
+      console.log("Filtered attachments:", updatedAttachments);
+      
       // Update visit with new attachments array
-      await apiRequest("PATCH", `/api/visits/${selectedVisitId}`, {
+      const result = await apiRequest("PATCH", `/api/visits/${selectedVisitId}`, {
         attachments: JSON.stringify(updatedAttachments)
       });
       
-      // Refresh the visit data
-      queryClient.invalidateQueries({ queryKey: [`/api/visits/${selectedVisitId}`] });
+      console.log("Update response:", result);
       
+      // Refresh both the single visit and all visits data
+      queryClient.invalidateQueries({ queryKey: [`/api/visits/${selectedVisitId}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/patients/${patientId}/visits`] });
+      
+      // Force refetch the selected visit
+      queryClient.fetchQuery({ queryKey: [`/api/visits/${selectedVisitId}`] });
+      
+      // Show success message
       toast({
         title: "Success",
         description: "Media file deleted successfully",
@@ -418,7 +434,7 @@ export default function PatientRecord() {
       console.error("Error deleting media:", error);
       toast({
         title: "Error",
-        description: "Failed to delete media file",
+        description: "Failed to delete media file. See console for details.",
         variant: "destructive"
       });
     }
