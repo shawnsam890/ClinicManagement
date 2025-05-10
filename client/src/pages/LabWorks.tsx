@@ -10,6 +10,46 @@ import { queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 
+// Define types for better TypeScript support
+type LabWork = {
+  id: number;
+  patientId: string;
+  workType: string;
+  status: string;
+  description: string;
+  startDate: string;
+  dueDate: string;
+  completedDate: string | null;
+  technician: string | null;
+  shade: string | null;
+  cost: number;
+  notes: string | null;
+};
+
+type Patient = {
+  id: number;
+  patientId: string;
+  name: string;
+};
+
+type InventoryItem = {
+  id: number;
+  itemName: string;
+  quantity: number;
+  threshold: number | null;
+  unitCost: number;
+  supplier: string | null;
+  lastRestock: string | null;
+};
+
+type DropdownOptions = {
+  settingValue: {
+    labTechnicians?: string[];
+    crownShades?: string[];
+    workTypes?: string[];
+  };
+};
+
 import {
   Table,
   TableBody,
@@ -93,22 +133,22 @@ export default function LabWorks() {
   const patientIdFromUrl = searchParams.get('patientId');
 
   // Fetch all lab works
-  const { data: labWorks = [], isLoading: isLoadingLabWorks } = useQuery({
+  const { data: labWorks = [], isLoading: isLoadingLabWorks } = useQuery<LabWork[]>({
     queryKey: ["/api/lab-works"],
   });
 
   // Fetch all patients for the dropdown
-  const { data: patients = [] } = useQuery({
+  const { data: patients = [] } = useQuery<Patient[]>({
     queryKey: ["/api/patients"],
   });
 
   // Fetch lab inventory
-  const { data: inventory = [], isLoading: isLoadingInventory } = useQuery({
+  const { data: inventory = [], isLoading: isLoadingInventory } = useQuery<InventoryItem[]>({
     queryKey: ["/api/lab-inventory"],
   });
 
   // Fetch dropdown options from settings
-  const { data: dropdownOptions = {} } = useQuery({
+  const { data: dropdownOptions = { settingValue: {} } } = useQuery<DropdownOptions>({
     queryKey: ["/api/settings/key/dropdown_options"],
   });
 
@@ -605,7 +645,7 @@ export default function LabWorks() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {patients?.map((patient: any) => (
+                            {patients.map((patient: any) => (
                               <SelectItem key={patient.id} value={patient.patientId}>
                                 {patient.patientId} - {patient.name}
                               </SelectItem>
