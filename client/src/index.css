@@ -8,6 +8,67 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Visit Log Styling */
+.visit-item {
+  @apply hover:bg-blue-50/40 cursor-pointer transition-all border-b relative;
+}
+
+.visit-item:last-child {
+  @apply border-b-0;
+}
+
+.visit-item.active {
+  @apply bg-blue-50/70;
+}
+
+.visit-item .visit-icon {
+  @apply p-1.5 rounded-full bg-primary/10 text-primary h-7 w-7 flex items-center justify-center mr-2 transition-all;
+}
+
+.visit-item:hover .visit-icon {
+  @apply bg-primary/20;
+}
+
+.visit-item .visit-title {
+  @apply font-medium text-sm;
+}
+
+.visit-item .visit-date {
+  @apply text-xs text-muted-foreground;
+}
+
+.visit-item .visit-badge {
+  @apply animate-pulse bg-orange-50 text-orange-600;
+}
+
+.visit-item .action-buttons {
+  @apply opacity-50 transition-opacity;
+}
+
+.visit-item:hover .action-buttons {
+  @apply opacity-100;
+}
+
+.empty-state {
+  @apply flex flex-col items-center justify-center text-center;
+}
+
+.empty-state-icon {
+  @apply p-4 rounded-full bg-primary/10 text-primary h-16 w-16 flex items-center justify-center mb-4;
+}
+
+.create-button {
+  @apply transition-all duration-200 border-primary/20 hover:border-primary/50 hover:bg-primary/5;
+}
+
+.prescription-icon {
+  @apply text-primary/70;
+}
+
+.tooth-icon {
+  @apply animate-pulse;
+}
+
 :root {
   /* Modern color palette with blue-teal primary theme */
   --background: 210 50% 98%;
