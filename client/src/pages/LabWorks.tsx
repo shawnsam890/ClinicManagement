@@ -170,6 +170,13 @@ export default function LabWorks() {
     },
   });
   
+  // Ensure the patient from URL is properly selected in the form
+  useEffect(() => {
+    if (patientIdFromUrl && form.getValues("patientId") !== patientIdFromUrl) {
+      form.setValue("patientId", patientIdFromUrl);
+    }
+  }, [patientIdFromUrl, form]);
+  
   // Define the handleCreateLabWork function before it's used in useEffect
   const handleCreateLabWork = () => {
     form.reset({
@@ -737,7 +744,7 @@ export default function LabWorks() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {dropdownOptions?.settingValue?.labTechnicians?.map((technician: string) => (
+                            {(dropdownOptions?.settingValue?.labTechnicians || []).map((technician: string) => (
                               <SelectItem key={technician} value={technician}>
                                 {technician}
                               </SelectItem>
@@ -772,7 +779,7 @@ export default function LabWorks() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {dropdownOptions?.settingValue?.crownShades?.map((shade: string) => (
+                              {(dropdownOptions?.settingValue?.crownShades || []).map((shade: string) => (
                                 <SelectItem key={shade} value={shade}>
                                   {shade}
                                 </SelectItem>
@@ -852,7 +859,11 @@ export default function LabWorks() {
                             min={0}
                             step="0.01"
                             {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                            value={field.value === null || isNaN(field.value) ? '' : field.value.toString()}
+                            onChange={(e) => {
+                              const value = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                              field.onChange(isNaN(value) ? 0 : value);
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
