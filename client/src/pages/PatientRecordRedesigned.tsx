@@ -9,6 +9,7 @@ import ConsentForm from "@/components/ConsentForm";
 import PrescriptionForm from "@/components/PrescriptionForm";
 import Invoice from "@/components/Invoice";
 import VisitLog from "@/components/VisitLog";
+import VisitDetailsDisplay from "@/components/VisitDetailsDisplay";
 import ToothFindingsSection from "@/components/ToothFindingsSection";
 import GeneralizedFindingsSection from "@/components/GeneralizedFindingsSection";
 import InvestigationSection from "@/components/InvestigationSection";
