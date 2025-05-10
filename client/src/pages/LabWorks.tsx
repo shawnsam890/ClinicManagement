@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,6 +7,7 @@ import { insertLabWorkSchema } from "@shared/schema";
 import Layout from "@/components/Layout";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
+import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 
 import {
@@ -83,6 +84,13 @@ export default function LabWorks() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedLabWork, setSelectedLabWork] = useState<any | null>(null);
   const [currentTab, setCurrentTab] = useState("works");
+  
+  // Get patientId from URL query parameter if it exists
+  const [location] = useLocation();
+  // Extract query params from location
+  const queryParamsStr = location.split('?')[1] || '';
+  const searchParams = new URLSearchParams(queryParamsStr);
+  const patientIdFromUrl = searchParams.get('patientId');
 
   // Fetch all lab works
   const { data: labWorks, isLoading: isLoadingLabWorks } = useQuery({
@@ -108,7 +116,7 @@ export default function LabWorks() {
   const form = useForm<LabWorkFormValues>({
     resolver: zodResolver(labWorkFormSchema),
     defaultValues: {
-      patientId: "",
+      patientId: patientIdFromUrl || "",
       workType: "",
       status: "pending",
       description: "",
@@ -121,6 +129,14 @@ export default function LabWorks() {
       notes: "",
     },
   });
+  
+  // If patientId is provided in the URL, automatically open the dialog to create a new lab work
+  useEffect(() => {
+    if (patientIdFromUrl) {
+      setCurrentTab("works");
+      handleCreateLabWork();
+    }
+  }, [patientIdFromUrl]);
 
   // Form for inventory item
   const inventoryForm = useForm({
