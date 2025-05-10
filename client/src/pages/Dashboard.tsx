@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, FlaskRound, BarChart4, Settings, UserCog, Calendar, Clock, Activity, CreditCard } from "lucide-react";
 import patientDatabaseImage from "@/assets/tiles/patient-database.jpg";
 import labWorksImage from "@/assets/tiles/lab-works.jpg";
+import staffManagementImage from "@/assets/tiles/staff-management.jpg";
 
 export default function Dashboard() {
   const { data: patients } = useQuery({
@@ -178,7 +179,7 @@ export default function Dashboard() {
         <DashboardTile
           title="Staff Management"
           description="Manage staff details, schedule, and salary"
-          imageSrc="https://images.unsplash.com/photo-1582750433449-648ed127bb54?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=300"
+          imageSrc={staffManagementImage}
           icon={<UserCog />}
           href="/staff"
         />
