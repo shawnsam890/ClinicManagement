@@ -1150,6 +1150,8 @@ export default function PatientRecord() {
                                           description: "Consent form uploaded successfully",
                                         });
                                         queryClient.invalidateQueries({ queryKey: [`/api/visits/${selectedVisitId}`] });
+                                        // Reset the file input
+                                        input.value = '';
                                       })
                                       .catch(error => {
                                         console.error('Error uploading consent form:', error);
@@ -1167,6 +1169,123 @@ export default function PatientRecord() {
                                 </Button>
                               </div>
                             </div>
+                            
+                            {/* Uploaded Consent Forms Section */}
+                            {selectedVisit && (
+                              <div className="mt-6">
+                                <h3 className="text-base font-medium mb-3">Uploaded Consent Forms</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  {selectedVisit.consentForms && Array.isArray(selectedVisit.consentForms) ? (
+                                    selectedVisit.consentForms.length > 0 ? (
+                                      selectedVisit.consentForms.map((form: any, index: number) => (
+                                        <Card key={`form-${index}`} className="overflow-hidden hover:shadow-md transition-shadow">
+                                          <div className="relative">
+                                            {form.url ? (
+                                              <div className="aspect-[4/3] relative bg-muted flex items-center justify-center">
+                                                {form.type?.includes('image/') ? (
+                                                  <img 
+                                                    src={form.url} 
+                                                    alt={form.name || `Form ${index + 1}`}
+                                                    className="object-contain h-full w-full"
+                                                  />
+                                                ) : form.type?.includes('pdf') ? (
+                                                  <div className="flex flex-col items-center justify-center h-full">
+                                                    <FileText className="h-12 w-12 text-muted-foreground mb-2" />
+                                                    <span className="text-sm font-medium">PDF Document</span>
+                                                  </div>
+                                                ) : (
+                                                  <div className="flex flex-col items-center justify-center h-full">
+                                                    <FileText className="h-12 w-12 text-muted-foreground mb-2" />
+                                                    <span className="text-sm font-medium">Document</span>
+                                                  </div>
+                                                )}
+                                              </div>
+                                            ) : form.patientSignature ? (
+                                              <div className="aspect-[4/3] relative bg-muted flex items-center justify-center">
+                                                <img 
+                                                  src={form.patientSignature} 
+                                                  alt={`Signed form ${index + 1}`}
+                                                  className="object-contain h-full w-full"
+                                                />
+                                              </div>
+                                            ) : (
+                                              <div className="aspect-[4/3] flex items-center justify-center bg-muted">
+                                                <FileText className="h-12 w-12 text-muted-foreground" />
+                                              </div>
+                                            )}
+                                            <Button
+                                              variant="destructive"
+                                              size="icon"
+                                              className="absolute top-2 right-2 h-8 w-8 rounded-full bg-red-500 hover:bg-red-600 opacity-80 hover:opacity-100"
+                                              onClick={() => {
+                                                if (window.confirm("Are you sure you want to delete this consent form? This action cannot be undone.")) {
+                                                  apiRequest("DELETE", `/api/visits/${selectedVisitId}/consent-forms/${index}`)
+                                                    .then(response => {
+                                                      if (!response.ok) {
+                                                        throw new Error("Failed to delete consent form");
+                                                      }
+                                                      return response.json();
+                                                    })
+                                                    .then(() => {
+                                                      queryClient.invalidateQueries({ queryKey: [`/api/visits/${selectedVisitId}`] });
+                                                      toast({
+                                                        title: "Success",
+                                                        description: "Consent form deleted successfully",
+                                                      });
+                                                    })
+                                                    .catch(error => {
+                                                      console.error("Error deleting consent form:", error);
+                                                      toast({
+                                                        title: "Error",
+                                                        description: "Failed to delete consent form",
+                                                        variant: "destructive",
+                                                      });
+                                                    });
+                                                }
+                                              }}
+                                            >
+                                              <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                          </div>
+                                          <CardContent className="p-3">
+                                            <div className="truncate text-sm font-medium">
+                                              {form.name || form.formType || `Form ${index + 1}`}
+                                            </div>
+                                            <div className="text-xs text-muted-foreground">
+                                              {form.timestamp ? new Date(form.timestamp).toLocaleString() : 'No date'}
+                                            </div>
+                                            <div className="flex mt-2 gap-2">
+                                              <Button 
+                                                size="sm" 
+                                                variant="outline" 
+                                                className="w-full text-xs h-8"
+                                                onClick={() => {
+                                                  if (form.url) {
+                                                    window.open(form.url, '_blank');
+                                                  } else if (form.patientSignature) {
+                                                    window.open(form.patientSignature, '_blank');
+                                                  }
+                                                }}
+                                              >
+                                                <ExternalLink className="h-3 w-3 mr-1" /> View
+                                              </Button>
+                                            </div>
+                                          </CardContent>
+                                        </Card>
+                                      ))
+                                    ) : (
+                                      <div className="col-span-2 py-8 text-center text-muted-foreground">
+                                        No consent forms uploaded yet
+                                      </div>
+                                    )
+                                  ) : (
+                                    <div className="col-span-2 py-8 text-center text-muted-foreground">
+                                      No consent forms uploaded yet
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
                             
                             <Separator className="my-4" />
                             
