@@ -58,6 +58,17 @@ export default function ConsentForm({
   // Refs
   const patientSignatureRef = useRef<SignatureCanvas | null>(null);
   const doctorSignatureRef = useRef<SignatureCanvas | null>(null);
+  
+  // Function to clear patient signature
+  const clearPatientSignature = () => {
+    if (patientSignatureRef.current) {
+      patientSignatureRef.current.clear();
+      setPatientSignature(null);
+    }
+    if (onClearSignature) {
+      onClearSignature();
+    }
+  };
   const signatureCanvasRef = useRef<SignatureCanvas | null>(null);
   const formContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
