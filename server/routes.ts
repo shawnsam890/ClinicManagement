@@ -84,12 +84,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get('/api/patients/:id', async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ message: 'Invalid ID' });
+      const id = req.params.id;
+      
+      // First, try to find by patientId (string format like PT2025-0001)
+      let patient = await storage.getPatientByPatientId(id);
+      
+      // If not found and id is a number, try to find by numeric id
+      if (!patient && !isNaN(parseInt(id))) {
+        patient = await storage.getPatientById(parseInt(id));
       }
       
-      const patient = await storage.getPatientById(id);
       if (!patient) {
         return res.status(404).json({ message: 'Patient not found' });
       }
