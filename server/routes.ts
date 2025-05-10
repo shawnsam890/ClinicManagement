@@ -16,6 +16,7 @@ import multer from 'multer';
 import { format } from 'date-fns';
 import { eq } from 'drizzle-orm';
 import { setupAuth } from "./auth";
+import { v4 as uuid } from 'uuid';
 
 // Configure multer for file uploads
 const upload = multer({
