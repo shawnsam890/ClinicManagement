@@ -1959,6 +1959,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Upload consent form
+  app.post('/api/upload/consent', upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+      }
+      
+      console.log('Consent form upload request:', req.body);
+      
+      const visitId = req.body.visitId ? parseInt(req.body.visitId) : null;
+      
+      if (!visitId || isNaN(visitId)) {
+        return res.status(400).json({ message: 'Invalid or missing visit ID' });
+      }
+      
+      // Get visit
+      const visit = await storage.getPatientVisitById(visitId);
+      if (!visit) {
+        return res.status(404).json({ message: 'Visit not found' });
+      }
+      
+      // Create unique filename
+      const fileId = uuid();
+      const ext = path.extname(req.file.originalname);
+      const filename = `${fileId}${ext}`;
+      const fileUrl = `/uploads/${filename}`;
+      
+      // Save file to uploads directory
+      fs.writeFileSync(`./uploads/${filename}`, req.file.buffer);
+      
+      // Prepare consent form data
+      const consentForm = {
+        id: uuid(),
+        name: req.file.originalname,
+        type: req.file.mimetype,
+        url: fileUrl,
+        formType: 'custom',
+        timestamp: new Date().toISOString()
+      };
+      
+      console.log('New consent form data:', consentForm);
+      
+      // Parse consent forms array
+      let consentForms = [];
+      try {
+        if (visit.consentForms) {
+          if (typeof visit.consentForms === 'string') {
+            consentForms = JSON.parse(visit.consentForms);
+          } else if (Array.isArray(visit.consentForms)) {
+            consentForms = visit.consentForms;
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing consent forms:', error);
+        consentForms = [];
+      }
+      
+      // Add to consentForms array
+      consentForms.push(consentForm);
+      
+      console.log('Updated consent forms array:', consentForms);
+      
+      // Update visit
+      await storage.updatePatientVisit(visitId, {
+        consentForms: JSON.stringify(consentForms)
+      });
+      
+      res.json({
+        message: 'Consent form uploaded successfully',
+        file: {
+          name: req.file.originalname,
+          url: fileUrl
+        }
+      });
+    } catch (error: any) {
+      console.error('Error uploading consent form:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Endpoint to delete consent forms
   app.delete('/api/visits/:visitId/consent-forms/:formIndex', async (req, res) => {
     try {
@@ -1969,31 +2049,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Invalid visit ID or form index' });
       }
       
+      console.log(`Deleting consent form ${formIndex} from visit ${visitId}`);
+      
       // Get the visit
       const visit = await storage.getPatientVisitById(visitId);
       if (!visit) {
         return res.status(404).json({ message: 'Visit not found' });
       }
       
-      // Check if visit has consent forms
-      if (!visit.consentForms || !Array.isArray(visit.consentForms)) {
-        return res.status(404).json({ message: 'No consent forms found for this visit' });
+      // Parse consentForms if it's a string
+      let consentForms = [];
+      try {
+        if (visit.consentForms) {
+          if (typeof visit.consentForms === 'string') {
+            consentForms = JSON.parse(visit.consentForms);
+          } else if (Array.isArray(visit.consentForms)) {
+            consentForms = visit.consentForms;
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing consent forms:', error);
+        return res.status(500).json({ message: 'Error parsing consent forms' });
       }
       
-      // Check if the form index exists
-      if (formIndex < 0 || formIndex >= visit.consentForms.length) {
+      console.log('Current consent forms:', consentForms);
+      
+      if (!consentForms || consentForms.length <= formIndex) {
         return res.status(404).json({ message: 'Consent form not found' });
       }
       
+      // Get the consent form to delete
+      const consentFormToDelete = consentForms[formIndex];
+      console.log('Consent form to delete:', consentFormToDelete);
+      
       // Remove the consent form
-      const updatedConsentForms = [...visit.consentForms];
-      updatedConsentForms.splice(formIndex, 1);
+      consentForms.splice(formIndex, 1);
       
       // Update the visit
-      await storage.updatePatientVisit(visitId, { consentForms: updatedConsentForms });
+      await storage.updatePatientVisit(visitId, { 
+        consentForms: JSON.stringify(consentForms) 
+      });
       
-      res.status(200).json({ message: 'Consent form deleted successfully' });
+      // If the consent form has a URL and it's a custom one, delete the file
+      try {
+        if (consentFormToDelete.url && consentFormToDelete.formType === 'custom') {
+          const filePath = '.' + consentFormToDelete.url;
+          fs.unlink(filePath, (err) => {
+            if (err) {
+              console.warn(`Could not delete file ${filePath}:`, err);
+            } else {
+              console.log(`Successfully deleted file ${filePath}`);
+            }
+          });
+        }
+      } catch (fileErr) {
+        console.warn('Error attempting to delete consent form file:', fileErr);
+      }
+      
+      res.status(200).json({ 
+        message: 'Consent form deleted successfully',
+        consentForms: consentForms
+      });
     } catch (error: any) {
+      console.error('Error deleting consent form:', error);
       res.status(500).json({ message: error.message });
     }
   });
