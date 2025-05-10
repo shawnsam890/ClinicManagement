@@ -293,13 +293,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Invalid ID' });
       }
       
-      const updatedVisit = await storage.updatePatientVisit(id, req.body);
+      // Make a copy of the request body to manipulate
+      const visitData = { ...req.body };
+      
+      // Handle empty dates to avoid PostgreSQL errors
+      // Convert empty strings to null for date fields
+      if (visitData.nextAppointment === '') {
+        visitData.nextAppointment = null;
+      }
+      
+      if (visitData.date === '') {
+        visitData.date = null;
+      }
+      
+      const updatedVisit = await storage.updatePatientVisit(id, visitData);
       if (!updatedVisit) {
         return res.status(404).json({ message: 'Visit not found' });
       }
       
       res.json(updatedVisit);
     } catch (error: any) {
+      console.error("Error updating visit:", error);
       res.status(500).json({ message: error.message });
     }
   });

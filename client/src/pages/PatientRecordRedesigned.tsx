@@ -388,6 +388,9 @@ export default function PatientRecord() {
         } catch (err) {
           console.error("Error formatting date:", err);
         }
+      } else if (data.nextAppointment === '') {
+        // If nextAppointment is an empty string, set it to null to avoid SQL errors
+        data.nextAppointment = null;
       }
       
       const res = await apiRequest("PUT", `/api/visits/${data.id}`, data);
