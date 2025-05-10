@@ -379,6 +379,51 @@ export default function PatientRecord() {
     }
   };
 
+  // Handle deleting media file
+  const handleDeleteMedia = async (mediaId: string) => {
+    if (!selectedVisit || !selectedVisitId) return;
+    
+    try {
+      // Parse current attachments
+      let attachments = [];
+      try {
+        if (selectedVisit.attachments) {
+          if (typeof selectedVisit.attachments === 'string') {
+            attachments = JSON.parse(selectedVisit.attachments);
+          } else if (Array.isArray(selectedVisit.attachments)) {
+            attachments = selectedVisit.attachments;
+          }
+        }
+      } catch (error) {
+        console.error("Error parsing attachments:", error);
+        attachments = [];
+      }
+      
+      // Filter out the attachment to be deleted
+      const updatedAttachments = attachments.filter((attachment: any) => attachment.id !== mediaId);
+      
+      // Update visit with new attachments array
+      await apiRequest("PATCH", `/api/visits/${selectedVisitId}`, {
+        attachments: JSON.stringify(updatedAttachments)
+      });
+      
+      // Refresh the visit data
+      queryClient.invalidateQueries({ queryKey: [`/api/visits/${selectedVisitId}`] });
+      
+      toast({
+        title: "Success",
+        description: "Media file deleted successfully",
+      });
+    } catch (error) {
+      console.error("Error deleting media:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete media file",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Update visit
   const updateVisitMutation = useMutation({
     mutationFn: async (data: { id: number } & Partial<PatientVisit>) => {
@@ -1237,7 +1282,7 @@ export default function PatientRecord() {
                                           )}
                                           
                                           {/* Hover overlay with actions */}
-                                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity">
                                             <Button 
                                               variant="ghost" 
                                               size="icon" 
@@ -1245,6 +1290,19 @@ export default function PatientRecord() {
                                               onClick={() => window.open(attachment.url, '_blank')}
                                             >
                                               <ExternalLink className="h-4 w-4" />
+                                            </Button>
+                                            <Button 
+                                              variant="ghost" 
+                                              size="icon" 
+                                              className="text-white h-8 w-8 hover:text-red-500"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (confirm('Are you sure you want to delete this file?')) {
+                                                  handleDeleteMedia(attachment.id);
+                                                }
+                                              }}
+                                            >
+                                              <Trash2 className="h-4 w-4" />
                                             </Button>
                                           </div>
                                         </div>
