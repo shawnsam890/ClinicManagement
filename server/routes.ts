@@ -1201,10 +1201,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Visit not found' });
       }
       
-      // Convert file to base64
-      const base64File = req.file.buffer.toString('base64');
-      const mimeType = req.file.mimetype;
-      const dataUri = `data:${mimeType};base64,${base64File}`;
+      // Ensure uploads directory exists
+      const uploadsDir = path.join(process.cwd(), 'uploads');
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+      
+      // Generate unique filename to prevent collisions
+      const fileExtension = path.extname(req.file.originalname);
+      const uniqueFilename = `${uuid()}${fileExtension}`;
+      const filePath = path.join(uploadsDir, uniqueFilename);
+      
+      // Save file to disk
+      fs.writeFileSync(filePath, req.file.buffer);
+      
+      // Create file URL for the attachment
+      const fileUrl = `/uploads/${uniqueFilename}`;
       
       // Update visit attachments
       let attachments = [];
@@ -1224,10 +1236,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Add new attachment
       attachments.push({
-        id: Date.now().toString(),
+        id: uuid(),
         name: req.file.originalname,
-        type: mimeType,
-        url: dataUri,
+        type: req.file.mimetype,
+        url: fileUrl,
         dateAdded: new Date().toISOString()
       });
       
@@ -1235,7 +1247,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         attachments: JSON.stringify(attachments)
       });
       
-      res.json({ message: 'File uploaded successfully' });
+      res.json({ 
+        message: 'File uploaded successfully',
+        file: {
+          name: req.file.originalname,
+          url: fileUrl
+        }
+      });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
@@ -1258,18 +1276,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Visit not found' });
       }
       
-      // Convert files to base64 and create attachment objects
+      // Ensure uploads directory exists
+      const uploadsDir = path.join(process.cwd(), 'uploads');
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+      
+      // Save files to disk and create attachment objects
       const mediaFiles = [];
       for (const file of req.files) {
-        const base64File = file.buffer.toString('base64');
-        const mimeType = file.mimetype;
-        const dataUri = `data:${mimeType};base64,${base64File}`;
+        // Generate unique filename to prevent collisions
+        const fileExtension = path.extname(file.originalname);
+        const uniqueFilename = `${uuid()}${fileExtension}`;
+        const filePath = path.join(uploadsDir, uniqueFilename);
+        
+        // Save file to disk
+        fs.writeFileSync(filePath, file.buffer);
+        
+        // Create file URL for the attachment
+        const fileUrl = `/uploads/${uniqueFilename}`;
         
         mediaFiles.push({
-          id: Date.now().toString() + '-' + mediaFiles.length,
+          id: uuid(),
           name: file.originalname,
-          type: mimeType,
-          url: dataUri,
+          type: file.mimetype,
+          url: fileUrl,
           dateAdded: new Date().toISOString()
         });
       }
@@ -1299,7 +1330,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ 
         message: `${mediaFiles.length} files uploaded successfully`, 
-        files: mediaFiles.map(file => ({ name: file.name, type: file.type }))
+        files: mediaFiles.map(file => ({ name: file.name, type: file.type, url: file.url }))
       });
     } catch (error: any) {
       console.error('Error uploading media files:', error);
