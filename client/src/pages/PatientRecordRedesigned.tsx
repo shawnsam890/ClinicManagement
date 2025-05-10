@@ -23,7 +23,8 @@ import { User, Phone, MessageSquare, Plus, CalendarDays, Receipt, ClipboardList,
 import "./VisitLog.css";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Patient, PatientVisit, Prescription, Invoice as InvoiceType } from "@shared/schema";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -45,6 +46,18 @@ export default function PatientRecord() {
   const [activeConsentForm, setActiveConsentForm] = useState<string | null>(null);
   const [showInvoice, setShowInvoice] = useState(false);
   const [showEditPatientDetails, setShowEditPatientDetails] = useState(false);
+  // State for media deletion confirmation dialog
+  const [deleteMediaDialog, setDeleteMediaDialog] = useState<{
+    isOpen: boolean;
+    visitId: number | null;
+    fileId: string | null;
+    fileName: string | null;
+  }>({
+    isOpen: false,
+    visitId: null,
+    fileId: null,
+    fileName: null
+  });
   const [patientForm, setPatientForm] = useState<any>({
     address: '',
     medicalHistory: '',

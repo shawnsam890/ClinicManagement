@@ -312,7 +312,7 @@ export default function PatientRecord() {
 
   if (isPatientLoading) {
     return (
-      <Layout>
+      <Layout title="Patient Record">
         <div className="flex items-center justify-center h-screen">
           <div className="animate-pulse flex flex-col items-center">
             <div className="w-32 h-32 bg-gray-200 rounded-full mb-4"></div>
@@ -327,7 +327,7 @@ export default function PatientRecord() {
 
   if (patientError) {
     return (
-      <Layout>
+      <Layout title="Error">
         <div className="flex flex-col items-center justify-center h-screen">
           <h2 className="text-2xl font-semibold mb-2">Error Loading Patient</h2>
           <p className="text-red-500">{(patientError as Error).message}</p>
@@ -344,7 +344,7 @@ export default function PatientRecord() {
 
   if (!patient) {
     return (
-      <Layout>
+      <Layout title="Not Found">
         <div className="flex flex-col items-center justify-center h-screen">
           <h2 className="text-2xl font-semibold mb-2">Patient Not Found</h2>
           <p className="text-muted-foreground">The patient you are looking for does not exist.</p>
@@ -360,7 +360,7 @@ export default function PatientRecord() {
   }
 
   return (
-    <Layout>
+    <Layout title="Patient Record">
       {patient && (
         <>
           <div className="flex flex-col-reverse md:flex-row justify-between items-start md:items-center mb-6 gap-4">
