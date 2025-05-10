@@ -22,8 +22,10 @@ import dentalExtractionFormImg from "@assets/Dental Extraction.jpg";
 
 interface ConsentFormProps {
   visitId: number;
-  formType: string;
-  onComplete: () => void;
+  patientName?: string;
+  formType?: string;
+  onComplete?: () => void;
+  onClearSignature?: () => void;
 }
 
 interface PatientFormInfo {
@@ -35,8 +37,10 @@ interface PatientFormInfo {
 
 export default function ConsentForm({
   visitId,
-  formType,
-  onComplete,
+  patientName,
+  formType = "dental",
+  onComplete = () => {},
+  onClearSignature,
 }: ConsentFormProps) {
   const { toast } = useToast();
   const [patientSignature, setPatientSignature] = useState<string | null>(null);

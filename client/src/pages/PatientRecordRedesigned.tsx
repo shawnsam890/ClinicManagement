@@ -19,7 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { User, Phone, MessageSquare, Plus, CalendarDays, Receipt, ClipboardList, FileText, 
-  Edit, Save, X, PlusCircle, Trash2, Repeat, CheckCircle2, Activity, Pill, Stethoscope, FileEdit } from "lucide-react";
+  Edit, Save, X, PlusCircle, Trash2, Repeat, CheckCircle2, Activity, Pill, Stethoscope, FileEdit, Image } from "lucide-react";
 import "./VisitLog.css";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Patient, PatientVisit, Prescription, Invoice as InvoiceType } from "@shared/schema";
@@ -757,10 +757,11 @@ export default function PatientRecord() {
                   </CardHeader>
                   <CardContent>
                     <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="mt-2">
-                      <TabsList className="grid w-full grid-cols-3">
+                      <TabsList className="grid w-full grid-cols-4">
+                        <TabsTrigger value="rx">Rx</TabsTrigger>
                         <TabsTrigger value="visit">Visit Details</TabsTrigger>
-                        <TabsTrigger value="rx">Prescription</TabsTrigger>
-                        <TabsTrigger value="files">Files</TabsTrigger>
+                        <TabsTrigger value="files">Forms</TabsTrigger>
+                        <TabsTrigger value="media">Media</TabsTrigger>
                       </TabsList>
                       <div className="mt-4">
                         {activeTab === 'rx' && (
@@ -845,66 +846,159 @@ export default function PatientRecord() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                   <div>
                                     <Label htmlFor="chiefComplaint">Chief Complaint</Label>
-                                    <Input 
-                                      id="chiefComplaint"
-                                      name="chiefComplaint"
+                                    <Select 
+                                      name="chiefComplaint" 
                                       defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.chiefComplaint || ""}
-                                      className="mt-1"
-                                    />
+                                    >
+                                      <SelectTrigger className="mt-1">
+                                        <SelectValue placeholder="Select complaint" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="Pain">Pain</SelectItem>
+                                        <SelectItem value="Swelling">Swelling</SelectItem>
+                                        <SelectItem value="Bleeding">Bleeding</SelectItem>
+                                        <SelectItem value="Sensitivity">Sensitivity</SelectItem>
+                                        <SelectItem value="Routine Check-up">Routine Check-up</SelectItem>
+                                        <SelectItem value="Cleaning">Cleaning</SelectItem>
+                                        <SelectItem value="Cosmetic">Cosmetic</SelectItem>
+                                        <SelectItem value="Bad Breath">Bad Breath</SelectItem>
+                                        <SelectItem value="Missing Tooth">Missing Tooth</SelectItem>
+                                        <SelectItem value="Loose Tooth">Loose Tooth</SelectItem>
+                                      </SelectContent>
+                                    </Select>
                                   </div>
                                   <div>
                                     <Label htmlFor="areaOfComplaint">Area of Complaint</Label>
-                                    <Input 
-                                      id="areaOfComplaint"
-                                      name="areaOfComplaint"
+                                    <Select 
+                                      name="areaOfComplaint" 
                                       defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.areaOfComplaint || ""}
-                                      className="mt-1"
-                                    />
+                                    >
+                                      <SelectTrigger className="mt-1">
+                                        <SelectValue placeholder="Select area" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="Upper right">Upper right</SelectItem>
+                                        <SelectItem value="Upper left">Upper left</SelectItem>
+                                        <SelectItem value="Lower right">Lower right</SelectItem>
+                                        <SelectItem value="Lower left">Lower left</SelectItem>
+                                        <SelectItem value="Front teeth">Front teeth</SelectItem>
+                                        <SelectItem value="Back teeth">Back teeth</SelectItem>
+                                        <SelectItem value="Gums">Gums</SelectItem>
+                                        <SelectItem value="Jaw">Jaw</SelectItem>
+                                        <SelectItem value="Entire mouth">Entire mouth</SelectItem>
+                                      </SelectContent>
+                                    </Select>
                                   </div>
                                   <div>
                                     <Label htmlFor="oralExamination">Oral Examination</Label>
-                                    <Textarea 
-                                      id="oralExamination"
-                                      name="oralExamination"
+                                    <Select 
+                                      name="oralExamination" 
                                       defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.oralExamination || ""}
-                                      className="mt-1"
-                                    />
+                                    >
+                                      <SelectTrigger className="mt-1">
+                                        <SelectValue placeholder="Select finding" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="Caries">Caries</SelectItem>
+                                        <SelectItem value="Pulpitis">Pulpitis</SelectItem>
+                                        <SelectItem value="Periodontitis">Periodontitis</SelectItem>
+                                        <SelectItem value="Gingivitis">Gingivitis</SelectItem>
+                                        <SelectItem value="Dental Abscess">Dental Abscess</SelectItem>
+                                        <SelectItem value="Impacted Tooth">Impacted Tooth</SelectItem>
+                                        <SelectItem value="Malocclusion">Malocclusion</SelectItem>
+                                        <SelectItem value="Missing Teeth">Missing Teeth</SelectItem>
+                                        <SelectItem value="Fractured Tooth">Fractured Tooth</SelectItem>
+                                        <SelectItem value="Normal">Normal</SelectItem>
+                                      </SelectContent>
+                                    </Select>
                                   </div>
                                   <div>
                                     <Label htmlFor="investigation">Investigation</Label>
-                                    <Textarea 
-                                      id="investigation"
-                                      name="investigation"
+                                    <Select 
+                                      name="investigation" 
                                       defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.investigation || ""}
-                                      className="mt-1"
-                                    />
+                                    >
+                                      <SelectTrigger className="mt-1">
+                                        <SelectValue placeholder="Select investigation" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="IOPA X-ray">IOPA X-ray</SelectItem>
+                                        <SelectItem value="OPG">OPG</SelectItem>
+                                        <SelectItem value="CBCT">CBCT</SelectItem>
+                                        <SelectItem value="Vitality Test">Vitality Test</SelectItem>
+                                        <SelectItem value="Blood Test">Blood Test</SelectItem>
+                                        <SelectItem value="Biopsy">Biopsy</SelectItem>
+                                        <SelectItem value="None">None</SelectItem>
+                                      </SelectContent>
+                                    </Select>
                                   </div>
                                   <div>
                                     <Label htmlFor="treatmentPlan">Treatment Plan</Label>
-                                    <Textarea 
-                                      id="treatmentPlan"
-                                      name="treatmentPlan"
+                                    <Select 
+                                      name="treatmentPlan" 
                                       defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.treatmentPlan || ""}
-                                      className="mt-1"
-                                    />
+                                    >
+                                      <SelectTrigger className="mt-1">
+                                        <SelectValue placeholder="Select treatment plan" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="Restoration">Restoration</SelectItem>
+                                        <SelectItem value="Root Canal Treatment">Root Canal Treatment</SelectItem>
+                                        <SelectItem value="Extraction">Extraction</SelectItem>
+                                        <SelectItem value="Scaling and Root Planing">Scaling and Root Planing</SelectItem>
+                                        <SelectItem value="Dental Implant">Dental Implant</SelectItem>
+                                        <SelectItem value="Crown">Crown</SelectItem>
+                                        <SelectItem value="Bridge">Bridge</SelectItem>
+                                        <SelectItem value="Orthodontic Treatment">Orthodontic Treatment</SelectItem>
+                                        <SelectItem value="Medication only">Medication only</SelectItem>
+                                        <SelectItem value="Observe">Observe</SelectItem>
+                                      </SelectContent>
+                                    </Select>
                                   </div>
                                   <div>
                                     <Label htmlFor="treatmentDone">Treatment Done</Label>
-                                    <Textarea 
-                                      id="treatmentDone"
-                                      name="treatmentDone"
+                                    <Select 
+                                      name="treatmentDone" 
                                       defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.treatmentDone || ""}
-                                      className="mt-1"
-                                    />
+                                    >
+                                      <SelectTrigger className="mt-1">
+                                        <SelectValue placeholder="Select treatment done" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="Restoration">Restoration</SelectItem>
+                                        <SelectItem value="Root Canal Treatment">Root Canal Treatment</SelectItem>
+                                        <SelectItem value="Extraction">Extraction</SelectItem>
+                                        <SelectItem value="Scaling and Root Planing">Scaling and Root Planing</SelectItem>
+                                        <SelectItem value="Dental Implant">Dental Implant</SelectItem>
+                                        <SelectItem value="Crown">Crown</SelectItem>
+                                        <SelectItem value="Bridge">Bridge</SelectItem>
+                                        <SelectItem value="Braces Adjustment">Braces Adjustment</SelectItem>
+                                        <SelectItem value="Medication Prescribed">Medication Prescribed</SelectItem>
+                                        <SelectItem value="None">None</SelectItem>
+                                      </SelectContent>
+                                    </Select>
                                   </div>
                                   <div>
                                     <Label htmlFor="advice">Advice</Label>
-                                    <Textarea 
-                                      id="advice"
-                                      name="advice"
+                                    <Select 
+                                      name="advice" 
                                       defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.advice || ""}
-                                      className="mt-1"
-                                    />
+                                    >
+                                      <SelectTrigger className="mt-1">
+                                        <SelectValue placeholder="Select advice" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="Proper Brushing">Proper Brushing</SelectItem>
+                                        <SelectItem value="Flossing">Flossing</SelectItem>
+                                        <SelectItem value="Soft Diet">Soft Diet</SelectItem>
+                                        <SelectItem value="Avoid Hot Food">Avoid Hot Food</SelectItem>
+                                        <SelectItem value="Cold Compress">Cold Compress</SelectItem>
+                                        <SelectItem value="Regular Check-up">Regular Check-up</SelectItem>
+                                        <SelectItem value="Avoid Smoking">Avoid Smoking</SelectItem>
+                                        <SelectItem value="Mouthwash">Mouthwash</SelectItem>
+                                        <SelectItem value="None">None</SelectItem>
+                                      </SelectContent>
+                                    </Select>
                                   </div>
                                   <div>
                                     <Label htmlFor="notes">Notes</Label>
@@ -926,7 +1020,7 @@ export default function PatientRecord() {
                                     />
                                   </div>
                                 </div>
-                                <Button type="submit" className="mr-2">
+                                <Button type="submit" className="mr-2 bg-gradient-to-r from-primary to-primary/90">
                                   <Save className="h-4 w-4 mr-1" /> Save Changes
                                 </Button>
                               </form>
@@ -934,10 +1028,152 @@ export default function PatientRecord() {
                           </div>
                         )}
                         {activeTab === 'files' && (
-                          <ConsentForm 
-                            visitId={selectedVisitId}
-                            patientName={patient.name}
-                          />
+                          <div className="space-y-6">
+                            <div className="bg-muted/20 rounded-lg p-4 border border-dashed border-muted-foreground/50">
+                              <h3 className="text-base font-medium mb-3">Upload Consent Form</h3>
+                              <div className="flex space-x-4">
+                                <div className="flex-1">
+                                  <Input 
+                                    type="file" 
+                                    accept=".pdf,.jpg,.jpeg,.png" 
+                                    id="consent-form-upload"
+                                    className="cursor-pointer"
+                                  />
+                                  <p className="text-sm text-muted-foreground mt-2">
+                                    Accepted formats: PDF, JPG, PNG (max 5MB)
+                                  </p>
+                                </div>
+                                <Button 
+                                  onClick={() => {
+                                    const input = document.getElementById('consent-form-upload') as HTMLInputElement;
+                                    if (input.files && input.files.length > 0) {
+                                      const file = input.files[0];
+                                      const formData = new FormData();
+                                      formData.append('file', file);
+                                      formData.append('visitId', selectedVisitId?.toString() || '');
+                                      formData.append('type', 'consent');
+                                      
+                                      fetch('/api/upload/consent', {
+                                        method: 'POST',
+                                        body: formData
+                                      })
+                                      .then(response => response.json())
+                                      .then(data => {
+                                        toast({
+                                          title: "Success",
+                                          description: "Consent form uploaded successfully",
+                                        });
+                                        queryClient.invalidateQueries({ queryKey: [`/api/visits/${selectedVisitId}`] });
+                                      })
+                                      .catch(error => {
+                                        console.error('Error uploading consent form:', error);
+                                        toast({
+                                          title: "Error",
+                                          description: "Failed to upload consent form",
+                                          variant: "destructive",
+                                        });
+                                      });
+                                    }
+                                  }}
+                                  className="bg-primary"
+                                >
+                                  <FileText className="h-4 w-4 mr-2" /> Upload
+                                </Button>
+                              </div>
+                            </div>
+                            
+                            <Separator className="my-4" />
+                            
+                            <ConsentForm 
+                              visitId={selectedVisitId}
+                              patientName={patient.name}
+                              onClearSignature={() => {
+                                // Add function to clear patient signature here
+                                const sigCanvas = document.querySelector('.patient-signature-pad') as HTMLCanvasElement;
+                                if (sigCanvas) {
+                                  const context = sigCanvas.getContext('2d');
+                                  if (context) {
+                                    context.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+                                  }
+                                }
+                              }}
+                            />
+                          </div>
+                        )}
+                        
+                        {activeTab === 'media' && (
+                          <div className="space-y-6">
+                            <div className="bg-muted/20 rounded-lg p-4 border border-dashed border-muted-foreground/50">
+                              <h3 className="text-base font-medium mb-3">Upload Images & Videos</h3>
+                              <div className="flex space-x-4">
+                                <div className="flex-1">
+                                  <Input 
+                                    type="file" 
+                                    accept=".jpg,.jpeg,.png,.mp4,.mov,.avi" 
+                                    id="media-upload"
+                                    className="cursor-pointer"
+                                    multiple
+                                  />
+                                  <p className="text-sm text-muted-foreground mt-2">
+                                    Accepted formats: JPG, PNG, MP4, MOV (max 50MB)
+                                  </p>
+                                </div>
+                                <Button 
+                                  onClick={() => {
+                                    const input = document.getElementById('media-upload') as HTMLInputElement;
+                                    if (input.files && input.files.length > 0) {
+                                      const formData = new FormData();
+                                      for (let i = 0; i < input.files.length; i++) {
+                                        formData.append('files', input.files[i]);
+                                      }
+                                      formData.append('visitId', selectedVisitId?.toString() || '');
+                                      formData.append('type', 'media');
+                                      
+                                      fetch('/api/upload/media', {
+                                        method: 'POST',
+                                        body: formData
+                                      })
+                                      .then(response => response.json())
+                                      .then(data => {
+                                        toast({
+                                          title: "Success",
+                                          description: `${input.files?.length} file(s) uploaded successfully`,
+                                        });
+                                        queryClient.invalidateQueries({ queryKey: [`/api/visits/${selectedVisitId}`] });
+                                      })
+                                      .catch(error => {
+                                        console.error('Error uploading media:', error);
+                                        toast({
+                                          title: "Error",
+                                          description: "Failed to upload media files",
+                                          variant: "destructive",
+                                        });
+                                      });
+                                    }
+                                  }}
+                                  className="bg-gradient-to-r from-purple-500 to-purple-600"
+                                >
+                                  <FileText className="h-4 w-4 mr-2" /> Upload
+                                </Button>
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-3">
+                              <h3 className="text-base font-medium">Media Gallery</h3>
+                              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                {/* This would be populated with actual media items from the API */}
+                                <div className="rounded-lg border overflow-hidden aspect-square bg-muted/30 flex items-center justify-center">
+                                  <FileText className="h-8 w-8 text-muted-foreground" />
+                                </div>
+                                <div className="rounded-lg border overflow-hidden aspect-square bg-muted/30 flex items-center justify-center">
+                                  <FileText className="h-8 w-8 text-muted-foreground" />
+                                </div>
+                                <div className="rounded-lg border overflow-hidden aspect-square bg-muted/30 flex items-center justify-center">
+                                  <FileText className="h-8 w-8 text-muted-foreground" />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                         )}
                       </div>
                     </Tabs>
