@@ -128,6 +128,12 @@ export default function PatientRecord() {
     enabled: !!selectedVisitId,
   });
   
+  // Fetch the selected visit data (for media gallery and other details)
+  const { data: selectedVisit } = useQuery<PatientVisit>({
+    queryKey: [`/api/visits/${selectedVisitId}`],
+    enabled: !!selectedVisitId,
+  });
+  
   // Fetch medical history and dental history options from settings
   const { data: settings } = useQuery<any>({
     queryKey: ['/api/settings/category/patient_options'],
@@ -1192,48 +1198,64 @@ export default function PatientRecord() {
                             <div className="space-y-3">
                               <h3 className="text-base font-medium">Media Gallery</h3>
                               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                                {selectedVisit?.attachments && selectedVisit.attachments.length > 0 ? (
-                                  selectedVisit.attachments.map((attachment, index) => {
-                                    const isImage = attachment.type?.startsWith('image/');
-                                    return (
-                                      <div 
-                                        key={attachment.id || index} 
-                                        className="rounded-lg border overflow-hidden aspect-square bg-muted/30 flex items-center justify-center relative group"
-                                      >
-                                        {isImage ? (
-                                          <img 
-                                            src={attachment.url}
-                                            alt={attachment.name}
-                                            className="object-cover w-full h-full"
-                                          />
-                                        ) : (
-                                          <div className="flex flex-col items-center justify-center p-2 text-center">
-                                            <FileText className="h-8 w-8 text-muted-foreground mb-1" />
-                                            <span className="text-xs text-muted-foreground line-clamp-2">
-                                              {attachment.name}
-                                            </span>
+                                {(() => {
+                                  // Parse attachments which might be stored as JSON string
+                                  let attachmentsArray: any[] = [];
+                                  try {
+                                    if (selectedVisit && selectedVisit.attachments) {
+                                      if (typeof selectedVisit.attachments === 'string') {
+                                        attachmentsArray = JSON.parse(selectedVisit.attachments);
+                                      } else if (Array.isArray(selectedVisit.attachments)) {
+                                        attachmentsArray = selectedVisit.attachments;
+                                      }
+                                    }
+                                  } catch (error) {
+                                    console.error("Error parsing attachments:", error);
+                                  }
+                                  
+                                  return attachmentsArray.length > 0 ? (
+                                    attachmentsArray.map((attachment: any, index: number) => {
+                                      const isImage = attachment.type?.startsWith('image/');
+                                      return (
+                                        <div 
+                                          key={attachment.id || index} 
+                                          className="rounded-lg border overflow-hidden aspect-square bg-muted/30 flex items-center justify-center relative group"
+                                        >
+                                          {isImage ? (
+                                            <img 
+                                              src={attachment.url}
+                                              alt={attachment.name}
+                                              className="object-cover w-full h-full"
+                                            />
+                                          ) : (
+                                            <div className="flex flex-col items-center justify-center p-2 text-center">
+                                              <FileText className="h-8 w-8 text-muted-foreground mb-1" />
+                                              <span className="text-xs text-muted-foreground line-clamp-2">
+                                                {attachment.name}
+                                              </span>
+                                            </div>
+                                          )}
+                                          
+                                          {/* Hover overlay with actions */}
+                                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                            <Button 
+                                              variant="ghost" 
+                                              size="icon" 
+                                              className="text-white h-8 w-8"
+                                              onClick={() => window.open(attachment.url, '_blank')}
+                                            >
+                                              <ExternalLink className="h-4 w-4" />
+                                            </Button>
                                           </div>
-                                        )}
-                                        
-                                        {/* Hover overlay with actions */}
-                                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                          <Button 
-                                            variant="ghost" 
-                                            size="icon" 
-                                            className="text-white h-8 w-8"
-                                            onClick={() => window.open(attachment.url, '_blank')}
-                                          >
-                                            <ExternalLink className="h-4 w-4" />
-                                          </Button>
                                         </div>
-                                      </div>
-                                    );
-                                  })
-                                ) : (
-                                  <div className="col-span-full text-center py-8 text-muted-foreground">
-                                    No media files have been uploaded yet.
-                                  </div>
-                                )}
+                                      );
+                                    })
+                                  ) : (
+                                    <div className="col-span-full text-center py-8 text-muted-foreground">
+                                      No media files have been uploaded yet.
+                                    </div>
+                                  );
+                                })()}
                               </div>
                             </div>
                           </div>
