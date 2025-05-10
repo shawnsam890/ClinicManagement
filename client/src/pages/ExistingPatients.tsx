@@ -204,20 +204,38 @@ export default function ExistingPatients() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex justify-center py-8">
-              <p>Loading patients...</p>
+            <div className="flex flex-col items-center justify-center py-16">
+              <div className="relative w-16 h-16">
+                <div className="absolute inset-0 rounded-full border-4 border-primary/30 border-t-primary animate-spin"></div>
+                <div className="absolute inset-3 flex items-center justify-center">
+                  <UserCircle2 className="h-6 w-6 text-primary/70" />
+                </div>
+              </div>
+              <p className="mt-4 text-neutral-600 font-medium">Loading patients...</p>
             </div>
           ) : filteredPatients.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-neutral-600">
+            <div className="text-center py-12 px-4">
+              <div className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-neutral-100 mb-4">
+                {searchQuery ? (
+                  <Search className="h-6 w-6 text-neutral-600" />
+                ) : (
+                  <UserCircle2 className="h-6 w-6 text-neutral-600" />
+                )}
+              </div>
+              <h3 className="text-lg font-medium text-neutral-900 mt-4">
+                {searchQuery ? "No matching results" : "No patients yet"}
+              </h3>
+              <p className="mt-2 text-neutral-600 max-w-md mx-auto">
                 {searchQuery
-                  ? "No patients found matching your search."
-                  : "No patients in the database yet."}
+                  ? "We couldn't find any patients matching your search criteria. Try using different keywords or clear your search."
+                  : "There are no patients in the database yet. Start by registering your first patient."}
               </p>
               <Button
                 onClick={() => navigate("/patients/new")}
-                className="mt-4"
+                className="mt-6 shadow-sm"
+                size="lg"
               >
+                <PlusCircle className="h-4 w-4 mr-2" />
                 Register New Patient
               </Button>
             </div>
@@ -258,12 +276,13 @@ export default function ExistingPatients() {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center">
-                              <div className={`h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary mr-2`}>
+                              <div className={`patient-avatar h-9 w-9 rounded-full bg-gradient-to-br from-primary/40 to-primary/10 flex items-center justify-center text-xs font-medium text-primary mr-3 border border-primary/20 shadow-sm`}>
                                 {patient.name.split(' ').map((n: string) => n[0]).join('')}
                               </div>
                               <div>
                                 <div className="font-medium">{patient.name}</div>
-                                <div className="text-xs text-neutral-500">
+                                <div className="text-xs flex items-center gap-1 text-neutral-500">
+                                  <Clock className="h-3 w-3" />
                                   Last visit: {patient.lastVisit ? new Date(patient.lastVisit).toLocaleDateString() : 'Never'}
                                 </div>
                               </div>
@@ -297,7 +316,7 @@ export default function ExistingPatients() {
                                         e.stopPropagation();
                                         handleContactWhatsApp(patient.phoneNumber);
                                       }}
-                                      className="h-8 w-8 p-0"
+                                      className="action-button h-8 w-8 p-0 hover:bg-green-50 hover:border-green-100"
                                     >
                                       <MessageSquare className="h-4 w-4 text-green-600" />
                                     </Button>
@@ -316,7 +335,7 @@ export default function ExistingPatients() {
                                         e.stopPropagation();
                                         handleContactSMS(patient.phoneNumber);
                                       }}
-                                      className="h-8 w-8 p-0"
+                                      className="action-button h-8 w-8 p-0 hover:bg-blue-50 hover:border-blue-100"
                                     >
                                       <Phone className="h-4 w-4 text-blue-600" />
                                     </Button>
@@ -331,7 +350,7 @@ export default function ExistingPatients() {
                                     <Button
                                       size="sm"
                                       variant="ghost"
-                                      className="h-8 w-8 p-0"
+                                      className="action-button h-8 w-8 p-0 hover:bg-primary/10 hover:border-primary/20"
                                     >
                                       <FileText className="h-4 w-4 text-primary" />
                                     </Button>
@@ -350,7 +369,7 @@ export default function ExistingPatients() {
                                         e.stopPropagation();
                                         confirmDeletePatient(patient.id);
                                       }}
-                                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                      className="action-button h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-100"
                                     >
                                       <Trash2 className="h-4 w-4" />
                                     </Button>
