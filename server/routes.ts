@@ -266,9 +266,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Create a new visit as follow-up
+      // Format date as YYYY-MM-DD to match the expected PostgreSQL date format
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      const formattedDate = `${year}-${month}-${day}`;
+      
       const followUpVisit = await storage.createPatientVisit({
         patientId: originalVisit.patientId,
-        date: new Date().toISOString(),
+        date: formattedDate,
         chiefComplaint: `Follow-up: ${originalVisit.chiefComplaint || 'Appointment'}`,
         previousVisitId: visitId,
       });
