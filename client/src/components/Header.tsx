@@ -78,16 +78,16 @@ export default function Header({
       >
         {/* Top Bar */}
         <div className="absolute top-4 left-0 right-0 z-20 px-4">
-          <div className="bg-white/40 rounded-xl shadow-md max-w-5xl mx-auto py-1.5 px-3 backdrop-blur-sm flex items-center justify-between">
+          <div className="bg-white/40 rounded-xl shadow-md max-w-3xl mx-auto py-1.5 px-3 backdrop-blur-sm flex items-center justify-between">
             <h1 className="text-lg font-bold text-primary mr-4">{clinicName}</h1>
             
-            <form onSubmit={handleSearchSubmit} className="flex-1 max-w-lg">
+            <form onSubmit={handleSearchSubmit} className="flex-1 max-w-md">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <input
                   type="text"
                   placeholder="Search patients..."
-                  className="w-full rounded-full border border-gray-300 pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-full border border-gray-300 pl-10 pr-4 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
