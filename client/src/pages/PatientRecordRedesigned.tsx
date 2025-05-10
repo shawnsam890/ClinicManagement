@@ -718,9 +718,9 @@ export default function PatientRecord() {
               </div>
             </div>
             
-            {/* We're hiding this section as content is moved to Visit Log area */}
-            <div className="hidden">
-              {false ? (
+            {/* Showing the prescription details when a visit is selected */}
+            <div className={selectedVisitId ? "" : "hidden"}>
+              {selectedVisitId ? (
                 <Card>
                   <CardHeader>
                     <div className="flex justify-between items-start">
