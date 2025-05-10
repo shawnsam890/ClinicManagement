@@ -18,7 +18,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { User, Phone, MessageSquare, Plus, CalendarDays, Receipt, ClipboardList, FileText, Edit, Save, X, PlusCircle, Trash2, Repeat } from "lucide-react";
+import { User, Phone, MessageSquare, Plus, CalendarDays, Receipt, ClipboardList, FileText, 
+  Edit, Save, X, PlusCircle, Trash2, Repeat, CheckCircle2, Activity, Pill, Stethoscope, FileEdit } from "lucide-react";
+import "./VisitLog.css";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Patient, PatientVisit, Prescription, Invoice as InvoiceType } from "@shared/schema";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -614,23 +616,54 @@ export default function PatientRecord() {
               </Card>
             </div>
 
-            {/* Left Sidebar - List of Prescriptions */}
+            {/* Left Sidebar - List of Prescriptions with enhanced styling */}
             <div className="md:col-span-3">
-              <Card>
-                <CardHeader className="pb-3">
+              <Card className="overflow-hidden border-none shadow-md">
+                <CardHeader className="pb-3 bg-gradient-to-r from-white to-blue-50/50 border-b">
                   <div className="flex justify-between items-center">
-                    <CardTitle className="text-lg">Visit Log</CardTitle>
-                    <Button variant="outline" size="sm" onClick={handleCreateRx} className="flex items-center">
-                      <Plus className="h-3.5 w-3.5 mr-1" /> Rx
+                    <div className="flex items-center">
+                      <div className="bg-primary/10 p-2 rounded-lg mr-3">
+                        <FileEdit className="h-5 w-5 text-primary" />
+                      </div>
+                      <CardTitle className="text-lg">Visit Log</CardTitle>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleCreateRx} 
+                      className="create-button flex items-center shadow-sm"
+                    >
+                      <Pill className="h-3.5 w-3.5 mr-1 prescription-icon" /> New Rx
                     </Button>
                   </div>
                 </CardHeader>
                 <CardContent className="p-0">
                   {isLoadingVisits ? (
-                    <div className="p-4 text-center">Loading visit log...</div>
+                    <div className="p-8 flex flex-col items-center justify-center">
+                      <div className="relative w-14 h-14 mb-3">
+                        <div className="absolute inset-0 rounded-full border-4 border-primary/20 border-t-primary animate-spin"></div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Activity className="h-5 w-5 text-primary/70" />
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground">Loading visit history...</p>
+                    </div>
                   ) : visits.length === 0 ? (
-                    <div className="p-4 text-center text-muted-foreground">
-                      No visits found. Click "Rx" to create a new one.
+                    <div className="empty-state p-8">
+                      <div className="empty-state-icon">
+                        <Activity className="h-6 w-6 tooth-icon" />
+                      </div>
+                      <h3 className="text-base font-medium mb-1">No Visit Records</h3>
+                      <p className="text-sm text-muted-foreground mb-4 max-w-xs">
+                        Create your first visit record to start tracking patient treatments and prescriptions.
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        onClick={handleCreateRx} 
+                        className="bg-primary/5 border-primary/20 hover:bg-primary/10"
+                      >
+                        <Pill className="h-4 w-4 mr-2 prescription-icon" /> Create First Visit
+                      </Button>
                     </div>
                   ) : (
                     <div className="divide-y">
