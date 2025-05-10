@@ -389,34 +389,22 @@ export default function PatientRecord() {
     try {
       console.log("Deleting media with ID:", mediaId);
       
-      // Parse current attachments
-      let attachments = [];
-      try {
-        if (selectedVisit.attachments) {
-          if (typeof selectedVisit.attachments === 'string') {
-            attachments = JSON.parse(selectedVisit.attachments);
-          } else if (Array.isArray(selectedVisit.attachments)) {
-            attachments = selectedVisit.attachments;
-          }
-        }
-      } catch (error) {
-        console.error("Error parsing attachments:", error);
-        attachments = [];
+      if (!window.confirm("Are you sure you want to delete this media file? This action cannot be undone.")) {
+        return;
       }
       
-      console.log("Original attachments:", attachments);
+      // Use the dedicated API endpoint for media deletion
+      const response = await apiRequest(
+        "DELETE", 
+        `/api/visits/${selectedVisitId}/attachments/${mediaId}`
+      );
       
-      // Filter out the attachment to be deleted
-      const updatedAttachments = attachments.filter((attachment: any) => attachment.id !== mediaId);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to delete media file");
+      }
       
-      console.log("Filtered attachments:", updatedAttachments);
-      
-      // Update visit with new attachments array
-      const result = await apiRequest("PATCH", `/api/visits/${selectedVisitId}`, {
-        attachments: JSON.stringify(updatedAttachments)
-      });
-      
-      console.log("Update response:", result);
+      console.log("Media deleted successfully");
       
       // Refresh both the single visit and all visits data
       queryClient.invalidateQueries({ queryKey: [`/api/visits/${selectedVisitId}`] });
