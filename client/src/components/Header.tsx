@@ -78,7 +78,7 @@ export default function Header({
       >
         {/* Top Bar */}
         <div className="absolute top-4 left-0 right-0 z-20 px-4">
-          <div className="bg-white/60 rounded-xl shadow-md max-w-5xl mx-auto p-2 backdrop-blur-sm flex items-center justify-between">
+          <div className="bg-white/40 rounded-xl shadow-md max-w-5xl mx-auto py-1.5 px-3 backdrop-blur-sm flex items-center justify-between">
             <h1 className="text-lg font-bold text-primary mr-4">{clinicName}</h1>
             
             <form onSubmit={handleSearchSubmit} className="flex-1 max-w-lg">
@@ -136,22 +136,22 @@ export default function Header({
         {/* Content Container */}
         <div className="container mx-auto h-full px-4 relative z-10 flex items-end pb-6">
           <div className="flex justify-between items-end w-full">
-            {/* Left Side - Slogan */}
+            {/* Left Side - Slogan with DM Sans font */}
             <div className="text-white inline-block">
-              <p className="text-3xl font-medium leading-tight" style={{ textShadow: "0 2px 4px rgba(0,0,0,0.6)" }}>
+              <p className="text-4xl font-medium leading-tight font-dm-sans" style={{ textShadow: "0 2px 4px rgba(0,0,0,0.6)" }}>
                 {firstSloganLine}
               </p>
-              <p className="text-3xl font-medium leading-tight" style={{ textShadow: "0 2px 4px rgba(0,0,0,0.6)" }}>
+              <p className="text-4xl font-medium leading-tight font-dm-sans" style={{ textShadow: "0 2px 4px rgba(0,0,0,0.6)" }}>
                 {secondSloganLine}
               </p>
             </div>
             
-            {/* Right Side - Doctor Welcome */}
+            {/* Right Side - Doctor Welcome with Canva Sans (Open Sans) font */}
             <div className="text-white text-right">
-              <p className="text-2xl font-medium leading-tight" style={{ textShadow: "0 2px 4px rgba(0,0,0,0.6)" }}>
+              <p className="text-xl font-medium leading-tight font-canva-sans" style={{ textShadow: "0 2px 4px rgba(0,0,0,0.6)" }}>
                 {firstGreetingWord}
               </p>
-              <p className="text-2xl font-bold leading-tight" style={{ textShadow: "0 2px 4px rgba(0,0,0,0.6)" }}>
+              <p className="text-3xl font-bold leading-tight font-canva-sans" style={{ textShadow: "0 2px 4px rgba(0,0,0,0.6)" }}>
                 {restGreeting}
               </p>
             </div>

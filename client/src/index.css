@@ -1,6 +1,8 @@
 /* Modern font imports from Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap'); /* Using Open Sans as Canva Sans alternative */
 
 @tailwind base;
 @tailwind components;
@@ -147,6 +149,14 @@
 
 .font-jakarta {
   font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.font-dm-sans {
+  font-family: 'DM Sans', sans-serif;
+}
+
+.font-canva-sans {
+  font-family: 'Open Sans', sans-serif;
 }
 
 /* Apply Jakarta Sans to headings */
