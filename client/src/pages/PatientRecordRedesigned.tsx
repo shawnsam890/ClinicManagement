@@ -561,53 +561,58 @@ export default function PatientRecord() {
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
             {/* Patient Medical Information */}
             <div className="md:col-span-3">
-              <Card>
-                <CardHeader className="pb-3">
+              <Card className="border-none shadow-md">
+                <CardHeader className="pb-3 bg-gradient-to-r from-white to-blue-50/30">
                   <div className="flex justify-between items-center">
-                    <CardTitle className="text-lg">Patient Details</CardTitle>
-                    <div className="flex space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => {
-                          setSelectedVisitId(null);
-                          setShowInvoice(true);
-                        }}
-                      >
-                        <Receipt className="h-4 w-4 mr-1" /> View Invoices
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        className="text-primary"
-                        onClick={() => setShowEditPatientDetails(true)}
-                      >
-                        <Edit className="h-4 w-4 mr-1" /> Edit
-                      </Button>
+                    <div className="flex items-center">
+                      <div className="bg-primary/10 p-2 rounded-lg mr-3">
+                        <User className="h-5 w-5 text-primary" />
+                      </div>
+                      <CardTitle className="text-lg">Patient Details</CardTitle>
                     </div>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      className="text-primary hover:bg-primary/10"
+                      onClick={() => setShowEditPatientDetails(true)}
+                    >
+                      <Edit className="h-4 w-4 mr-1" /> Edit
+                    </Button>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <h3 className="text-sm font-medium mb-2">Address</h3>
+                    <h3 className="text-sm font-medium mb-2 flex items-center">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary/70 mr-2"></span>
+                      Address
+                    </h3>
                     <p className="text-sm p-3 bg-muted/30 rounded-md">
                       {patient.address || "Not specified"}
                     </p>
                   </div>
                   <div>
-                    <h3 className="text-sm font-medium mb-2">Medical History</h3>
+                    <h3 className="text-sm font-medium mb-2 flex items-center">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary/70 mr-2"></span>
+                      Medical History
+                    </h3>
                     <p className="text-sm p-3 bg-muted/30 rounded-md">
                       {patient.medicalHistory || "Not specified"}
                     </p>
                   </div>
                   <div>
-                    <h3 className="text-sm font-medium mb-2">Dental History</h3>
+                    <h3 className="text-sm font-medium mb-2 flex items-center">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary/70 mr-2"></span>
+                      Dental History
+                    </h3>
                     <p className="text-sm p-3 bg-muted/30 rounded-md">
                       {patient.dentalHistory || "Not specified"}
                     </p>
                   </div>
                   <div>
-                    <h3 className="text-sm font-medium mb-2">Drug Allergy</h3>
+                    <h3 className="text-sm font-medium mb-2 flex items-center">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary/70 mr-2"></span>
+                      Drug Allergy
+                    </h3>
                     <p className="text-sm p-3 bg-muted/30 rounded-md">
                       {patient.drugAllergy || "None"}
                     </p>
@@ -615,8 +620,44 @@ export default function PatientRecord() {
                 </CardContent>
               </Card>
             </div>
+            
+            {/* Invoices Section */}
+            <div className="md:col-span-3">
+              <Card className="border-none shadow-md h-full">
+                <CardHeader className="pb-3 bg-gradient-to-r from-white to-green-50/30">
+                  <div className="flex items-center">
+                    <div className="bg-emerald-100 p-2 rounded-lg mr-3">
+                      <Receipt className="h-5 w-5 text-emerald-600" />
+                    </div>
+                    <CardTitle className="text-lg">Billing & Invoices</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col items-center justify-center text-center p-4">
+                    <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-4">
+                      <Receipt className="h-8 w-8 text-emerald-500" />
+                    </div>
+                    <h3 className="font-medium mb-2">Payment History</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      {invoicesWithItems.length > 0 
+                        ? `${invoicesWithItems.length} invoice${invoicesWithItems.length !== 1 ? 's' : ''} available` 
+                        : "No invoices yet"}
+                    </p>
+                    <Button 
+                      className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-md"
+                      onClick={() => {
+                        setSelectedVisitId(null);
+                        setShowInvoice(true);
+                      }}
+                    >
+                      <Receipt className="h-4 w-4 mr-2" /> View Invoices
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
-            {/* Left Sidebar - List of Prescriptions with enhanced styling */}
+            {/* Visit Log - List of Prescriptions with enhanced styling */}
             <div className="md:col-span-3">
               <VisitLog 
                 visits={visits} 
@@ -636,7 +677,7 @@ export default function PatientRecord() {
             </div>
             
             {/* Right Content Area - Selected Prescription Details */}
-            <div className="md:col-span-6">
+            <div className="md:col-span-3">
               {selectedVisitId ? (
                 <Card>
                   <CardHeader>
