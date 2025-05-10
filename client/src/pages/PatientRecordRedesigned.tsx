@@ -640,8 +640,6 @@ export default function PatientRecord() {
                   formatDate={formatDate}
                   getChiefComplaint={getChiefComplaint}
                 />
-                
-                {/* No need for conditional prescription details - they will be shown in the original section */}
               </div>
             </div>
             
@@ -721,21 +719,27 @@ export default function PatientRecord() {
             {/* Showing the prescription details when a visit is selected */}
             <div className={selectedVisitId ? "" : "hidden"}>
               {selectedVisitId ? (
-                <Card>
-                  <CardHeader>
+                <Card className="border-none shadow-md">
+                  <CardHeader className="bg-gradient-to-r from-white to-indigo-50/30">
                     <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle>
-                          {getChiefComplaint(visits.find((v: any) => v.id === selectedVisitId) || {})}
-                        </CardTitle>
-                        <CardDescription>
-                          {formatDate(visits.find((v: any) => v.id === selectedVisitId)?.date || '')}
-                        </CardDescription>
+                      <div className="flex items-start">
+                        <div className="bg-indigo-100 p-2 rounded-lg mr-3">
+                          <ClipboardList className="h-5 w-5 text-indigo-600" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg">
+                            {getChiefComplaint(visits.find((v: any) => v.id === selectedVisitId) || {})}
+                          </CardTitle>
+                          <CardDescription>
+                            {formatDate(visits.find((v: any) => v.id === selectedVisitId)?.date || '')}
+                          </CardDescription>
+                        </div>
                       </div>
                       <div className="flex space-x-2">
                         <Button 
                           variant="outline" 
                           size="sm"
+                          className="border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600"
                           onClick={() => handleCreateFollowUp(selectedVisitId)}
                         >
                           <CalendarDays className="h-3.5 w-3.5 mr-1" /> Add Follow-Up
@@ -743,6 +747,7 @@ export default function PatientRecord() {
                         <Button 
                           variant="outline" 
                           size="sm"
+                          className="border-emerald-200 hover:bg-emerald-50 hover:text-emerald-600"
                           onClick={() => setShowInvoice(true)}
                         >
                           <Receipt className="h-3.5 w-3.5 mr-1" /> Invoice
@@ -751,10 +756,191 @@ export default function PatientRecord() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <VisitLog 
-                      visitId={selectedVisitId} 
-                      patientId={patientId}
-                    />
+                    <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="mt-2">
+                      <TabsList className="grid w-full grid-cols-3">
+                        <TabsTrigger value="visit">Visit Details</TabsTrigger>
+                        <TabsTrigger value="rx">Prescription</TabsTrigger>
+                        <TabsTrigger value="files">Files</TabsTrigger>
+                      </TabsList>
+                      <div className="mt-4">
+                        {activeTab === 'rx' && (
+                          <PrescriptionForm 
+                            visitId={selectedVisitId}
+                            patientId={patientId}
+                            existingPrescriptions={prescriptions}
+                            onAddPrescription={(data) => {
+                              apiRequest("POST", `/api/visits/${selectedVisitId}/prescriptions`, data)
+                                .then(() => {
+                                  queryClient.invalidateQueries({ queryKey: [`/api/visits/${selectedVisitId}/prescriptions`] });
+                                  toast({
+                                    title: "Success",
+                                    description: "Prescription added successfully",
+                                  });
+                                })
+                                .catch((error) => {
+                                  console.error("Error adding prescription:", error);
+                                  toast({
+                                    title: "Error",
+                                    description: "Failed to add prescription",
+                                    variant: "destructive",
+                                  });
+                                });
+                            }}
+                            onDeletePrescription={(id) => {
+                              apiRequest("DELETE", `/api/prescriptions/${id}`)
+                                .then(() => {
+                                  queryClient.invalidateQueries({ queryKey: [`/api/visits/${selectedVisitId}/prescriptions`] });
+                                  toast({
+                                    title: "Success",
+                                    description: "Prescription deleted successfully",
+                                  });
+                                })
+                                .catch((error) => {
+                                  console.error("Error deleting prescription:", error);
+                                  toast({
+                                    title: "Error",
+                                    description: "Failed to delete prescription",
+                                    variant: "destructive",
+                                  });
+                                });
+                            }}
+                            onUpdatePrescription={(id, data) => {
+                              apiRequest("PUT", `/api/prescriptions/${id}`, data)
+                                .then(() => {
+                                  queryClient.invalidateQueries({ queryKey: [`/api/visits/${selectedVisitId}/prescriptions`] });
+                                  toast({
+                                    title: "Success",
+                                    description: "Prescription updated successfully",
+                                  });
+                                })
+                                .catch((error) => {
+                                  console.error("Error updating prescription:", error);
+                                  toast({
+                                    title: "Error",
+                                    description: "Failed to update prescription",
+                                    variant: "destructive",
+                                  });
+                                });
+                            }}
+                          />
+                        )}
+                        {activeTab === 'visit' && (
+                          <div className="space-y-4">
+                            {visits.find((v: any) => v.id === selectedVisitId) && (
+                              <form onSubmit={(e) => {
+                                e.preventDefault();
+                                const form = e.target as HTMLFormElement;
+                                const formData = new FormData(form);
+                                const data: any = {};
+                                
+                                formData.forEach((value, key) => {
+                                  data[key] = value;
+                                });
+                                
+                                updateVisitMutation.mutate({
+                                  id: selectedVisitId,
+                                  ...data
+                                });
+                              }}>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                  <div>
+                                    <Label htmlFor="chiefComplaint">Chief Complaint</Label>
+                                    <Input 
+                                      id="chiefComplaint"
+                                      name="chiefComplaint"
+                                      defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.chiefComplaint || ""}
+                                      className="mt-1"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="areaOfComplaint">Area of Complaint</Label>
+                                    <Input 
+                                      id="areaOfComplaint"
+                                      name="areaOfComplaint"
+                                      defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.areaOfComplaint || ""}
+                                      className="mt-1"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="oralExamination">Oral Examination</Label>
+                                    <Textarea 
+                                      id="oralExamination"
+                                      name="oralExamination"
+                                      defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.oralExamination || ""}
+                                      className="mt-1"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="investigation">Investigation</Label>
+                                    <Textarea 
+                                      id="investigation"
+                                      name="investigation"
+                                      defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.investigation || ""}
+                                      className="mt-1"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="treatmentPlan">Treatment Plan</Label>
+                                    <Textarea 
+                                      id="treatmentPlan"
+                                      name="treatmentPlan"
+                                      defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.treatmentPlan || ""}
+                                      className="mt-1"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="treatmentDone">Treatment Done</Label>
+                                    <Textarea 
+                                      id="treatmentDone"
+                                      name="treatmentDone"
+                                      defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.treatmentDone || ""}
+                                      className="mt-1"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="advice">Advice</Label>
+                                    <Textarea 
+                                      id="advice"
+                                      name="advice"
+                                      defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.advice || ""}
+                                      className="mt-1"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="notes">Notes</Label>
+                                    <Textarea 
+                                      id="notes"
+                                      name="notes"
+                                      defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.notes || ""}
+                                      className="mt-1"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="nextAppointment">Next Appointment</Label>
+                                    <Input 
+                                      id="nextAppointment"
+                                      name="nextAppointment"
+                                      type="date"
+                                      defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.nextAppointment || ""}
+                                      className="mt-1"
+                                    />
+                                  </div>
+                                </div>
+                                <Button type="submit" className="mr-2">
+                                  <Save className="h-4 w-4 mr-1" /> Save Changes
+                                </Button>
+                              </form>
+                            )}
+                          </div>
+                        )}
+                        {activeTab === 'files' && (
+                          <ConsentForm 
+                            visitId={selectedVisitId}
+                            patientName={patient.name}
+                          />
+                        )}
+                      </div>
+                    </Tabs>
                   </CardContent>
                 </Card>
               ) : (
