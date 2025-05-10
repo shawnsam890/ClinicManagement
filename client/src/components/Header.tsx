@@ -73,8 +73,8 @@ export default function Header({
     <header className="shadow-md">
       {/* Main Header with Image Background */}
       <div 
-        className="relative bg-cover bg-center h-64 overflow-hidden" 
-        style={{ backgroundImage: `url(${dentalClinicImage})`, backgroundSize: '100%', backgroundPosition: 'center 30%' }}
+        className="relative bg-cover bg-center h-80 w-full overflow-hidden" 
+        style={{ backgroundImage: `url(${dentalClinicImage})`, backgroundSize: 'cover', backgroundPosition: 'center 30%' }}
       >
         {/* Top Bar */}
         <div className="absolute top-4 left-0 right-0 z-20 px-4">
@@ -130,8 +130,8 @@ export default function Header({
           </div>
         </div>
         
-        {/* Translucent Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-primary/30" style={{ mixBlendMode: 'multiply' }}></div>
+        {/* Light subtle overlay for text legibility */}
+        <div className="absolute inset-0 bg-black/10"></div>
         
         {/* Content Container */}
         <div className="container mx-auto h-full px-4 relative z-10 flex items-end pb-6">
@@ -159,32 +159,32 @@ export default function Header({
             </div>
           </div>
         </div>
-      </div>
       
-      {/* Subheader with Page Title */}
-      <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <div className="flex items-center">
-            {showBackButton && (
-              <button
-                onClick={() => navigate(backTo)}
-                className="text-primary mr-3 hover:text-primary/80"
-                aria-label="Back"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </button>
-            )}
-            <h2 className="text-primary font-bold text-xl font-heading">{title}</h2>
+        {/* Page Title embedded in the top bar */}
+        <div className="absolute bottom-4 left-0 right-0 z-20 px-4">
+          <div className="max-w-5xl mx-auto flex justify-between items-center">
+            <div className="flex items-center">
+              {showBackButton && (
+                <button
+                  onClick={() => navigate(backTo)}
+                  className="text-white mr-3 hover:text-white/80 bg-primary/20 p-2 rounded-full backdrop-blur-sm"
+                  aria-label="Back"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </button>
+              )}
+              <h2 className="text-white font-bold text-xl font-heading drop-shadow-md">{title}</h2>
+            </div>
+            
+            {/* Settings Button */}
+            <button 
+              onClick={() => navigate("/settings")} 
+              className="text-white hover:text-white/80 p-2 rounded-full bg-primary/20 backdrop-blur-sm"
+              aria-label="Settings"
+            >
+              <Settings className="h-5 w-5" />
+            </button>
           </div>
-          
-          {/* Settings Button */}
-          <button 
-            onClick={() => navigate("/settings")} 
-            className="text-gray-600 hover:text-primary p-2 rounded-full hover:bg-gray-100 transition-all"
-            aria-label="Settings"
-          >
-            <Settings className="h-5 w-5" />
-          </button>
         </div>
       </div>
     </header>
