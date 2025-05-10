@@ -675,6 +675,36 @@ export default function Settings() {
                     </div>
                     
                     <div className="space-y-2">
+                      <Label htmlFor="clinicSlogan">Clinic Slogan/Tagline</Label>
+                      <Input
+                        id="clinicSlogan"
+                        value={clinicInfoState.slogan}
+                        onChange={(e) =>
+                          setClinicInfoState({
+                            ...clinicInfoState,
+                            slogan: e.target.value,
+                          })
+                        }
+                        placeholder="Creating Smiles, Creating Happiness"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="doctorGreeting">Doctor Greeting</Label>
+                      <Input
+                        id="doctorGreeting"
+                        value={clinicInfoState.doctorGreeting}
+                        onChange={(e) =>
+                          setClinicInfoState({
+                            ...clinicInfoState,
+                            doctorGreeting: e.target.value,
+                          })
+                        }
+                        placeholder="Welcome Dr. Shawn"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
                       <Label htmlFor="clinicPhone">Phone Number</Label>
                       <Input
                         id="clinicPhone"

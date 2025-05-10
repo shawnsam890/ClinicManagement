@@ -1,6 +1,7 @@
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Bell, ChevronDown, Settings, User } from "lucide-react";
+// Fixed path with space in filename
 import dentalClinicImage from "@assets/Dental Extraction.jpg";
 
 interface HeaderProps {
@@ -45,7 +46,7 @@ export default function Header({
         style={{ backgroundImage: `url(${dentalClinicImage})` }}
       >
         {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-primary/30"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-primary/30 backdrop-blur-sm"></div>
         
         {/* Content Container */}
         <div className="container mx-auto h-full px-4 py-3 relative z-10">
@@ -70,14 +71,14 @@ export default function Header({
               <h1 className="text-2xl md:text-3xl font-bold mb-2 font-heading drop-shadow-lg">
                 {clinicName}
               </h1>
-              <p className="text-lg md:text-xl font-medium drop-shadow-lg text-white/90 max-w-xs">
-                {slogan}
+              <p className="text-sm md:text-lg italic font-medium drop-shadow-lg text-white/90 max-w-xs tracking-wide">
+                "{slogan}"
               </p>
             </div>
             
             {/* Right Side - Doctor Welcome */}
             <div className="hidden md:block text-white text-right">
-              <p className="text-xl font-medium drop-shadow-lg">
+              <p className="text-xl font-medium drop-shadow-lg bg-white/10 px-4 py-2 rounded-lg backdrop-blur-sm">
                 {doctorGreeting}
               </p>
             </div>
