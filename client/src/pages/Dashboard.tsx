@@ -4,6 +4,15 @@ import DashboardTile from "@/components/DashboardTile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, FlaskRound, BarChart4, Settings, UserCog, Calendar } from "lucide-react";
 
+// Import dashboard images - we'll use the attached assets here
+import patientDatabaseImage from "@assets/Screenshot_2025-05-07-16-48-33-795_com.simpld.app-edit.jpg";
+import labWorkImage from "@assets/Dental Extraction.jpg";
+import revenueImage from "@assets/Screenshot 2025-05-10 003048.png";
+import staffManagementImage from "@assets/Screenshot_2025-05-10-00-28-27-943_com.replit.app.jpg";
+import settingsImage from "@assets/2 ss.png";
+// Using a JPEG instead of PDF for doctors image since PDFs can't be displayed as images
+import doctorsImage from "@assets/root canal consent form.jpg";
+
 export default function Dashboard() {
   const { data: patients } = useQuery({
     queryKey: ["/api/patients"],
@@ -47,47 +56,41 @@ export default function Dashboard() {
     <Layout title={clinicInfo?.settingValue?.name || "Dr. Shawn's Clinic"}>
       <h2 className="text-2xl font-bold text-neutral-800 mb-6 font-heading">Dashboard</h2>
       
-      {/* Dashboard Tiles */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {/* Dashboard Tiles - 3x2 Grid as shown in design */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
         <DashboardTile
           title="Patient Database"
-          description="Manage patient records, appointments, and histories"
-          imageSrc="https://images.unsplash.com/photo-1566665797739-1674de7a421a?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=300"
-          icon={<Users />}
+          imageSrc={patientDatabaseImage}
           href="/patients"
         />
         
         <DashboardTile
-          title="Lab Works"
-          description="Track lab orders, results, and inventory"
-          imageSrc="https://images.unsplash.com/photo-1579684385127-1ef15d508118?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=300" 
-          icon={<FlaskRound />}
+          title="Lab Work"
+          imageSrc={labWorkImage}
           href="/lab-works"
         />
         
         <DashboardTile
+          title="Staff Management"
+          imageSrc={staffManagementImage}
+          href="/staff"
+        />
+        
+        <DashboardTile
           title="Revenue"
-          description="Manage billing, payments, and financial reports"
-          imageSrc="https://images.unsplash.com/photo-1563986768609-322da13575f3?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=300"
-          icon={<BarChart4 />}
+          imageSrc={revenueImage}
           href="/revenue"
         />
         
         <DashboardTile
-          title="Staff Management"
-          description="Manage staff details, schedule, and salary"
-          imageSrc="https://images.unsplash.com/photo-1582750433449-648ed127bb54?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=300"
-          icon={<UserCog />}
-          href="/staff"
+          title="Doctors"
+          imageSrc={doctorsImage}
+          href="/doctors"
         />
-        
-        {/* Appointments tile removed as per new workflow */}
         
         <DashboardTile
           title="Settings"
-          description="Configure application preferences and options"
-          imageSrc="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=300"
-          icon={<Settings />}
+          imageSrc={settingsImage}
           href="/settings"
         />
       </div>

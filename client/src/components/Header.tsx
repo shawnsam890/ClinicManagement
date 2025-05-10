@@ -1,8 +1,7 @@
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Bell, ChevronDown, Settings, User } from "lucide-react";
-// Fixed path with space in filename
-import dentalClinicImage from "@assets/Dental Extraction.jpg";
+import { ArrowLeft, Bell, ChevronDown, Search, Settings, User } from "lucide-react";
+import smileBackground from "@/assets/smile-background.png";
 
 interface HeaderProps {
   title: string;
@@ -39,79 +38,86 @@ export default function Header({
   const doctorGreeting = clinicInfo?.settingValue?.doctorGreeting || "Welcome Dr. Shawn";
 
   return (
-    <header className="shadow-md">
-      {/* Main Header with Image Background */}
+    <header>
+      {/* Main Header with Smile Background */}
       <div 
-        className="relative bg-cover bg-center h-48 md:h-56" 
-        style={{ backgroundImage: `url(${dentalClinicImage})` }}
+        className="relative bg-cover bg-center h-[500px]" 
+        style={{ backgroundImage: `url(${smileBackground})` }}
       >
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-primary/30 backdrop-blur-sm"></div>
-        
-        {/* Content Container */}
-        <div className="container mx-auto h-full px-4 py-3 relative z-10">
-          {/* Top Navigation */}
-          <div className="flex justify-end items-center">
-            <button className="text-white mr-4 hover:text-neutral-200 p-2 rounded-full hover:bg-white/10 transition-all">
-              <Bell className="h-5 w-5" />
-            </button>
-            <div className="flex items-center cursor-pointer bg-white/10 rounded-full px-3 py-1 hover:bg-white/20 transition-all">
-              <div className="w-8 h-8 bg-white rounded-full mr-2 flex items-center justify-center text-primary font-semibold">
-                DS
-              </div>
-              <span className="text-white text-sm hidden md:inline-block">Dr. Shawn</span>
-              <ChevronDown className="text-white ml-1 h-4 w-4" />
+        {/* Top Navigation Bar */}
+        <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 py-3 z-10">
+          {/* Clinic Name in Pill */}
+          <div className="bg-white rounded-full px-6 py-3 shadow-lg">
+            <h1 className="text-xl font-bold text-gray-800">
+              {clinicName}
+            </h1>
+          </div>
+          
+          {/* Search Bar */}
+          <div className="relative flex-grow max-w-md mx-8">
+            <div className="bg-white rounded-full flex items-center shadow-lg px-4 py-2">
+              <input 
+                type="text" 
+                placeholder="Search for Patients" 
+                className="flex-grow border-none outline-none text-sm pl-2"
+              />
+              <Search className="h-5 w-5 text-gray-500" />
             </div>
           </div>
           
-          {/* Clinic Info Container */}
-          <div className="flex justify-between items-end h-28 md:h-32 mt-6">
-            {/* Left Side - Clinic Name & Slogan */}
-            <div className="text-white">
-              <h1 className="text-2xl md:text-3xl font-bold mb-2 font-heading drop-shadow-lg">
-                {clinicName}
-              </h1>
-              <p className="text-sm md:text-lg italic font-medium drop-shadow-lg text-white/90 max-w-xs tracking-wide">
-                "{slogan}"
-              </p>
-            </div>
-            
-            {/* Right Side - Doctor Welcome */}
-            <div className="hidden md:block text-white text-right">
-              <p className="text-xl font-medium drop-shadow-lg bg-white/10 px-4 py-2 rounded-lg backdrop-blur-sm">
-                {doctorGreeting}
-              </p>
-            </div>
+          {/* User Avatar */}
+          <div className="bg-white rounded-full h-16 w-16 flex items-center justify-center text-2xl font-bold shadow-lg">
+            DR
           </div>
+        </div>
+        
+        {/* Left Side - Slogan */}
+        <div className="absolute bottom-32 left-8 text-white">
+          <p className="text-3xl font-light italic leading-relaxed">
+            Creating Smiles<br />
+            Creating Happiness
+          </p>
+        </div>
+        
+        {/* Right Side - Doctor Welcome */}
+        <div className="absolute right-8 top-1/3 text-white">
+          <p className="text-4xl font-bold mb-0">
+            Welcome
+          </p>
+          <p className="text-5xl font-bold">
+            Dr. Shawn
+          </p>
         </div>
       </div>
       
-      {/* Subheader with Page Title */}
-      <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <div className="flex items-center">
-            {showBackButton && (
-              <button
-                onClick={() => navigate(backTo)}
-                className="text-primary mr-3 hover:text-primary/80"
-                aria-label="Back"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </button>
-            )}
-            <h2 className="text-primary font-bold text-xl font-heading">{title}</h2>
+      {/* Dashboard or Page Title rendered conditionally */}
+      {title !== "Dashboard" && (
+        <div className="bg-white border-b shadow-sm">
+          <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div className="flex items-center">
+              {showBackButton && (
+                <button
+                  onClick={() => navigate(backTo)}
+                  className="text-primary mr-3 hover:text-primary/80"
+                  aria-label="Back"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </button>
+              )}
+              <h2 className="text-primary font-bold text-xl font-heading">{title}</h2>
+            </div>
+            
+            {/* Settings Button */}
+            <button 
+              onClick={() => navigate("/settings")} 
+              className="text-gray-600 hover:text-primary p-2 rounded-full hover:bg-gray-100 transition-all"
+              aria-label="Settings"
+            >
+              <Settings className="h-5 w-5" />
+            </button>
           </div>
-          
-          {/* Settings Button */}
-          <button 
-            onClick={() => navigate("/settings")} 
-            className="text-gray-600 hover:text-primary p-2 rounded-full hover:bg-gray-100 transition-all"
-            aria-label="Settings"
-          >
-            <Settings className="h-5 w-5" />
-          </button>
         </div>
-      </div>
+      )}
     </header>
   );
 }
