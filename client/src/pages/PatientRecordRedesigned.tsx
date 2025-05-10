@@ -171,10 +171,17 @@ export default function PatientRecord() {
   const createVisitMutation = useMutation({
     mutationFn: async (data: any) => {
       console.log("Creating new visit for prescription:", data);
+      // Format the date as YYYY-MM-DD to prevent SQL errors
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      const formattedDate = `${year}-${month}-${day}`;
+      
       const res = await apiRequest("POST", "/api/visits", {
         patientId,
-        date: new Date().toISOString().split('T')[0],
-        chiefComplaint: data.chiefComplaint || "Not specified",
+        date: formattedDate,
+        chiefComplaint: data.chiefComplaint || "New prescription",
       });
       return res.json();
     },
@@ -208,9 +215,16 @@ export default function PatientRecord() {
   // Create a new follow-up appointment for a specific visit
   const createFollowUpMutation = useMutation({
     mutationFn: async (data: any) => {
+      // Format the date as YYYY-MM-DD to prevent SQL errors
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      const formattedDate = `${year}-${month}-${day}`;
+      
       const res = await apiRequest("POST", "/api/visits", {
         patientId,
-        date: new Date().toISOString().split('T')[0],
+        date: formattedDate,
         chiefComplaint: "Follow-up for visit #" + data.visitId,
         previousVisitId: data.visitId,
       });
@@ -362,6 +376,20 @@ export default function PatientRecord() {
   // Update visit
   const updateVisitMutation = useMutation({
     mutationFn: async (data: { id: number } & Partial<PatientVisit>) => {
+      // Handle date formatting for next appointment
+      if (data.nextAppointment) {
+        try {
+          // Make sure the date is in YYYY-MM-DD format
+          const dateObj = new Date(data.nextAppointment);
+          const year = dateObj.getFullYear();
+          const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+          const day = String(dateObj.getDate()).padStart(2, '0');
+          data.nextAppointment = `${year}-${month}-${day}`;
+        } catch (err) {
+          console.error("Error formatting date:", err);
+        }
+      }
+      
       const res = await apiRequest("PUT", `/api/visits/${data.id}`, data);
       return res.json();
     },
