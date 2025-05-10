@@ -1206,7 +1206,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const dataUri = `data:${mimeType};base64,${base64File}`;
       
       // Update visit attachments
-      const attachments = visit.attachments || [];
+      let attachments = [];
+      try {
+        // Handle existing attachments which might be a JSON string
+        if (visit.attachments) {
+          if (typeof visit.attachments === 'string') {
+            attachments = JSON.parse(visit.attachments);
+          } else if (Array.isArray(visit.attachments)) {
+            attachments = visit.attachments;
+          }
+        }
+      } catch (error) {
+        console.error("Error parsing existing attachments:", error);
+        attachments = [];
+      }
+      
+      // Add new attachment
       attachments.push({
         id: Date.now().toString(),
         name: req.file.originalname,
@@ -1216,7 +1231,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       await storage.updatePatientVisit(visit.id, {
-        attachments
+        attachments: JSON.stringify(attachments)
       });
       
       res.json({ message: 'File uploaded successfully' });
@@ -1259,11 +1274,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Update visit attachments
-      const attachments = visit.attachments || [];
-      attachments.push(...mediaFiles);
+      let attachments = [];
+      try {
+        // Handle existing attachments which might be a JSON string
+        if (visit.attachments) {
+          if (typeof visit.attachments === 'string') {
+            attachments = JSON.parse(visit.attachments);
+          } else if (Array.isArray(visit.attachments)) {
+            attachments = visit.attachments;
+          }
+        }
+      } catch (error) {
+        console.error("Error parsing existing attachments:", error);
+        attachments = [];
+      }
+      
+      // Combine existing and new attachments
+      attachments = [...attachments, ...mediaFiles];
       
       await storage.updatePatientVisit(visit.id, {
-        attachments
+        attachments: JSON.stringify(attachments)
       });
       
       res.json({ 
