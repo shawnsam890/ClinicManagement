@@ -1,0 +1,192 @@
+/* VisitLog.css */
+
+.visit-list {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.visit-item {
+  position: relative;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.visit-item:hover {
+  background-color: rgba(var(--primary-rgb), 0.04);
+}
+
+.visit-item.active {
+  background-color: rgba(var(--primary-rgb), 0.08);
+}
+
+.visit-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(to bottom, var(--primary), rgba(var(--primary-rgb), 0.7));
+  border-radius: 0 4px 4px 0;
+}
+
+.visit-date {
+  position: relative;
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background-color: rgba(var(--primary-rgb), 0.08);
+  font-size: 0.75rem;
+  color: var(--primary);
+  transition: all 0.3s ease;
+}
+
+.visit-item:hover .visit-date {
+  background-color: rgba(var(--primary-rgb), 0.12);
+}
+
+.visit-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+}
+
+.visit-item:hover .visit-title {
+  color: var(--primary);
+}
+
+.visit-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  margin-right: 8px;
+  background-color: rgba(var(--primary-rgb), 0.1);
+  color: var(--primary);
+}
+
+.visit-item:hover .visit-icon {
+  transform: scale(1.1);
+  background-color: rgba(var(--primary-rgb), 0.15);
+}
+
+.visit-item .action-buttons {
+  opacity: 0;
+  transform: translateX(10px);
+  transition: all 0.3s ease;
+}
+
+.visit-item:hover .action-buttons {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.visit-item.active .action-buttons {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.visit-badge {
+  transition: all 0.2s ease;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.visit-item:hover .visit-badge {
+  background-color: rgba(var(--primary-rgb), 0.08);
+  border-color: rgba(var(--primary-rgb), 0.2);
+}
+
+.prescription-icon {
+  transform: rotate(-45deg);
+  margin-right: 6px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1rem;
+  text-align: center;
+  color: var(--muted-foreground);
+}
+
+.empty-state-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: rgba(var(--primary-rgb), 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  color: var(--primary);
+}
+
+.selected-visit-card {
+  border-radius: 12px;
+  border: 1px solid rgba(var(--primary-rgb), 0.1);
+  background: linear-gradient(to bottom right, white, rgba(var(--primary-rgb), 0.02));
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.selected-visit-card:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.selected-visit-header {
+  border-bottom: 1px solid rgba(var(--primary-rgb), 0.1);
+  background-color: rgba(var(--primary-rgb), 0.03);
+}
+
+.no-visit-placeholder {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.8), rgba(var(--primary-rgb), 0.03));
+  border: 1px dashed rgba(var(--primary-rgb), 0.2);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.no-visit-placeholder:hover {
+  border-color: rgba(var(--primary-rgb), 0.3);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(var(--primary-rgb), 0.05));
+}
+
+/* Tooth icon animation */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.tooth-icon {
+  animation: pulse 3s infinite ease-in-out;
+}
+
+/* Create button animation */
+.create-button {
+  transition: all 0.3s ease;
+  border: 1px solid rgba(var(--primary-rgb), 0.2);
+  background: linear-gradient(to right, rgba(var(--primary-rgb), 0.1), rgba(var(--primary-rgb), 0.0));
+}
+
+.create-button:hover {
+  border-color: rgba(var(--primary-rgb), 0.3);
+  background: linear-gradient(to right, rgba(var(--primary-rgb), 0.15), rgba(var(--primary-rgb), 0.05));
+  transform: translateY(-1px);
+}

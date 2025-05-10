@@ -23,6 +23,7 @@
   
   /* Updated primary colors - teal blue */
   --primary: 195 85% 41%;
+  --primary-rgb: 21, 170, 208; /* RGB equivalent of the HSL primary color */
   --primary-foreground: 0 0% 100%;
   
   /* Updated secondary colors - soft coral */
