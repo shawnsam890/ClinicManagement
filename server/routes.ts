@@ -745,8 +745,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/invoices', async (req, res) => {
     try {
       const invoices = await storage.getInvoices();
-      res.json(invoices);
+      
+      // Get all patients to check for orphaned invoices
+      const patients = await storage.getAllPatients();
+      const patientIds = new Set(patients.map(p => p.patientId));
+      
+      // Filter out invoices that belong to patients that no longer exist
+      const validInvoices = invoices.filter(invoice => patientIds.has(invoice.patientId));
+      
+      // Cleanup orphaned invoices (those with no matching patient)
+      const orphanedInvoices = invoices.filter(invoice => !patientIds.has(invoice.patientId));
+      if (orphanedInvoices.length > 0) {
+        console.log(`Found ${orphanedInvoices.length} orphaned invoices. Cleaning up...`);
+        
+        // Import necessary dependencies for database operations
+        const { db } = await import('./db');
+        const { eq } = await import('drizzle-orm');
+        const { invoices: invoicesTable, invoiceItems } = await import('@shared/schema');
+        
+        // Delete orphaned invoices
+        await db.transaction(async (tx) => {
+          for (const invoice of orphanedInvoices) {
+            // First delete associated invoice items
+            await tx.delete(invoiceItems)
+              .where(eq(invoiceItems.invoiceId, invoice.id));
+            
+            // Then delete the invoice
+            await tx.delete(invoicesTable)
+              .where(eq(invoicesTable.id, invoice.id));
+          }
+        });
+      }
+      
+      res.json(validInvoices);
     } catch (error: any) {
+      console.error('Error fetching invoices:', error);
       res.status(500).json({ message: error.message });
     }
   });
