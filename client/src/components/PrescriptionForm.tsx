@@ -287,9 +287,35 @@ export default function PrescriptionForm({
       return;
     }
 
-    // Save all prescriptions
-    for (const prescription of prescriptions) {
-      await savePrescription.mutateAsync(prescription);
+    try {
+      // Show loading toast
+      toast({
+        title: "Saving...",
+        description: "Saving all prescriptions"
+      });
+
+      // Save all prescriptions
+      for (const prescription of prescriptions) {
+        await savePrescription.mutateAsync(prescription);
+      }
+
+      // Show success toast after all prescriptions are saved
+      toast({
+        title: "Success",
+        description: "All prescriptions saved successfully"
+      });
+
+      // Trigger the onSave callback if provided
+      if (onSave) {
+        onSave(prescriptions);
+      }
+    } catch (error) {
+      console.error("Error saving prescriptions:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save some prescriptions",
+        variant: "destructive"
+      });
     }
   };
 
