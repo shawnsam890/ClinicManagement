@@ -149,11 +149,24 @@ export default function PatientRecord() {
   // Update form data when patient is loaded
   useEffect(() => {
     if (patient) {
+      // Convert comma-separated strings to arrays
+      const medHistory = patient.medicalHistory 
+        ? patient.medicalHistory.split(', ').filter(item => item.trim()) 
+        : [];
+      
+      const dentHistory = patient.dentalHistory
+        ? patient.dentalHistory.split(', ').filter(item => item.trim())
+        : [];
+      
+      const allergies = patient.drugAllergy
+        ? patient.drugAllergy.split(', ').filter(item => item.trim())
+        : [];
+
       setPatientForm({
         address: patient.address || '',
-        medicalHistory: patient.medicalHistory || '',
-        dentalHistory: patient.dentalHistory || '',
-        drugAllergy: patient.drugAllergy || ''
+        medicalHistory: medHistory,
+        dentalHistory: dentHistory,
+        drugAllergy: allergies
       });
     }
   }, [patient]);
