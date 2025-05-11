@@ -747,7 +747,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const invoices = await storage.getInvoices();
       
       // Get all patients to check for orphaned invoices
-      const patients = await storage.getAllPatients();
+      const patients = await storage.getPatients();
       const patientIds = new Set(patients.map(p => p.patientId));
       
       // Filter out invoices that belong to patients that no longer exist
