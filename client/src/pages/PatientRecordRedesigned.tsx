@@ -158,11 +158,11 @@ export default function PatientRecord() {
     }
   }, [patient]);
 
-  // Load medical history and dental history options
+  // Load medical history, dental history, and drug allergy options
   useEffect(() => {
     // First try to get options from dropdown_options (more current)
     if (dropdownOptions && dropdownOptions.settingValue) {
-      const { medicalHistory, previousDentalHistory } = dropdownOptions.settingValue;
+      const { medicalHistory, previousDentalHistory, drugAllergy } = dropdownOptions.settingValue;
       
       if (medicalHistory && Array.isArray(medicalHistory)) {
         setMedicalHistoryOptions(medicalHistory);
@@ -171,11 +171,16 @@ export default function PatientRecord() {
       if (previousDentalHistory && Array.isArray(previousDentalHistory)) {
         setDentalHistoryOptions(previousDentalHistory);
       }
+      
+      if (drugAllergy && Array.isArray(drugAllergy)) {
+        setDrugAllergyOptions(drugAllergy);
+      }
     } 
     // Fallback to patient_options if dropdown options are missing
     else if (patientOptions) {
       const medHistory = patientOptions.find((s: any) => s.settingKey === 'medical_history_options');
       const dentHistory = patientOptions.find((s: any) => s.settingKey === 'dental_history_options');
+      const drugAllergy = patientOptions.find((s: any) => s.settingKey === 'drug_allergy_options');
       
       if (medHistory && Array.isArray(medHistory.settingValue)) {
         setMedicalHistoryOptions(medHistory.settingValue);
@@ -189,6 +194,13 @@ export default function PatientRecord() {
       } else {
         // Default options if none exist
         setDentalHistoryOptions(['Extraction', 'RCT', 'Scaling', 'None']);
+      }
+      
+      if (drugAllergy && Array.isArray(drugAllergy.settingValue)) {
+        setDrugAllergyOptions(drugAllergy.settingValue);
+      } else {
+        // Default options if none exist
+        setDrugAllergyOptions(['Penicillin', 'NSAIDs', 'Sulfa Drugs', 'None']);
       }
     }
   }, [patientOptions, dropdownOptions]);
@@ -598,6 +610,43 @@ export default function PatientRecord() {
       setNewDentalHistoryOption('');
     }).catch(error => {
       console.error("Error saving dental history options:", error);
+    });
+  };
+  
+  // Add new drug allergy option
+  const handleAddDrugAllergyOption = () => {
+    if (!newDrugAllergyOption.trim()) return;
+    
+    const updatedOptions = [...drugAllergyOptions, newDrugAllergyOption];
+    setDrugAllergyOptions(updatedOptions);
+    
+    // Save to settings
+    apiRequest("POST", "/api/settings", {
+      settingKey: "drug_allergy_options",
+      settingValue: updatedOptions,
+      category: "patient_options"
+    }).then(() => {
+      queryClient.invalidateQueries({ queryKey: ['/api/settings/category/patient_options'] });
+      
+      // Also update the dropdown_options which is used by other parts of the app
+      if (dropdownOptions && dropdownOptions.settingValue) {
+        const updatedDropdownOptions = {
+          ...dropdownOptions.settingValue,
+          drugAllergy: updatedOptions
+        };
+        
+        apiRequest("PUT", `/api/settings/${dropdownOptions.id}`, {
+          settingValue: updatedDropdownOptions
+        }).then(() => {
+          queryClient.invalidateQueries({ queryKey: ['/api/settings/key/dropdown_options'] });
+        }).catch(error => {
+          console.error("Error updating dropdown options:", error);
+        });
+      }
+      
+      setNewDrugAllergyOption('');
+    }).catch(error => {
+      console.error("Error saving drug allergy options:", error);
     });
   };
 
