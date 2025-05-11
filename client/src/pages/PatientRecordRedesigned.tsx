@@ -1287,22 +1287,7 @@ export default function PatientRecord() {
                               </div>
                             )}
                             
-                            <Separator className="my-4" />
-                            
-                            <ConsentForm 
-                              visitId={selectedVisitId}
-                              patientName={patient.name}
-                              onClearSignature={() => {
-                                // Add function to clear patient signature here
-                                const sigCanvas = document.querySelector('.patient-signature-pad') as HTMLCanvasElement;
-                                if (sigCanvas) {
-                                  const context = sigCanvas.getContext('2d');
-                                  if (context) {
-                                    context.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
-                                  }
-                                }
-                              }}
-                            />
+                            {/* Digital consent form removed as requested */}
                           </div>
                         )}
                         
