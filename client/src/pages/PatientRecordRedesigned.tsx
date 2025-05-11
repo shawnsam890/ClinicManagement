@@ -1623,41 +1623,23 @@ export default function PatientRecord() {
                       )}
                     </div>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <Select
-                        onValueChange={(value) => handleMultiSelectChange('medicalHistory', value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Add medical history" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {medicalHistoryOptions
-                            .filter(option => !patientForm.medicalHistory.includes(option))
-                            .map((option) => (
-                              <SelectItem key={option} value={option}>
-                                {option}
-                              </SelectItem>
-                            ))
-                          }
-                        </SelectContent>
-                      </Select>
-                      
-                      <div className="flex space-x-2">
-                        <Input
-                          placeholder="Add new option"
-                          value={newMedicalHistoryOption}
-                          onChange={(e) => setNewMedicalHistoryOption(e.target.value)}
-                        />
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          size="icon"
-                          onClick={handleAddMedicalHistoryOption}
-                        >
-                          <PlusCircle className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
+                    <Select
+                      onValueChange={(value) => handleMultiSelectChange('medicalHistory', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Add medical history" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {medicalHistoryOptions
+                          .filter(option => !patientForm.medicalHistory.includes(option))
+                          .map((option) => (
+                            <SelectItem key={option} value={option}>
+                              {option}
+                            </SelectItem>
+                          ))
+                        }
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 
@@ -1680,41 +1662,23 @@ export default function PatientRecord() {
                       )}
                     </div>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <Select
-                        onValueChange={(value) => handleMultiSelectChange('dentalHistory', value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Add dental history" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {dentalHistoryOptions
-                            .filter(option => !patientForm.dentalHistory.includes(option))
-                            .map((option) => (
-                              <SelectItem key={option} value={option}>
-                                {option}
-                              </SelectItem>
-                            ))
-                          }
-                        </SelectContent>
-                      </Select>
-                      
-                      <div className="flex space-x-2">
-                        <Input
-                          placeholder="Add new option"
-                          value={newDentalHistoryOption}
-                          onChange={(e) => setNewDentalHistoryOption(e.target.value)}
-                        />
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          size="icon"
-                          onClick={handleAddDentalHistoryOption}
-                        >
-                          <PlusCircle className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
+                    <Select
+                      onValueChange={(value) => handleMultiSelectChange('dentalHistory', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Add dental history" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {dentalHistoryOptions
+                          .filter(option => !patientForm.dentalHistory.includes(option))
+                          .map((option) => (
+                            <SelectItem key={option} value={option}>
+                              {option}
+                            </SelectItem>
+                          ))
+                        }
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 
@@ -1737,41 +1701,23 @@ export default function PatientRecord() {
                       )}
                     </div>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <Select
-                        onValueChange={(value) => handleMultiSelectChange('drugAllergy', value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Add drug allergy" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {drugAllergyOptions
-                            .filter(option => !patientForm.drugAllergy.includes(option))
-                            .map((option) => (
-                              <SelectItem key={option} value={option}>
-                                {option}
-                              </SelectItem>
-                            ))
-                          }
-                        </SelectContent>
-                      </Select>
-                      
-                      <div className="flex space-x-2">
-                        <Input
-                          placeholder="Add new option"
-                          value={newDrugAllergyOption}
-                          onChange={(e) => setNewDrugAllergyOption(e.target.value)}
-                        />
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          size="icon"
-                          onClick={handleAddDrugAllergyOption}
-                        >
-                          <PlusCircle className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
+                    <Select
+                      onValueChange={(value) => handleMultiSelectChange('drugAllergy', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Add drug allergy" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {drugAllergyOptions
+                          .filter(option => !patientForm.drugAllergy.includes(option))
+                          .map((option) => (
+                            <SelectItem key={option} value={option}>
+                              {option}
+                            </SelectItem>
+                          ))
+                        }
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>
