@@ -179,7 +179,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Get the patient to find their patientId
-      const patient = await storage.getPatient(id);
+      const patient = await storage.getPatientById(id);
       if (!patient) {
         return res.status(404).json({ message: 'Patient not found' });
       }
