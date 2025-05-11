@@ -201,10 +201,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .from(patientVisits)
           .where(eq(patientVisits.patientId, patientId));
           
-        // If the patient has visits and prescriptions
-        if (visits.length > 0) {
-          const visitIds = visits.map(v => v.id);
+        const visitIds = visits.length > 0 ? visits.map(v => v.id) : [];
           
+        // If the patient has visits and prescriptions
+        if (visitIds.length > 0) {
           // Delete prescriptions for all visits
           for (const visitId of visitIds) {
             await tx.delete(prescriptions)
@@ -227,13 +227,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await tx.delete(invoices)
           .where(eq(invoices.patientId, patientId));
         
-        // Delete visits
-        await tx.delete(patientVisits)
-          .where(eq(patientVisits.patientId, patientId));
-        
-        // Delete appointments
+        // Delete appointments (IMPORTANT: Do this BEFORE deleting visits)
+        // This fixes the foreign key constraint with appointments_visit_id_fkey
         await tx.delete(appointments)
           .where(eq(appointments.patientId, patientId));
+        
+        // Delete appointments that might reference visit IDs
+        if (visitIds.length > 0) {
+          for (const visitId of visitIds) {
+            await tx.delete(appointments)
+              .where(eq(appointments.visitId, visitId));
+          }
+        }
+        
+        // Now it's safe to delete visits
+        await tx.delete(patientVisits)
+          .where(eq(patientVisits.patientId, patientId));
         
         // Delete lab works
         await tx.delete(labWorks)
