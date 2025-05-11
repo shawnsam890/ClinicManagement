@@ -253,28 +253,26 @@ export default function ConsentForm({
     }));
   };
 
-  const submitConsentForm = async (patientSigData: string, type: 'signature' | 'uploaded') => {
+  const submitConsentForm = async (patientSigData: string) => {
     try {
-      // For signature type, validate patient info and doctor selection
-      if (type === 'signature') {
-        if (!patientInfo.name || !patientInfo.address || !patientInfo.phone) {
-          toast({
-            title: "Missing Information",
-            description: "Please fill in all patient information fields.",
-            variant: "destructive",
-          });
-          return;
-        }
+      // Validate patient info and doctor selection
+      if (!patientInfo.name || !patientInfo.address || !patientInfo.phone) {
+        toast({
+          title: "Missing Information",
+          description: "Please fill in all patient information fields.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-        // Only check for doctor selection if there are doctors available to select
-        if (doctorSignatures.length > 0 && !selectedDoctorId) {
-          toast({
-            title: "Doctor Selection Required",
-            description: "Please select a doctor for the consent form.",
-            variant: "destructive",
-          });
-          return;
-        }
+      // Only check for doctor selection if there are doctors available to select
+      if (doctorSignatures.length > 0 && !selectedDoctorId) {
+        toast({
+          title: "Doctor Selection Required",
+          description: "Please select a doctor for the consent form.",
+          variant: "destructive",
+        });
+        return;
       }
 
       // Get doctor signature if selected
@@ -291,8 +289,8 @@ export default function ConsentForm({
         formType,
         patientSignature: patientSigData,
         doctorSignature: doctorSignatureImage,
-        patientInfo: type === 'signature' ? patientInfo : undefined,
-        type,
+        patientInfo: patientInfo,
+        type: 'signature',
         timestamp: new Date().toISOString(),
       };
 
@@ -326,7 +324,7 @@ export default function ConsentForm({
 
   const handleSubmit = () => {
     if (patientSignature) {
-      submitConsentForm(patientSignature, 'signature');
+      submitConsentForm(patientSignature);
     } else {
       toast({
         title: "Missing Signature",
