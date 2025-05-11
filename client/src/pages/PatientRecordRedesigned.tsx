@@ -135,8 +135,13 @@ export default function PatientRecord() {
   });
   
   // Fetch medical history and dental history options from settings
-  const { data: settings } = useQuery<any>({
+  const { data: patientOptions } = useQuery<any>({
     queryKey: ['/api/settings/category/patient_options'],
+  });
+  
+  // Fetch dropdown options (which has the latest medical history options)
+  const { data: dropdownOptions } = useQuery<any>({
+    queryKey: ['/api/settings/key/dropdown_options'],
   });
 
   // Update form data when patient is loaded
@@ -153,9 +158,22 @@ export default function PatientRecord() {
 
   // Load medical history and dental history options
   useEffect(() => {
-    if (settings) {
-      const medHistory = settings.find((s: any) => s.settingKey === 'medical_history_options');
-      const dentHistory = settings.find((s: any) => s.settingKey === 'dental_history_options');
+    // First try to get options from dropdown_options (more current)
+    if (dropdownOptions && dropdownOptions.settingValue) {
+      const { medicalHistory, previousDentalHistory } = dropdownOptions.settingValue;
+      
+      if (medicalHistory && Array.isArray(medicalHistory)) {
+        setMedicalHistoryOptions(medicalHistory);
+      }
+      
+      if (previousDentalHistory && Array.isArray(previousDentalHistory)) {
+        setDentalHistoryOptions(previousDentalHistory);
+      }
+    } 
+    // Fallback to patient_options if dropdown options are missing
+    else if (patientOptions) {
+      const medHistory = patientOptions.find((s: any) => s.settingKey === 'medical_history_options');
+      const dentHistory = patientOptions.find((s: any) => s.settingKey === 'dental_history_options');
       
       if (medHistory && Array.isArray(medHistory.settingValue)) {
         setMedicalHistoryOptions(medHistory.settingValue);
@@ -171,7 +189,7 @@ export default function PatientRecord() {
         setDentalHistoryOptions(['Extraction', 'RCT', 'Scaling', 'None']);
       }
     }
-  }, [settings]);
+  }, [patientOptions, dropdownOptions]);
 
   // Create a new Visit (Rx)
   const createVisitMutation = useMutation({
@@ -514,13 +532,30 @@ export default function PatientRecord() {
     const updatedOptions = [...medicalHistoryOptions, newMedicalHistoryOption];
     setMedicalHistoryOptions(updatedOptions);
     
-    // Save to settings
+    // Save to patient_options settings
     apiRequest("POST", "/api/settings", {
       settingKey: "medical_history_options",
       settingValue: updatedOptions,
       category: "patient_options"
     }).then(() => {
       queryClient.invalidateQueries({ queryKey: ['/api/settings/category/patient_options'] });
+      
+      // Also update the dropdown_options which is used by other parts of the app
+      if (dropdownOptions && dropdownOptions.settingValue) {
+        const updatedDropdownOptions = {
+          ...dropdownOptions.settingValue,
+          medicalHistory: updatedOptions
+        };
+        
+        apiRequest("PUT", `/api/settings/${dropdownOptions.id}`, {
+          settingValue: updatedDropdownOptions
+        }).then(() => {
+          queryClient.invalidateQueries({ queryKey: ['/api/settings/key/dropdown_options'] });
+        }).catch(error => {
+          console.error("Error updating dropdown options:", error);
+        });
+      }
+      
       setNewMedicalHistoryOption('');
     }).catch(error => {
       console.error("Error saving medical history options:", error);
@@ -541,6 +576,23 @@ export default function PatientRecord() {
       category: "patient_options"
     }).then(() => {
       queryClient.invalidateQueries({ queryKey: ['/api/settings/category/patient_options'] });
+      
+      // Also update the dropdown_options which is used by other parts of the app
+      if (dropdownOptions && dropdownOptions.settingValue) {
+        const updatedDropdownOptions = {
+          ...dropdownOptions.settingValue,
+          previousDentalHistory: updatedOptions
+        };
+        
+        apiRequest("PUT", `/api/settings/${dropdownOptions.id}`, {
+          settingValue: updatedDropdownOptions
+        }).then(() => {
+          queryClient.invalidateQueries({ queryKey: ['/api/settings/key/dropdown_options'] });
+        }).catch(error => {
+          console.error("Error updating dropdown options:", error);
+        });
+      }
+      
       setNewDentalHistoryOption('');
     }).catch(error => {
       console.error("Error saving dental history options:", error);
