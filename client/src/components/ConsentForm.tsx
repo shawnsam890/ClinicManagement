@@ -130,10 +130,23 @@ export default function ConsentForm({
             I have been informed about alternative treatments and potential consequences of non-treatment.
           `
         };
+      case "implant":
+        return {
+          title: "Implant Consent Form",
+          content: `
+            I hereby consent to dental implant treatment as deemed necessary by my dental provider.
+            
+            I understand the risks associated with dental implants, including infection, implant failure, nerve damage, and the possibility of needing additional procedures.
+            
+            I acknowledge that dental implant treatment requires proper care and maintenance, and that success depends on various factors including bone quality and oral hygiene.
+            
+            I have been informed about alternative treatments and potential consequences of non-treatment.
+          `
+        };
       default:
         return {
-          title: "Custom Consent Form",
-          content: "Please upload a custom consent form document."
+          title: "Dental Procedure Consent Form",
+          content: "Standard dental procedure consent form"
         };
     }
   };
@@ -240,32 +253,6 @@ export default function ConsentForm({
     }));
   };
 
-  const uploadCustomForm = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const dataUrl = reader.result as string;
-        submitConsentForm(dataUrl, 'uploaded');
-      };
-      reader.readAsDataURL(file);
-    } catch (error) {
-      toast({
-        title: "Upload Failed",
-        description: "Failed to upload the consent form.",
-        variant: "destructive",
-      });
-    }
-  };
-
   const submitConsentForm = async (patientSigData: string, type: 'signature' | 'uploaded') => {
     try {
       // For signature type, validate patient info and doctor selection
@@ -357,26 +344,7 @@ export default function ConsentForm({
         <CardTitle className="text-xl font-heading text-primary">{formTemplate.title}</CardTitle>
       </CardHeader>
       <CardContent>
-        {formType === 'custom' ? (
-          <div className="mb-6 flex flex-col items-center justify-center p-8 border-2 border-dashed border-neutral-300 rounded-lg bg-neutral-50">
-            <File className="h-12 w-12 text-neutral-400 mb-3" />
-            <p className="text-neutral-600 mb-4">Upload a custom consent form document</p>
-            <input
-              type="file"
-              ref={fileInputRef}
-              className="hidden"
-              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-              onChange={handleFileUpload}
-            />
-            <Button 
-              onClick={uploadCustomForm}
-              className="flex items-center"
-            >
-              <Upload className="mr-2 h-4 w-4" />
-              Upload Form
-            </Button>
-          </div>
-        ) : (formType === 'root_canal' || formType === 'extraction' || formType === 'implant') ? (
+        {(formType === 'root_canal' || formType === 'extraction' || formType === 'implant' || true) ? (
           <>
             {/* Form with direct drawing functionality */}
             <div className="mb-6 p-4 bg-neutral-50 rounded-lg border border-neutral-200">
