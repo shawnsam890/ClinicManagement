@@ -71,7 +71,7 @@ export default function ConsentForm({
   };
   const signatureCanvasRef = useRef<SignatureCanvas | null>(null);
   const formContainerRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // No longer needed: const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch doctor signatures
   const { data: doctorSignatures = [] } = useQuery<DoctorSignature[]>({
@@ -267,7 +267,7 @@ export default function ConsentForm({
         }
 
         // Only check for doctor selection if there are doctors available to select
-        if (doctorSignatures.length > 0 && !selectedDoctorId && formType !== 'custom') {
+        if (doctorSignatures.length > 0 && !selectedDoctorId) {
           toast({
             title: "Doctor Selection Required",
             description: "Please select a doctor for the consent form.",
@@ -325,9 +325,7 @@ export default function ConsentForm({
   };
 
   const handleSubmit = () => {
-    if (formType === 'custom') {
-      uploadCustomForm();
-    } else if (patientSignature) {
+    if (patientSignature) {
       submitConsentForm(patientSignature, 'signature');
     } else {
       toast({
@@ -690,7 +688,7 @@ export default function ConsentForm({
           </Button>
           <Button 
             onClick={handleSubmit}
-            disabled={formType !== 'custom' && !patientSignature}
+            disabled={!patientSignature}
           >
             Submit Form
           </Button>
