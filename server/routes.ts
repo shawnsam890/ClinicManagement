@@ -178,13 +178,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Invalid ID' });
       }
       
-      const success = await storage.deletePatient(id);
-      if (!success) {
+      // Get the patient to find their patientId
+      const patient = await storage.getPatient(id);
+      if (!patient) {
         return res.status(404).json({ message: 'Patient not found' });
       }
       
+      const patientId = patient.patientId;
+      
+      // Import necessary dependencies for database operations
+      const { db } = await import('./db');
+      const { eq } = await import('drizzle-orm');
+      const { 
+        patients, patientVisits, prescriptions, invoices, 
+        invoiceItems, appointments, labWorks 
+      } = await import('@shared/schema');
+      
+      // Use a transaction to ensure all deletions succeed or fail together
+      await db.transaction(async (tx) => {
+        // First delete all related prescriptions for this patient's visits
+        const visits = await tx.select({ id: patientVisits.id })
+          .from(patientVisits)
+          .where(eq(patientVisits.patientId, patientId));
+          
+        // If the patient has visits and prescriptions
+        if (visits.length > 0) {
+          const visitIds = visits.map(v => v.id);
+          
+          // Delete prescriptions for all visits
+          for (const visitId of visitIds) {
+            await tx.delete(prescriptions)
+              .where(eq(prescriptions.visitId, visitId));
+          }
+        }
+        
+        // Delete invoices and invoice items
+        const patientInvoices = await tx.select({ id: invoices.id })
+          .from(invoices)
+          .where(eq(invoices.patientId, patientId));
+          
+        // If there are invoices, delete their items first
+        for (const invoice of patientInvoices) {
+          await tx.delete(invoiceItems)
+            .where(eq(invoiceItems.invoiceId, invoice.id));
+        }
+        
+        // Then delete the invoices
+        await tx.delete(invoices)
+          .where(eq(invoices.patientId, patientId));
+        
+        // Delete visits
+        await tx.delete(patientVisits)
+          .where(eq(patientVisits.patientId, patientId));
+        
+        // Delete appointments
+        await tx.delete(appointments)
+          .where(eq(appointments.patientId, patientId));
+        
+        // Delete lab works
+        await tx.delete(labWorks)
+          .where(eq(labWorks.patientId, patientId));
+        
+        // Finally delete the patient
+        await tx.delete(patients)
+          .where(eq(patients.id, id));
+      });
+      
       res.status(204).end();
     } catch (error: any) {
+      console.error('Error deleting patient:', error);
       res.status(500).json({ message: error.message });
     }
   });
