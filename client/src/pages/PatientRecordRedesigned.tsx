@@ -525,18 +525,41 @@ export default function PatientRecord() {
   });
 
   // Handle form changes
-  const handleFormChange = (field: string, value: string) => {
+  const handleFormChange = (field: string, value: any) => {
     setPatientForm(prev => ({
       ...prev,
       [field]: value
     }));
   };
   
+  // Handle selection change for multi-select fields
+  const handleMultiSelectChange = (field: string, value: string) => {
+    setPatientForm(prev => {
+      // If value is already in array, remove it; otherwise add it
+      const currentValues = prev[field] || [];
+      const newValues = currentValues.includes(value)
+        ? currentValues.filter(v => v !== value)
+        : [...currentValues, value];
+      
+      return {
+        ...prev,
+        [field]: newValues
+      };
+    });
+  };
+  
   // We've removed the handleVisitFormChange function as we're now editing directly in the VisitLog
 
   // Save patient details
   const handleSavePatientDetails = () => {
-    updatePatientMutation.mutate(patientForm);
+    // Convert array values to comma-separated strings before saving
+    const formattedData = {
+      ...patientForm,
+      medicalHistory: patientForm.medicalHistory.join(', '),
+      dentalHistory: patientForm.dentalHistory.join(', '),
+      drugAllergy: patientForm.drugAllergy.join(', ')
+    };
+    updatePatientMutation.mutate(formattedData);
   };
 
   // Add new history option
@@ -1570,86 +1593,173 @@ export default function PatientRecord() {
                 
                 <div className="grid gap-2">
                   <Label htmlFor="medicalHistory">Medical History</Label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <Select
-                      value={patientForm.medicalHistory}
-                      onValueChange={(value) => handleFormChange('medicalHistory', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select medical history" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {medicalHistoryOptions.map((option) => (
-                          <SelectItem key={option} value={option}>
-                            {option}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <div className="grid gap-3">
+                    <div className="flex flex-wrap gap-2 p-3 border rounded-md">
+                      {patientForm.medicalHistory.length > 0 ? (
+                        patientForm.medicalHistory.map((item) => (
+                          <Badge key={item} variant="secondary" className="px-3 py-1 gap-1">
+                            {item}
+                            <X 
+                              className="h-3 w-3 cursor-pointer" 
+                              onClick={() => handleMultiSelectChange('medicalHistory', item)}
+                            />
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-muted-foreground text-sm">No medical history selected</span>
+                      )}
+                    </div>
                     
-                    <div className="flex space-x-2">
-                      <Input
-                        placeholder="Add new option"
-                        value={newMedicalHistoryOption}
-                        onChange={(e) => setNewMedicalHistoryOption(e.target.value)}
-                      />
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="icon"
-                        onClick={handleAddMedicalHistoryOption}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <Select
+                        onValueChange={(value) => handleMultiSelectChange('medicalHistory', value)}
                       >
-                        <PlusCircle className="h-4 w-4" />
-                      </Button>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Add medical history" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {medicalHistoryOptions
+                            .filter(option => !patientForm.medicalHistory.includes(option))
+                            .map((option) => (
+                              <SelectItem key={option} value={option}>
+                                {option}
+                              </SelectItem>
+                            ))
+                          }
+                        </SelectContent>
+                      </Select>
+                      
+                      <div className="flex space-x-2">
+                        <Input
+                          placeholder="Add new option"
+                          value={newMedicalHistoryOption}
+                          onChange={(e) => setNewMedicalHistoryOption(e.target.value)}
+                        />
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="icon"
+                          onClick={handleAddMedicalHistoryOption}
+                        >
+                          <PlusCircle className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
                 
                 <div className="grid gap-2">
                   <Label htmlFor="dentalHistory">Dental History</Label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <Select
-                      value={patientForm.dentalHistory}
-                      onValueChange={(value) => handleFormChange('dentalHistory', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select dental history" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {dentalHistoryOptions.map((option) => (
-                          <SelectItem key={option} value={option}>
-                            {option}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <div className="grid gap-3">
+                    <div className="flex flex-wrap gap-2 p-3 border rounded-md">
+                      {patientForm.dentalHistory.length > 0 ? (
+                        patientForm.dentalHistory.map((item) => (
+                          <Badge key={item} variant="secondary" className="px-3 py-1 gap-1">
+                            {item}
+                            <X 
+                              className="h-3 w-3 cursor-pointer" 
+                              onClick={() => handleMultiSelectChange('dentalHistory', item)}
+                            />
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-muted-foreground text-sm">No dental history selected</span>
+                      )}
+                    </div>
                     
-                    <div className="flex space-x-2">
-                      <Input
-                        placeholder="Add new option"
-                        value={newDentalHistoryOption}
-                        onChange={(e) => setNewDentalHistoryOption(e.target.value)}
-                      />
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="icon"
-                        onClick={handleAddDentalHistoryOption}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <Select
+                        onValueChange={(value) => handleMultiSelectChange('dentalHistory', value)}
                       >
-                        <PlusCircle className="h-4 w-4" />
-                      </Button>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Add dental history" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {dentalHistoryOptions
+                            .filter(option => !patientForm.dentalHistory.includes(option))
+                            .map((option) => (
+                              <SelectItem key={option} value={option}>
+                                {option}
+                              </SelectItem>
+                            ))
+                          }
+                        </SelectContent>
+                      </Select>
+                      
+                      <div className="flex space-x-2">
+                        <Input
+                          placeholder="Add new option"
+                          value={newDentalHistoryOption}
+                          onChange={(e) => setNewDentalHistoryOption(e.target.value)}
+                        />
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="icon"
+                          onClick={handleAddDentalHistoryOption}
+                        >
+                          <PlusCircle className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
                 
                 <div className="grid gap-2">
                   <Label htmlFor="drugAllergy">Drug Allergy</Label>
-                  <Textarea
-                    id="drugAllergy"
-                    value={patientForm.drugAllergy}
-                    onChange={(e) => handleFormChange('drugAllergy', e.target.value)}
-                    rows={2}
-                  />
+                  <div className="grid gap-3">
+                    <div className="flex flex-wrap gap-2 p-3 border rounded-md">
+                      {patientForm.drugAllergy.length > 0 ? (
+                        patientForm.drugAllergy.map((item) => (
+                          <Badge key={item} variant="secondary" className="px-3 py-1 gap-1">
+                            {item}
+                            <X 
+                              className="h-3 w-3 cursor-pointer" 
+                              onClick={() => handleMultiSelectChange('drugAllergy', item)}
+                            />
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-muted-foreground text-sm">No drug allergies selected</span>
+                      )}
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <Select
+                        onValueChange={(value) => handleMultiSelectChange('drugAllergy', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Add drug allergy" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {drugAllergyOptions
+                            .filter(option => !patientForm.drugAllergy.includes(option))
+                            .map((option) => (
+                              <SelectItem key={option} value={option}>
+                                {option}
+                              </SelectItem>
+                            ))
+                          }
+                        </SelectContent>
+                      </Select>
+                      
+                      <div className="flex space-x-2">
+                        <Input
+                          placeholder="Add new option"
+                          value={newDrugAllergyOption}
+                          onChange={(e) => setNewDrugAllergyOption(e.target.value)}
+                        />
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="icon"
+                          onClick={handleAddDrugAllergyOption}
+                        >
+                          <PlusCircle className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
               
