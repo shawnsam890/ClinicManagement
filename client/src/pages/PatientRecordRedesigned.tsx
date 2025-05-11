@@ -47,16 +47,18 @@ export default function PatientRecord() {
   const [showEditPatientDetails, setShowEditPatientDetails] = useState(false);
   const [patientForm, setPatientForm] = useState<any>({
     address: '',
-    medicalHistory: '',
-    dentalHistory: '',
-    drugAllergy: ''
+    medicalHistory: [],
+    dentalHistory: [],
+    drugAllergy: []
   });
   // We've removed the visit form and edit dialog state variables
   // as we're now editing directly in the visit log
   const [newMedicalHistoryOption, setNewMedicalHistoryOption] = useState('');
   const [newDentalHistoryOption, setNewDentalHistoryOption] = useState('');
+  const [newDrugAllergyOption, setNewDrugAllergyOption] = useState('');
   const [medicalHistoryOptions, setMedicalHistoryOptions] = useState<string[]>([]);
   const [dentalHistoryOptions, setDentalHistoryOptions] = useState<string[]>([]);
+  const [drugAllergyOptions, setDrugAllergyOptions] = useState<string[]>([]);
 
   // Fetch patient details
   const { data: patient, isLoading: isLoadingPatient } = useQuery<Patient>({
