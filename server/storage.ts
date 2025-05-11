@@ -889,7 +889,28 @@ export class DatabaseStorage implements IStorage {
   }
   
   async createInvoice(invoice: InsertInvoice): Promise<Invoice> {
-    const result = await db.insert(invoices).values(invoice).returning();
+    // Get all existing invoice IDs
+    const existingInvoices = await db.select({ id: invoices.id }).from(invoices).orderBy(invoices.id);
+    
+    // Find the smallest available ID (gap) starting from 1
+    let availableId = 1;
+    for (const existingInvoice of existingInvoices) {
+      if (existingInvoice.id === availableId) {
+        availableId++;
+      } else {
+        // Found a gap
+        break;
+      }
+    }
+    
+    // If we specify an ID, Postgres will use it instead of auto-incrementing
+    // This way we can reuse previously deleted invoice numbers
+    const invoiceWithId = { 
+      ...invoice, 
+      id: availableId 
+    };
+    
+    const result = await db.insert(invoices).values(invoiceWithId).returning();
     return result[0];
   }
   
