@@ -15,9 +15,9 @@ interface PrescriptionItem {
   visitId: number;
   medicationId: number;
   medicationName?: string;
-  timing: string;
-  days?: number;
-  notes?: string;
+  timing: string | null;
+  days?: number | null;
+  notes?: string | null;
 }
 
 interface PrescriptionFormProps {
@@ -25,6 +25,8 @@ interface PrescriptionFormProps {
   patientId?: string;
   existingPrescriptions?: PrescriptionItem[];
   onSave?: (prescriptions: PrescriptionItem[]) => void;
+  onAddPrescription?: (prescription: PrescriptionItem) => void;
+  onDeletePrescription?: (id: number) => void;
   readOnly?: boolean;
 }
 
@@ -33,6 +35,8 @@ export default function PrescriptionForm({
   patientId,
   existingPrescriptions,
   onSave,
+  onAddPrescription,
+  onDeletePrescription,
   readOnly = false,
 }: PrescriptionFormProps) {
   const { toast } = useToast();
@@ -255,12 +259,22 @@ export default function PrescriptionForm({
   // Delete prescription mutation
   const deletePrescription = async (id: number) => {
     try {
-      await apiRequest('DELETE', `/api/prescriptions/${id}`);
+      // If we have a custom delete handler, use that
+      if (onDeletePrescription) {
+        await onDeletePrescription(id);
+      } else {
+        // Otherwise use the default API request
+        await apiRequest('DELETE', `/api/prescriptions/${id}`);
+      }
+      
+      // Always refresh the query cache
       queryClient.invalidateQueries({ queryKey: [`/api/visits/${visitId}/prescriptions`] });
+      
       toast({
         title: "Success",
         description: "Prescription deleted successfully",
       });
+      
       // Refresh prescriptions list
       const updatedPrescriptions = prescriptions.filter(p => p.id !== id);
       setPrescriptions(updatedPrescriptions);
@@ -295,20 +309,35 @@ export default function PrescriptionForm({
       });
 
       // Save all prescriptions
+      let savedCount = 0;
       for (const prescription of prescriptions) {
-        await savePrescription.mutateAsync(prescription);
+        if (prescription.id) {
+          // Update existing prescription
+          await savePrescription.mutateAsync(prescription);
+        } else {
+          // New prescription - use onAddPrescription callback if available
+          if (onAddPrescription) {
+            await onAddPrescription(prescription);
+          } else {
+            await savePrescription.mutateAsync(prescription);
+          }
+        }
+        savedCount++;
       }
 
       // Show success toast after all prescriptions are saved
       toast({
         title: "Success",
-        description: "All prescriptions saved successfully"
+        description: `${savedCount} prescription${savedCount !== 1 ? 's' : ''} saved successfully`
       });
 
       // Trigger the onSave callback if provided
       if (onSave) {
         onSave(prescriptions);
       }
+
+      // Refresh the prescriptions list
+      queryClient.invalidateQueries({ queryKey: [`/api/visits/${visitId}/prescriptions`] });
     } catch (error) {
       console.error("Error saving prescriptions:", error);
       toast({
