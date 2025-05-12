@@ -983,8 +983,8 @@ export default function PatientRecord() {
                   <CardContent>
                     <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="mt-2">
                       <TabsList className="grid w-full grid-cols-4">
+                        <TabsTrigger value="visit">Case Notes</TabsTrigger>
                         <TabsTrigger value="rx">Rx</TabsTrigger>
-                        <TabsTrigger value="visit">Visit Details</TabsTrigger>
                         <TabsTrigger value="files">Forms</TabsTrigger>
                         <TabsTrigger value="media">Media</TabsTrigger>
                       </TabsList>

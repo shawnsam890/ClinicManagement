@@ -190,7 +190,7 @@ export default function PrescriptionForm({
     
     const timingParts = prescription.timing.split('-');
     
-    // Validate input to only allow digits, S, or empty
+    // Always allow empty string (backspace) and validate numbers or S
     if (value !== "" && !/^[0-9Ss]?$/.test(value)) {
       return;
     }
@@ -200,8 +200,8 @@ export default function PrescriptionForm({
       value = 'S';
     }
     
-    // Use the entered value or '0' if empty (allows backspace to work)
-    timingParts[position] = value || '0';
+    // Handle backspace (empty value) - set to 0
+    timingParts[position] = value === "" ? "0" : value;
     prescription.timing = timingParts.join('-');
     
     setPrescriptions(updatedPrescriptions);
@@ -500,6 +500,12 @@ export default function PrescriptionForm({
                           onChange={(e) => updateTimingDigit(index, 0, e.target.value)}
                           className="w-8 h-8 text-center p-0"
                           maxLength={1}
+                          onKeyDown={(e) => {
+                            // Handle backspace specifically
+                            if (e.key === 'Backspace') {
+                              updateTimingDigit(index, 0, '0');
+                            }
+                          }}
                         />
                         <span>-</span>
                         <Input
@@ -508,6 +514,12 @@ export default function PrescriptionForm({
                           onChange={(e) => updateTimingDigit(index, 1, e.target.value)}
                           className="w-8 h-8 text-center p-0"
                           maxLength={1}
+                          onKeyDown={(e) => {
+                            // Handle backspace specifically
+                            if (e.key === 'Backspace') {
+                              updateTimingDigit(index, 1, '0');
+                            }
+                          }}
                         />
                         <span>-</span>
                         <Input
@@ -516,6 +528,12 @@ export default function PrescriptionForm({
                           onChange={(e) => updateTimingDigit(index, 2, e.target.value)}
                           className="w-8 h-8 text-center p-0"
                           maxLength={1}
+                          onKeyDown={(e) => {
+                            // Handle backspace specifically
+                            if (e.key === 'Backspace') {
+                              updateTimingDigit(index, 2, '0');
+                            }
+                          }}
                         />
                         <TooltipProvider>
                           <Tooltip>
