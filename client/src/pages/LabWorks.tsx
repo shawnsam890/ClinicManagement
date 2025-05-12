@@ -969,8 +969,23 @@ export default function LabWorks() {
                     )}
                   />
                   
-                  {/* Lab Cost is now managed in Settings */}                  
-                  {/* Only Clinic Cost is shown here */}
+                  {/* Lab Cost from Settings */}
+                  <div className="space-y-2">
+                    <div className="flex items-baseline justify-between">
+                      <div className="font-medium">Lab Cost (from Settings)</div>
+                      <div className="text-right font-semibold">
+                        {(() => {
+                          const workType = form.watch("workType");
+                          const technician = form.watch("technician");
+                          const labCost = findLabCostFromSettings(technician, workType);
+                          return labCost !== null ? `₹${labCost.toLocaleString()} per unit` : "Not set";
+                        })()}
+                      </div>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      This cost is configured in the Settings page and is used to calculate the profit.
+                    </div>
+                  </div>
                   
                   {/* Clinic Cost (per unit) */}
                   <FormField
@@ -1027,6 +1042,54 @@ export default function LabWorks() {
                     </FormItem>
                   )}
                 />
+
+                {/* Total Cost & Profit Preview */}
+                <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-900 mb-4">
+                  <h3 className="text-lg font-semibold">Cost Summary</h3>
+                  
+                  {(() => {
+                    const units = form.watch("units") || 1;
+                    const clinicCost = form.watch("clinicCost") || 0;
+                    const workType = form.watch("workType");
+                    const technician = form.watch("technician");
+                    const labCost = findLabCostFromSettings(technician, workType) || 0;
+                    
+                    const totalLabCost = labCost * units;
+                    const totalClinicCost = clinicCost * units;
+                    const profit = totalClinicCost - totalLabCost;
+                    
+                    return (
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span>Lab Cost per Unit:</span>
+                          <span>₹{labCost.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Clinic Cost per Unit:</span>
+                          <span>₹{clinicCost.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Units:</span>
+                          <span>{units}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Total Lab Cost:</span>
+                          <span>₹{totalLabCost.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Total Clinic Cost:</span>
+                          <span>₹{totalClinicCost.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between font-semibold border-t pt-2">
+                          <span>Expected Profit:</span>
+                          <span className={profit >= 0 ? "text-green-600" : "text-red-600"}>
+                            ₹{profit.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
 
                 <DialogFooter>
                   <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
