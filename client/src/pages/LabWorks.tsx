@@ -494,24 +494,37 @@ export default function LabWorks() {
   // Apply filters
   console.log('⚠️ FILTERING: labWorks count =', labWorks?.length, 'patientId =', patientIdFromUrl);
 
-  // Create a working copy to prevent any issues
-  const workingLabWorks = labWorks ? [...labWorks] : [];
+  // COMPLETELY NEW APPROACH: Direct, dedicated filtering
   
-  // FORCE FILTERING FOR PATIENT-SPECIFIC MODE
-  // Critical: Only get lab works that EXACTLY match the patientId - no exceptions
-  let patientFilteredLabWorks = workingLabWorks;
+  // Step 1: Create an empty filtered array
+  let patientFilteredLabWorks: typeof labWorks = [];
   
+  // Step 2: Check if patient ID is provided
   if (isPatientSpecificMode && patientIdFromUrl) {
-    console.log('🔴 STRICT PATIENT FILTERING ACTIVE for ID:', patientIdFromUrl);
-    // This explicit comparison is essential - ensuring exact match only
-    patientFilteredLabWorks = workingLabWorks.filter(work => {
-      const isMatch = work.patientId === patientIdFromUrl;
-      console.log(`Work ID ${work.id}: patientId=${work.patientId}, match=${isMatch}`);
-      return isMatch;
-    });
-  }
+    console.log('⚡ NEW PATIENT FILTER ACTIVE - Hard filtering for ID:', patientIdFromUrl);
     
-  console.log('👉 RESULT: Found', patientFilteredLabWorks.length, 'lab works for patient', patientIdFromUrl);
+    // Step 3: Manually loop through and add only exact matches
+    if (labWorks && labWorks.length > 0) {
+      console.log('Available Lab Works:', labWorks.map(work => `${work.id}:${work.patientId}`).join(', '));
+      
+      for (const work of labWorks) {
+        if (work.patientId === patientIdFromUrl) {
+          console.log(`✅ MATCH: Work ID ${work.id} for patient ${work.patientId}`);
+          patientFilteredLabWorks.push(work);
+        } else {
+          console.log(`❌ REJECTED: Work ID ${work.id} for patient ${work.patientId}`);
+        }
+      }
+    }
+  } else {
+    // If no patient ID, use all works
+    patientFilteredLabWorks = labWorks || [];
+  }
+  
+  console.log('📊 FINAL PATIENT FILTER RESULT:', 
+    patientFilteredLabWorks.length, 
+    'works for patient', 
+    patientIdFromUrl || 'ALL');
   
   // Then apply the regular search and status filters
   const filteredLabWorks = patientFilteredLabWorks.filter((work: any) => {
