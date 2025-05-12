@@ -211,11 +211,24 @@ export default function PrescriptionForm({
     
     // Handle backspace (empty value) - set to 0
     timingParts[position] = value === "" ? "0" : value;
-    prescription.timing = timingParts.join('-');
     
-    // We removed the auto-move functionality as requested
+    // Create the new timing value
+    const newTiming = timingParts.join('-');
+    console.log("Updated timing:", newTiming);
     
+    // Set the timing directly in the prescription object
+    updatedPrescriptions[index] = {
+      ...updatedPrescriptions[index],
+      timing: newTiming
+    };
+    
+    // Update the state with the new prescriptions array
     setPrescriptions(updatedPrescriptions);
+    
+    // If onSave callback is provided, invoke it
+    if (onSave) {
+      onSave(updatedPrescriptions);
+    }
     
     // If this is a new unsaved prescription, just update the state
     if (!prescription.id) {
