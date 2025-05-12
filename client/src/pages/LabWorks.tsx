@@ -118,7 +118,14 @@ const labWorkFormSchema = insertLabWorkSchema.extend({
   dueDate: z.string().min(1, "Due date is required"),
   completedDate: z.string().nullable().optional(),
   shade: z.string().optional(),
-  cost: z.coerce.number().min(0, "Cost must be a positive number"),
+  units: z.coerce.number().min(1, "Units must be at least 1"),
+  labName: z.string().optional(),
+  labCost: z.coerce.number().min(0, "Lab cost must be a positive number").optional().nullable(),
+  clinicCost: z.coerce.number().min(0, "Clinic cost must be a positive number").optional().nullable(),
+  totalLabCost: z.coerce.number().min(0).optional().nullable(),
+  totalClinicCost: z.coerce.number().min(0).optional().nullable(),
+  paymentStatus: z.string().default("pending"),
+  paymentDate: z.string().nullable().optional(),
 });
 
 type LabWorkFormValues = z.infer<typeof labWorkFormSchema>;
@@ -158,6 +165,11 @@ export default function LabWorks() {
     queryKey: ["/api/settings/key/dropdown_options"],
   });
 
+  // Query to fetch lab costs
+  const { data: labCosts = [] } = useQuery<any[]>({
+    queryKey: ["/api/lab-work-costs"],
+  });
+
   // Form for lab work
   const form = useForm<LabWorkFormValues>({
     resolver: zodResolver(labWorkFormSchema),
@@ -171,7 +183,14 @@ export default function LabWorks() {
       completedDate: null,
       technician: "",
       shade: "",
-      cost: 0,
+      units: 1,
+      labName: "",
+      labCost: null,
+      clinicCost: null,
+      totalLabCost: null,
+      totalClinicCost: null,
+      paymentStatus: "pending",
+      paymentDate: null,
       notes: "",
     },
   });
@@ -195,7 +214,14 @@ export default function LabWorks() {
       completedDate: null,
       technician: "",
       shade: "",
-      cost: 0,
+      units: 1,
+      labName: "",
+      labCost: null,
+      clinicCost: null,
+      totalLabCost: null,
+      totalClinicCost: null,
+      paymentStatus: "pending",
+      paymentDate: null,
       notes: "",
     });
     setSelectedLabWork(null);
