@@ -239,6 +239,42 @@ export default function PatientRecord() {
     queryClient.invalidateQueries({ queryKey: [`/api/visits/${visitId}`] });
   };
 
+  // Update prescription date for all prescriptions in a visit
+  const updatePrescriptionDateMutation = useMutation({
+    mutationFn: async (data: { visitId: number, prescriptionDate: string }) => {
+      const res = await apiRequest(
+        "PATCH", 
+        `/api/visits/${data.visitId}/prescriptions/date`, 
+        { prescriptionDate: data.prescriptionDate }
+      );
+      return await res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Prescription date updated",
+        description: "All prescriptions in this visit now have the same date",
+      });
+      queryClient.invalidateQueries({ queryKey: [`/api/visits/${visitId}/prescriptions`] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to update prescription date",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Function to update prescription date
+  const updatePrescriptionDate = (date: string) => {
+    if (!visitId) return;
+    
+    updatePrescriptionDateMutation.mutate({ 
+      visitId, 
+      prescriptionDate: date 
+    });
+  };
+
   const getDropdownOptions = (key: string) => {
     if (!dropdownOptions?.settingValue) return [];
     return dropdownOptions.settingValue[key] || [];
