@@ -521,12 +521,24 @@ export default function Settings() {
 
   const handleDeleteOption = (category: string, value: string) => {
     const currentOptions = { ...dropdownOptions };
+    
+    // Initialize the category if it doesn't exist
+    if (!currentOptions[category]) {
+      currentOptions[category] = [];
+      return; // Nothing to delete
+    }
+    
     const updatedOptions = currentOptions[category].filter(
       (option: string) => option !== value
     );
     currentOptions[category] = updatedOptions;
     
     updateDropdownOptions(currentOptions);
+    
+    toast({
+      title: "Success",
+      description: "Option deleted successfully",
+    });
   };
 
   const handleAddOption = () => {
@@ -830,80 +842,8 @@ export default function Settings() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {dropdownOptions && dropdownOptions[newOptionCategory] ? 
-                      dropdownOptions[newOptionCategory].map((option: string, index: number) => (
-                        <TableRow key={`${newOptionCategory}-${index}`}>
-                          <TableCell>{getCategoryLabel(newOptionCategory)}</TableCell>
-                          <TableCell>
-                            {editingOption === `${newOptionCategory}-${option}` ? (
-                              <Input
-                                value={newOptionValue}
-                                onChange={(e) => setNewOptionValue(e.target.value)}
-                                autoFocus
-                              />
-                            ) : (
-                              option
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {editingOption === `${newOptionCategory}-${option}` ? (
-                              <div className="flex justify-end space-x-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    handleUpdateOption(newOptionCategory, option, newOptionValue);
-                                  }}
-                                >
-                                  <Check className="h-4 w-4 text-green-500" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => setEditingOption(null)}
-                                >
-                                  <X className="h-4 w-4 text-red-500" />
-                                </Button>
-                              </div>
-                            ) : (
-                              <div className="flex justify-end space-x-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    setEditingOption(`${newOptionCategory}-${option}`);
-                                    setNewOptionValue(option);
-                                  }}
-                                >
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="24"
-                                    height="24"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    className="h-4 w-4"
-                                  >
-                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                  </svg>
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleDeleteOption(newOptionCategory, option)}
-                                >
-                                  <Trash2 className="h-4 w-4 text-red-500" />
-                                </Button>
-                              </div>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      )) : <TableRow><TableCell colSpan={3} className="text-center">No options found for this category</TableCell></TableRow>
-                    }
+                    {renderOptionsList()}
+                    
                     
                     {isAddingOption && (
                       <TableRow>
