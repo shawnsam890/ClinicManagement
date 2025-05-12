@@ -196,6 +196,27 @@ export default function LabWorks() {
     },
   });
   
+  // Watch for changes to work type and technician for dynamic lab cost lookup
+  const workType = form.watch("workType");
+  const technician = form.watch("technician");
+  
+  // Use the API to fetch lab costs by work type and technician
+  const { data: labWorkCost, isLoading: isLabCostLoading } = useQuery<any>({
+    queryKey: ["/api/lab-work-costs/lookup", workType, technician],
+    queryFn: async () => {
+      if (!workType || !technician) return null;
+      const response = await fetch(`/api/lab-work-costs/lookup?workType=${encodeURIComponent(workType)}&labTechnician=${encodeURIComponent(technician)}`);
+      if (!response.ok) {
+        if (response.status === 404) {
+          return null; // No cost found for this combination
+        }
+        throw new Error('Failed to fetch lab work cost');
+      }
+      return response.json();
+    },
+    enabled: !!workType && !!technician,
+  });
+  
   // Ensure the patient from URL is properly selected in the form
   useEffect(() => {
     if (patientIdFromUrl && form.getValues("patientId") !== patientIdFromUrl) {
@@ -414,21 +435,8 @@ export default function LabWorks() {
     labWorkMutation.mutate(updatedValues);
   };
   
-  // Function to find lab cost from settings based on technician and work type
-  const findLabCostFromSettings = (technician: string | null, workType: string): number | null => {
-    if (!technician || !workType) return null;
-    
-    // Find matching cost from lab costs list
-    const matchingCost = labCosts.find(cost => 
-      cost.labTechnician === technician && 
-      cost.workType === workType
-    );
-    
-    return matchingCost ? matchingCost.cost : null;
-  };
-  
-  // Custom hook to fetch lab cost by technician and work type
-  const useLabWorkCost = (workType: string | null, labTechnician: string | null) => {
+  // Define custom hook to fetch lab cost by technician and work type
+  function useLabWorkCostHook(workType: string | null, labTechnician: string | null) {
     return useQuery<any>({
       queryKey: ["/api/lab-work-costs/lookup", workType, labTechnician],
       queryFn: async () => {
@@ -444,6 +452,31 @@ export default function LabWorks() {
       },
       enabled: !!workType && !!labTechnician,
     });
+  }
+  
+  // Use our custom hook to fetch the lab cost
+  const { data: labWorkCost, isLoading: isLabCostLoading } = useLabWorkCostHook(
+    workType || null, 
+    technician || null
+  );
+  
+  // Function to find lab cost from settings based on technician and work type
+  // This function now uses our API-based data and falls back to the local data if needed
+  const findLabCostFromSettings = (technician: string | null, workType: string): number | null => {
+    if (!technician || !workType) return null;
+    
+    // First try to use the data from our specialized hook
+    if (labWorkCost && !isLabCostLoading) {
+      return labWorkCost.cost;
+    }
+    
+    // Fall back to the old method of finding in the full list
+    const matchingCost = labCosts.find(cost => 
+      cost.labTechnician === technician && 
+      cost.workType === workType
+    );
+    
+    return matchingCost ? matchingCost.cost : null;
   };
 
   const onInventorySubmit = (values: any) => {
