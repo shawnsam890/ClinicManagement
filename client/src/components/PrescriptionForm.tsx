@@ -174,7 +174,7 @@ export default function PrescriptionForm({
     const timingParts = updatedPrescriptions[index].timing.split('-');
     
     // Validate input to only allow digits, S, or empty
-    if (!/^[0-9Ss]?$/.test(value)) {
+    if (value !== "" && !/^[0-9Ss]?$/.test(value)) {
       return;
     }
     
@@ -183,6 +183,7 @@ export default function PrescriptionForm({
       value = 'S';
     }
     
+    // Use the entered value or '0' if empty (allows backspace to work)
     timingParts[position] = value || '0';
     updatedPrescriptions[index].timing = timingParts.join('-');
     
