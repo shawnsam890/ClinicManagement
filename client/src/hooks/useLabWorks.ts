@@ -9,12 +9,8 @@ export function useLabWorks(patientId?: string | null) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Get all lab works or patient-specific lab works if patientId is provided
-  // Add extra console logging to debug
-  console.log(`useLabWorks hook called with patientId: ${patientId}`);
-  
-  // For this component, we'll always use the general endpoint
-  // and filter the results in the component for more control
+  // Get all lab works - regardless of patientId
+  // We'll do client-side filtering based on the patientId
   const { data: labWorks, isLoading: isLoadingLabWorks } = useQuery<LabWork[]>({
     queryKey: ["/api/lab-works"],
   });

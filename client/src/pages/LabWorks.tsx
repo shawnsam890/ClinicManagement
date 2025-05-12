@@ -151,15 +151,23 @@ export default function LabWorks() {
   const searchParams = new URLSearchParams(queryParamsStr);
   const patientIdFromUrl = searchParams.get('patientId');
   
-  // Debug output - will show in the console
-  console.log("Patient ID from URL:", patientIdFromUrl);
+  // Set the page title to indicate patient-specific view
+  useEffect(() => {
+    if (patientIdFromUrl) {
+      document.title = `Lab Orders for ${patientIdFromUrl}`;
+    } else {
+      document.title = 'All Lab Works';
+    }
+  }, [patientIdFromUrl]);
+  
+  // Debug output with more prominent logging
+  console.log("▶️ PATIENT ID FROM URL:", patientIdFromUrl);
 
-  // Use the custom hook that automatically handles patient-specific lab works
-  // Pass the patientId directly - the hook will handle null/undefined cases
+  // Always get all lab works and filter in the component
   const { 
     labWorks = [], 
     isLoadingLabWorks 
-  } = useLabWorks(patientIdFromUrl);
+  } = useLabWorks();
 
   // Fetch all patients for the dropdown
   const { data: patients = [] } = useQuery<Patient[]>({
@@ -480,35 +488,46 @@ export default function LabWorks() {
     }
   };
 
-  // Filter lab works based on search query, status filter, and patient ID
-  console.log('Filtering lab works. Initial count:', labWorks?.length);
-  console.log('Patient ID from URL for filtering:', patientIdFromUrl);
+  // Determine if we're in patient-specific mode or general mode
+  const isPatientSpecificMode = !!patientIdFromUrl;
+  
+  // Apply filters
+  console.log('⚠️ FILTERING: labWorks count =', labWorks?.length, 'patientId =', patientIdFromUrl);
 
-  const filteredLabWorks = labWorks.filter((work: any) => {
-    // First check: If we have a patient ID from URL, only show lab works for that patient
-    if (patientIdFromUrl && work.patientId !== patientIdFromUrl) {
-      return false;
-    }
+  // Create a working copy to prevent any issues
+  const workingLabWorks = labWorks ? [...labWorks] : [];
+  
+  // FORCE FILTERING FOR PATIENT-SPECIFIC MODE
+  // Critical: Only get lab works that EXACTLY match the patientId - no exceptions
+  let patientFilteredLabWorks = workingLabWorks;
+  
+  if (isPatientSpecificMode && patientIdFromUrl) {
+    console.log('🔴 STRICT PATIENT FILTERING ACTIVE for ID:', patientIdFromUrl);
+    // This explicit comparison is essential - ensuring exact match only
+    patientFilteredLabWorks = workingLabWorks.filter(work => {
+      const isMatch = work.patientId === patientIdFromUrl;
+      console.log(`Work ID ${work.id}: patientId=${work.patientId}, match=${isMatch}`);
+      return isMatch;
+    });
+  }
     
-    // Second check: Apply search filter
+  console.log('👉 RESULT: Found', patientFilteredLabWorks.length, 'lab works for patient', patientIdFromUrl);
+  
+  // Then apply the regular search and status filters
+  const filteredLabWorks = patientFilteredLabWorks.filter((work: any) => {
+    // Apply search filter
     const matchesSearch =
       work.patientId.toLowerCase().includes(searchQuery.toLowerCase()) ||
       work.workType.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (work.technician && work.technician.toLowerCase().includes(searchQuery.toLowerCase()));
     
-    // Third check: Apply status filter
+    // Apply status filter
     const matchesStatus = statusFilter === "all" || work.status === statusFilter;
     
     return matchesSearch && matchesStatus;
   });
   
-  console.log('After filtering. Final count:', filteredLabWorks.length);
-  
-  // Extra logging to see if our patient filter is working
-  if (patientIdFromUrl) {
-    console.log('Lab works for patient ' + patientIdFromUrl + ':', 
-      filteredLabWorks.map(work => work.id + ' - ' + work.patientId));
-  }
+  console.log('👍 Final filtered count:', filteredLabWorks.length, 'records');
 
   // Filter inventory based on search query
   const filteredInventory = inventory.filter((item: any) =>
@@ -591,11 +610,11 @@ export default function LabWorks() {
           <Card>
             <CardHeader>
               <CardTitle>
-                {patientIdFromUrl ? "Patient Lab Works" : "All Lab Works"}
+                {isPatientSpecificMode ? `Lab Orders for Patient ${patientIdFromUrl}` : "All Lab Works"}
               </CardTitle>
               <CardDescription>
-                {patientIdFromUrl 
-                  ? `Viewing lab orders for patient ID: ${patientIdFromUrl}`
+                {isPatientSpecificMode 
+                  ? <span className="font-semibold text-purple-600">Showing lab works ONLY for patient ID: {patientIdFromUrl}</span>
                   : "Manage dental laboratory work orders and track their progress"}
               </CardDescription>
             </CardHeader>
