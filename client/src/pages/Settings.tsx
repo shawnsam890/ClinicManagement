@@ -502,8 +502,7 @@ export default function Settings() {
     
     createLabWorkCostMutation.mutate({
       workType: newLabWorkCost.workType,
-      defaultCost: newLabWorkCost.defaultCost,
-      defaultClinicPrice: newLabWorkCost.defaultClinicPrice || newLabWorkCost.defaultCost
+      defaultCost: newLabWorkCost.defaultCost
     });
   };
   
@@ -521,8 +520,7 @@ export default function Settings() {
       id,
       values: {
         workType: editingLabWorkCost.workType,
-        defaultCost: editingLabWorkCost.defaultCost,
-        defaultClinicPrice: editingLabWorkCost.defaultClinicPrice || editingLabWorkCost.defaultCost
+        defaultCost: editingLabWorkCost.defaultCost
       }
     });
   };
@@ -1462,8 +1460,6 @@ export default function Settings() {
                       <TableRow>
                         <TableHead>Work Type</TableHead>
                         <TableHead>Lab Cost</TableHead>
-                        <TableHead>Clinic Price</TableHead>
-                        <TableHead>Profit Margin</TableHead>
                         <TableHead className="w-[100px]">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -1503,22 +1499,7 @@ export default function Settings() {
                                 cost.defaultCost
                               )}
                             </TableCell>
-                            <TableCell>
-                              {editingLabWorkCostId === cost.id ? (
-                                <Input
-                                  type="number"
-                                  value={editingLabWorkCost.defaultClinicPrice || ''}
-                                  onChange={(e) => setEditingLabWorkCost({...editingLabWorkCost, defaultClinicPrice: parseFloat(e.target.value) || 0})}
-                                />
-                              ) : (
-                                cost.defaultClinicPrice
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {cost.defaultClinicPrice && cost.defaultCost
-                                ? `${((cost.defaultClinicPrice - cost.defaultCost) / cost.defaultCost * 100).toFixed(0)}%`
-                                : 'N/A'}
-                            </TableCell>
+
                             <TableCell>
                               {editingLabWorkCostId === cost.id ? (
                                 <div className="flex items-center gap-2">
