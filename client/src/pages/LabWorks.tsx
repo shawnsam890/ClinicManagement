@@ -150,6 +150,9 @@ export default function LabWorks() {
   const queryParamsStr = location.split('?')[1] || '';
   const searchParams = new URLSearchParams(queryParamsStr);
   const patientIdFromUrl = searchParams.get('patientId');
+  
+  // Debug output - will show in the console
+  console.log("Patient ID from URL:", patientIdFromUrl);
 
   // Use the custom hook that automatically handles patient-specific lab works
   const { 
