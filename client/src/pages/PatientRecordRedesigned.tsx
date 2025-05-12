@@ -1063,6 +1063,21 @@ export default function PatientRecord() {
                                   data[key] = value;
                                 });
                                 
+                                // Add date field which will be pulled from the visit date
+                                const visitDate = visits.find((v: any) => v.id === selectedVisitId)?.date;
+                                
+                                // If there are prescriptions for this visit, pass the prescription date to them
+                                if (selectedVisitId) {
+                                  const visit = visits.find((v: any) => v.id === selectedVisitId);
+                                  if (visit) {
+                                    const prescriptionsForVisit = prescriptions.filter(p => p.visitId === selectedVisitId);
+                                    if (prescriptionsForVisit.length > 0) {
+                                      const date = new Date().toISOString().split('T')[0];
+                                      updatePrescriptionDate(selectedVisitId, date);
+                                    }
+                                  }
+                                }
+                                
                                 updateVisitMutation.mutate({
                                   id: selectedVisitId,
                                   ...data
