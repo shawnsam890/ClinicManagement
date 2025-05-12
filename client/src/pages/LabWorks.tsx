@@ -22,7 +22,13 @@ type LabWork = {
   completedDate: string | null;
   technician: string | null;
   shade: string | null;
-  cost: number;
+  units: number;
+  labCost: number | null;
+  clinicCost: number | null;
+  totalLabCost: number | null;
+  totalClinicCost: number | null;
+  paymentStatus: string;
+  paymentDate: string | null;
   notes: string | null;
 };
 
