@@ -207,7 +207,7 @@ export default function PrescriptionForm({
     
     // Initialize timing if it's null or empty
     if (!prescription.timing) {
-      prescription.timing = "--";
+      prescription.timing = "--"; // Only hyphens as separators
     }
     
     // Split by hyphens, padding array if needed
@@ -384,7 +384,7 @@ export default function PrescriptionForm({
             medicationId: prescription.medicationId,
             medicationName: prescription.medicationName,
             prescriptionDate: prescription.prescriptionDate,
-            timing: prescription.timing || "0-0-0",
+            timing: prescription.timing || "",
             days: prescription.days || 7,
             notes: prescription.notes || null
           };
@@ -630,7 +630,7 @@ export default function PrescriptionForm({
                           onClick={(e) => (e.target as HTMLInputElement).select()}
                           onKeyDown={(e) => {
                             if (e.key === 'Backspace') {
-                              updateTimingDigit(index, 1, '0');
+                              updateTimingDigit(index, 1, '');
                               e.preventDefault();
                             } else if (e.key >= '0' && e.key <= '9') {
                               updateTimingDigit(index, 1, e.key);
@@ -651,7 +651,7 @@ export default function PrescriptionForm({
                           onClick={(e) => (e.target as HTMLInputElement).select()}
                           onKeyDown={(e) => {
                             if (e.key === 'Backspace') {
-                              updateTimingDigit(index, 2, '0');
+                              updateTimingDigit(index, 2, '');
                               e.preventDefault();
                             } else if (e.key >= '0' && e.key <= '9') {
                               updateTimingDigit(index, 2, e.key);
