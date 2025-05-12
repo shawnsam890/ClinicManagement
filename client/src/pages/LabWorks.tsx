@@ -89,6 +89,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -539,11 +540,13 @@ export default function LabWorks() {
                         <TableHead>Patient ID</TableHead>
                         <TableHead>Work Type</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Start Date</TableHead>
-                        <TableHead>Due Date</TableHead>
+                        <TableHead>Lab Name</TableHead> 
                         <TableHead>Technician</TableHead>
+                        <TableHead className="text-center">Units</TableHead>
                         <TableHead>Shade</TableHead>
-                        <TableHead className="text-right">Cost</TableHead>
+                        <TableHead className="text-right">Lab Cost</TableHead>
+                        <TableHead className="text-right">Clinic Cost</TableHead>
+                        <TableHead className="text-right">Due Date</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -553,11 +556,21 @@ export default function LabWorks() {
                           <TableCell>{work.patientId}</TableCell>
                           <TableCell>{work.workType}</TableCell>
                           <TableCell>{getStatusBadge(work.status)}</TableCell>
-                          <TableCell>{work.startDate}</TableCell>
-                          <TableCell>{work.dueDate}</TableCell>
+                          <TableCell>{work.labName || "-"}</TableCell>
                           <TableCell>{work.technician || "-"}</TableCell>
+                          <TableCell className="text-center">{work.units || 1}</TableCell>
                           <TableCell>{work.workType === "crown" && work.shade ? work.shade : "-"}</TableCell>
-                          <TableCell className="text-right">₹{work.cost?.toLocaleString() || "0"}</TableCell>
+                          <TableCell className="text-right">
+                            {work.totalLabCost ? 
+                              `₹${work.totalLabCost.toLocaleString()}` : 
+                              (work.labCost ? `₹${(work.labCost * (work.units || 1)).toLocaleString()}` : "-")}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {work.totalClinicCost ? 
+                              `₹${work.totalClinicCost.toLocaleString()}` : 
+                              (work.clinicCost ? `₹${(work.clinicCost * (work.units || 1)).toLocaleString()}` : "-")}
+                          </TableCell>
+                          <TableCell className="text-right">{work.dueDate}</TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end space-x-2">
                               <Button
