@@ -607,6 +607,12 @@ export default function PrescriptionForm({
                             if (e.key === 'Backspace') {
                               updateTimingDigit(index, 0, '0');
                               e.preventDefault();
+                            } else if (e.key >= '0' && e.key <= '9') {
+                              updateTimingDigit(index, 0, e.key);
+                              e.preventDefault();
+                            } else if (e.key.toLowerCase() === 's') {
+                              updateTimingDigit(index, 0, 'S');
+                              e.preventDefault();
                             }
                           }}
                         />
@@ -622,6 +628,12 @@ export default function PrescriptionForm({
                             if (e.key === 'Backspace') {
                               updateTimingDigit(index, 1, '0');
                               e.preventDefault();
+                            } else if (e.key >= '0' && e.key <= '9') {
+                              updateTimingDigit(index, 1, e.key);
+                              e.preventDefault();
+                            } else if (e.key.toLowerCase() === 's') {
+                              updateTimingDigit(index, 1, 'S');
+                              e.preventDefault();
                             }
                           }}
                         />
@@ -636,6 +648,12 @@ export default function PrescriptionForm({
                           onKeyDown={(e) => {
                             if (e.key === 'Backspace') {
                               updateTimingDigit(index, 2, '0');
+                              e.preventDefault();
+                            } else if (e.key >= '0' && e.key <= '9') {
+                              updateTimingDigit(index, 2, e.key);
+                              e.preventDefault();
+                            } else if (e.key.toLowerCase() === 's') {
+                              updateTimingDigit(index, 2, 'S');
                               e.preventDefault();
                             }
                           }}
