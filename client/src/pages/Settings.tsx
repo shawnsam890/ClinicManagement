@@ -1654,7 +1654,7 @@ export default function Settings() {
                         <SignatureCanvas
                           ref={signatureRef}
                           canvasProps={{
-                            className: "w-full h-40 bg-white",
+                            className: "w-full h-56 bg-white",
                           }}
                         />
                       </div>
@@ -1734,7 +1734,7 @@ export default function Settings() {
                             </Button>
                           </div>
                         </div>
-                        <div className="h-24 border rounded flex items-center justify-center bg-neutral-50 p-2">
+                        <div className="h-36 border rounded flex items-center justify-center bg-neutral-50 p-2">
                           <img 
                             src={signature.signatureImage} 
                             alt={`${signature.doctorName}'s signature`}
