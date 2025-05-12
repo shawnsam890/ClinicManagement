@@ -164,6 +164,11 @@ export default function LabWorks() {
   // Fetch dropdown options from settings
   const { data: dropdownOptions = { settingValue: {} } } = useQuery<DropdownOptions>({
     queryKey: ["/api/settings/key/dropdown_options"],
+    onSuccess: (data) => {
+      console.log("Dropdown options loaded:", data);
+      console.log("Lab technicians:", data?.settingValue?.labTechnicians);
+      console.log("Work types:", data?.settingValue?.workTypes);
+    },
   });
 
   // Query to fetch lab costs
