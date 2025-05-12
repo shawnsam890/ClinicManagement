@@ -4,6 +4,7 @@ import {
   Appointment, InsertAppointment,
   LabWork, InsertLabWork,
   LabInventoryItem, InsertLabInventoryItem,
+  LabWorkCost, InsertLabWorkCost,
   Staff, InsertStaff,
   StaffAttendance, InsertStaffAttendance,
   StaffSalary, InsertStaffSalary,
@@ -49,6 +50,14 @@ export interface IStorage {
   createLabWork(labWork: InsertLabWork): Promise<LabWork>;
   updateLabWork(id: number, labWork: Partial<InsertLabWork>): Promise<LabWork | undefined>;
   deleteLabWork(id: number): Promise<boolean>;
+  
+  // Lab work costs
+  getLabWorkCosts(): Promise<LabWorkCost[]>;
+  getLabWorkCostById(id: number): Promise<LabWorkCost | undefined>;
+  getLabWorkCostByWorkType(workType: string): Promise<LabWorkCost | undefined>;
+  createLabWorkCost(labWorkCost: InsertLabWorkCost): Promise<LabWorkCost>;
+  updateLabWorkCost(id: number, labWorkCost: Partial<InsertLabWorkCost>): Promise<LabWorkCost | undefined>;
+  deleteLabWorkCost(id: number): Promise<boolean>;
   
   // Lab inventory
   getLabInventory(): Promise<LabInventoryItem[]>;
