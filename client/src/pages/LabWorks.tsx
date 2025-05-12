@@ -396,18 +396,35 @@ export default function LabWorks() {
   };
 
   const onLabWorkSubmit = (values: LabWorkFormValues) => {
+    // Find the lab cost from settings based on technician and workType
+    const labCost = findLabCostFromSettings(values.technician, values.workType);
+    
     // Calculate total costs based on per-unit costs and number of units
-    const totalLabCost = values.labCost && values.units ? values.labCost * values.units : null;
+    const totalLabCost = labCost && values.units ? labCost * values.units : null;
     const totalClinicCost = values.clinicCost && values.units ? values.clinicCost * values.units : null;
     
-    // Update the values with calculated totals
+    // Update the values with calculated totals and lab cost from settings
     const updatedValues = {
       ...values,
+      labCost,
       totalLabCost,
       totalClinicCost
     };
     
     labWorkMutation.mutate(updatedValues);
+  };
+  
+  // Function to find lab cost from settings based on technician and work type
+  const findLabCostFromSettings = (technician: string | null, workType: string): number | null => {
+    if (!technician || !workType) return null;
+    
+    // Find matching cost from lab costs list
+    const matchingCost = labCosts.find(cost => 
+      cost.labTechnician === technician && 
+      cost.workType === workType
+    );
+    
+    return matchingCost ? matchingCost.cost : null;
   };
 
   const onInventorySubmit = (values: any) => {
@@ -540,57 +557,71 @@ export default function LabWorks() {
                         <TableHead>Patient ID</TableHead>
                         <TableHead>Work Type</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Lab Name</TableHead> 
                         <TableHead>Technician</TableHead>
                         <TableHead className="text-center">Units</TableHead>
                         <TableHead>Shade</TableHead>
                         <TableHead className="text-right">Lab Cost</TableHead>
                         <TableHead className="text-right">Clinic Cost</TableHead>
+                        <TableHead className="text-right">Profit</TableHead>
                         <TableHead className="text-right">Due Date</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredLabWorks.map((work: any) => (
-                        <TableRow key={work.id}>
-                          <TableCell>{work.patientId}</TableCell>
-                          <TableCell>{work.workType}</TableCell>
-                          <TableCell>{getStatusBadge(work.status)}</TableCell>
-                          <TableCell>{work.labName || "-"}</TableCell>
-                          <TableCell>{work.technician || "-"}</TableCell>
-                          <TableCell className="text-center">{work.units || 1}</TableCell>
-                          <TableCell>{work.workType === "crown" && work.shade ? work.shade : "-"}</TableCell>
-                          <TableCell className="text-right">
-                            {work.totalLabCost ? 
-                              `₹${work.totalLabCost.toLocaleString()}` : 
-                              (work.labCost ? `₹${(work.labCost * (work.units || 1)).toLocaleString()}` : "-")}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {work.totalClinicCost ? 
-                              `₹${work.totalClinicCost.toLocaleString()}` : 
-                              (work.clinicCost ? `₹${(work.clinicCost * (work.units || 1)).toLocaleString()}` : "-")}
-                          </TableCell>
-                          <TableCell className="text-right">{work.dueDate}</TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end space-x-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEditLabWork(work)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteLabWork(work.id)}
-                              >
-                                <Trash2 className="h-4 w-4 text-red-600" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {filteredLabWorks.map((work: any) => {
+                        // Calculate lab cost from settings if not already stored
+                        const labCost = work.labCost || findLabCostFromSettings(work.technician, work.workType);
+                        const totalLabCost = labCost && work.units ? labCost * work.units : null;
+                        const totalClinicCost = work.totalClinicCost || (work.clinicCost && work.units ? work.clinicCost * work.units : null);
+                        
+                        // Calculate profit (clinic cost - lab cost)
+                        const profit = totalClinicCost !== null && totalLabCost !== null 
+                          ? totalClinicCost - totalLabCost 
+                          : null;
+                          
+                        return (
+                          <TableRow key={work.id}>
+                            <TableCell>{work.patientId}</TableCell>
+                            <TableCell>{work.workType}</TableCell>
+                            <TableCell>{getStatusBadge(work.status)}</TableCell>
+                            <TableCell>{work.technician || "-"}</TableCell>
+                            <TableCell className="text-center">{work.units || 1}</TableCell>
+                            <TableCell>{work.workType === "crown" && work.shade ? work.shade : "-"}</TableCell>
+                            <TableCell className="text-right">
+                              {totalLabCost ? `₹${totalLabCost.toLocaleString()}` : "-"}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {totalClinicCost ? `₹${totalClinicCost.toLocaleString()}` : "-"}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {profit !== null ? (
+                                <span className={profit >= 0 ? "text-green-600" : "text-red-600"}>
+                                  ₹{profit.toLocaleString()}
+                                </span>
+                              ) : "-"}
+                            </TableCell>
+                            <TableCell className="text-right">{work.dueDate}</TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end space-x-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleEditLabWork(work)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteLabWork(work.id)}
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-600" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </div>
@@ -938,45 +969,8 @@ export default function LabWorks() {
                     )}
                   />
                   
-                  {/* Lab Name */}
-                  <FormField
-                    control={form.control}
-                    name="labName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Lab Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Enter lab name" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Lab Cost (per unit) */}
-                  <FormField
-                    control={form.control}
-                    name="labCost"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Lab Cost (₹ per unit)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            {...field}
-                            value={field.value === null || isNaN(field.value) ? '' : field.value.toString()}
-                            onChange={(e) => {
-                              const value = e.target.value === '' ? null : parseFloat(e.target.value);
-                              field.onChange(isNaN(value) ? null : value);
-                            }}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {/* Lab Cost is now managed in Settings */}                  
+                  {/* Only Clinic Cost is shown here */}
                   
                   {/* Clinic Cost (per unit) */}
                   <FormField
