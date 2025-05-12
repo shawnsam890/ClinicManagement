@@ -1467,7 +1467,7 @@ export default function Settings() {
                   </div>
                   <Button
                     onClick={handleAddLabWorkCost}
-                    disabled={!newLabWorkCost.workType || !newLabWorkCost.defaultCost}
+                    disabled={!newLabWorkCost.workType || !newLabWorkCost.labTechnician || !newLabWorkCost.cost}
                     className="self-start"
                   >
                     Add Lab Work Cost
@@ -1479,6 +1479,7 @@ export default function Settings() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Work Type</TableHead>
+                        <TableHead>Lab Technician</TableHead>
                         <TableHead>Lab Cost</TableHead>
                         <TableHead className="w-[100px]">Actions</TableHead>
                       </TableRow>
@@ -1510,13 +1511,34 @@ export default function Settings() {
                             </TableCell>
                             <TableCell>
                               {editingLabWorkCostId === cost.id ? (
+                                <Select
+                                  value={editingLabWorkCost.labTechnician || ''}
+                                  onValueChange={(value) => setEditingLabWorkCost({...editingLabWorkCost, labTechnician: value})}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {dropdownOptions?.settingValue?.labTechnicians?.map((option: string) => (
+                                      <SelectItem key={option} value={option}>
+                                        {option}
+                                      </SelectItem>
+                                    )) || []}
+                                  </SelectContent>
+                                </Select>
+                              ) : (
+                                cost.labTechnician
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {editingLabWorkCostId === cost.id ? (
                                 <Input
                                   type="number"
-                                  value={editingLabWorkCost.defaultCost || ''}
-                                  onChange={(e) => setEditingLabWorkCost({...editingLabWorkCost, defaultCost: parseFloat(e.target.value) || 0})}
+                                  value={editingLabWorkCost.cost || ''}
+                                  onChange={(e) => setEditingLabWorkCost({...editingLabWorkCost, cost: parseFloat(e.target.value) || 0})}
                                 />
                               ) : (
-                                cost.defaultCost
+                                cost.cost
                               )}
                             </TableCell>
 
