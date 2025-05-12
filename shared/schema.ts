@@ -103,12 +103,12 @@ export const labInventory = pgTable("lab_inventory", {
   lastRestock: date("last_restock"),
 });
 
-// Table to store default costs for lab work types and labs
+// Table to store default costs for lab work types and technicians
 export const labWorkCosts = pgTable("lab_work_costs", {
   id: serial("id").primaryKey(),
   workType: text("work_type").notNull(),  // The type of lab work (e.g., "Crown", "Bridge")
-  labName: text("lab_name").notNull(),    // The name of the lab (e.g., "ABC Lab", "XYZ Lab")
-  defaultLabCost: real("default_lab_cost").notNull(),  // Default cost paid to lab
+  labTechnician: text("lab_technician").notNull(),  // The name of the technician
+  cost: real("cost").notNull(),  // Cost charged by this technician for this work type
   notes: text("notes"),
 });
 
