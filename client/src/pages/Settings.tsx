@@ -599,6 +599,8 @@ export default function Settings() {
       treatmentDone: "Treatment Done",
       advice: "Advice",
       labTechnicians: "Lab Technicians",
+      workTypes: "Lab Work Types",
+      crownShades: "Crown Shades",
       doctors: "Doctors",
     };
     return labels[key] || key;
