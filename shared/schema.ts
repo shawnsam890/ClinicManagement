@@ -56,7 +56,9 @@ export const patientVisits = pgTable("patient_visits", {
   chiefComplaint: text("chief_complaint").notNull(),
   areaOfComplaint: text("area_of_complaint"),
   oralExamination: text("oral_examination"),
+  toothNumber: text("tooth_number"),  // New field for tooth number
   investigation: text("investigation"),
+  investigationalDiagnosis: text("investigational_diagnosis"), // New field for investigation diagnosis
   treatmentPlan: text("treatment_plan"),
   prescription: text("prescription"), // Legacy field, will eventually store a reference to prescriptions table
   treatmentDone: text("treatment_done"),

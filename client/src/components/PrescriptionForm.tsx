@@ -171,7 +171,14 @@ export default function PrescriptionForm({
   // Update timing digit
   const updateTimingDigit = (index: number, position: number, value: string) => {
     const updatedPrescriptions = [...prescriptions];
-    const timingParts = updatedPrescriptions[index].timing.split('-');
+    const prescription = updatedPrescriptions[index];
+    
+    // Initialize timing if it's null
+    if (!prescription.timing) {
+      prescription.timing = "0-0-0";
+    }
+    
+    const timingParts = prescription.timing.split('-');
     
     // Validate input to only allow digits, S, or empty
     if (value !== "" && !/^[0-9Ss]?$/.test(value)) {
@@ -185,17 +192,17 @@ export default function PrescriptionForm({
     
     // Use the entered value or '0' if empty (allows backspace to work)
     timingParts[position] = value || '0';
-    updatedPrescriptions[index].timing = timingParts.join('-');
+    prescription.timing = timingParts.join('-');
     
     setPrescriptions(updatedPrescriptions);
     
     // If this is a new unsaved prescription, just update the state
-    if (!updatedPrescriptions[index].id) {
+    if (!prescription.id) {
       return;
     }
     
     // Auto-save this prescription after timing update if it already exists
-    savePrescription.mutate(updatedPrescriptions[index]);
+    savePrescription.mutate(prescription);
     
     // If onSave callback is provided, invoke it
     if (onSave) {
@@ -428,7 +435,7 @@ export default function PrescriptionForm({
                       <>
                         <Input
                           type="text"
-                          value={prescription.timing.split('-')[0]}
+                          value={prescription.timing ? prescription.timing.split('-')[0] : '0'}
                           onChange={(e) => updateTimingDigit(index, 0, e.target.value)}
                           className="w-8 h-8 text-center p-0"
                           maxLength={1}
@@ -436,7 +443,7 @@ export default function PrescriptionForm({
                         <span>-</span>
                         <Input
                           type="text"
-                          value={prescription.timing.split('-')[1]}
+                          value={prescription.timing ? prescription.timing.split('-')[1] : '0'}
                           onChange={(e) => updateTimingDigit(index, 1, e.target.value)}
                           className="w-8 h-8 text-center p-0"
                           maxLength={1}
@@ -444,7 +451,7 @@ export default function PrescriptionForm({
                         <span>-</span>
                         <Input
                           type="text"
-                          value={prescription.timing.split('-')[2]}
+                          value={prescription.timing ? prescription.timing.split('-')[2] : '0'}
                           onChange={(e) => updateTimingDigit(index, 2, e.target.value)}
                           className="w-8 h-8 text-center p-0"
                           maxLength={1}

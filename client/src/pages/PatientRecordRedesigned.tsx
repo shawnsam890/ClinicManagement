@@ -1138,6 +1138,17 @@ export default function PatientRecord() {
                                     </Select>
                                   </div>
                                   <div>
+                                    <Label htmlFor="toothNumber">Tooth Number</Label>
+                                    <Input
+                                      id="toothNumber"
+                                      name="toothNumber"
+                                      type="text"
+                                      placeholder="e.g. 18, 36, 41"
+                                      defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.toothNumber || ""}
+                                      className="mt-1"
+                                    />
+                                  </div>
+                                  <div>
                                     <Label htmlFor="investigation">Investigation</Label>
                                     <Select 
                                       name="investigation" 
