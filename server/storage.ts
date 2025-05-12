@@ -781,7 +781,7 @@ export class DatabaseStorage implements IStorage {
     const result = await db.select().from(labWorkCosts).where(eq(labWorkCosts.id, id));
     return result[0];
   }
-
+  
   async getLabWorkCostByWorkType(workType: string): Promise<LabWorkCost | undefined> {
     const result = await db.select().from(labWorkCosts).where(eq(labWorkCosts.workType, workType));
     return result[0];
