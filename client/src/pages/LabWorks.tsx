@@ -163,11 +163,31 @@ export default function LabWorks() {
   // Debug output with more prominent logging
   console.log("▶️ PATIENT ID FROM URL:", patientIdFromUrl);
 
-  // Always get all lab works and filter in the component
+  // Fetch patient-specific lab works if we have a patientId
   const { 
-    labWorks = [], 
-    isLoadingLabWorks 
-  } = useLabWorks();
+    data: patientSpecificLabWorks = [],
+    isLoading: isLoadingPatientWorks
+  } = useQuery<any[]>({
+    queryKey: patientIdFromUrl ? [`/api/patients/${patientIdFromUrl}/lab-works`] : ['unused-key'],
+    enabled: !!patientIdFromUrl // Only run this query if we have a patientId
+  });
+  
+  // Fetch all lab works (only used when not in patient-specific mode)
+  const { 
+    data: allLabWorks = [], 
+    isLoading: isLoadingAllLabWorks 
+  } = useQuery<any[]>({
+    queryKey: ['/api/lab-works'],
+    enabled: !patientIdFromUrl // Only run this query if we don't have a patientId
+  });
+  
+  // Use either patient-specific lab works or all lab works
+  const labWorks = patientIdFromUrl ? patientSpecificLabWorks : allLabWorks;
+  const isLoadingLabWorks = patientIdFromUrl ? isLoadingPatientWorks : isLoadingAllLabWorks;
+  
+  // Log which data source we're using
+  console.log('🔍 DATA SOURCE:', patientIdFromUrl ? 'PATIENT SPECIFIC' : 'ALL LAB WORKS');
+  console.log('📌 LAB WORKS COUNT:', labWorks?.length || 0);
 
   // Fetch all patients for the dropdown
   const { data: patients = [] } = useQuery<Patient[]>({
@@ -494,40 +514,19 @@ export default function LabWorks() {
   // Apply filters
   console.log('⚠️ FILTERING: labWorks count =', labWorks?.length, 'patientId =', patientIdFromUrl);
 
-  // COMPLETELY NEW APPROACH: Direct, dedicated filtering
+  // ULTRA SIMPLE APPROACH
+  // Just a single filter operation - no nested logic
   
-  // Step 1: Create an empty filtered array
-  let patientFilteredLabWorks: typeof labWorks = [];
+  // First filter by patient ID if one is provided
+  // This is the solution to the issue with patient-specific lab works
+  const patientFilteredWorks = labWorks && patientIdFromUrl 
+    ? labWorks.filter(work => work.patientId === patientIdFromUrl)
+    : labWorks || [];
   
-  // Step 2: Check if patient ID is provided
-  if (isPatientSpecificMode && patientIdFromUrl) {
-    console.log('⚡ NEW PATIENT FILTER ACTIVE - Hard filtering for ID:', patientIdFromUrl);
-    
-    // Step 3: Manually loop through and add only exact matches
-    if (labWorks && labWorks.length > 0) {
-      console.log('Available Lab Works:', labWorks.map(work => `${work.id}:${work.patientId}`).join(', '));
-      
-      for (const work of labWorks) {
-        if (work.patientId === patientIdFromUrl) {
-          console.log(`✅ MATCH: Work ID ${work.id} for patient ${work.patientId}`);
-          patientFilteredLabWorks.push(work);
-        } else {
-          console.log(`❌ REJECTED: Work ID ${work.id} for patient ${work.patientId}`);
-        }
-      }
-    }
-  } else {
-    // If no patient ID, use all works
-    patientFilteredLabWorks = labWorks || [];
-  }
-  
-  console.log('📊 FINAL PATIENT FILTER RESULT:', 
-    patientFilteredLabWorks.length, 
-    'works for patient', 
-    patientIdFromUrl || 'ALL');
+  console.log(`FOUND ${patientFilteredWorks.length} WORKS FOR PATIENT ${patientIdFromUrl || 'ALL'}`);
   
   // Then apply the regular search and status filters
-  const filteredLabWorks = patientFilteredLabWorks.filter((work: any) => {
+  const filteredLabWorks = patientFilteredWorks.filter((work: any) => {
     // Apply search filter
     const matchesSearch =
       work.patientId.toLowerCase().includes(searchQuery.toLowerCase()) ||
