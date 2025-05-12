@@ -510,7 +510,11 @@ export default function LabWorks() {
   };
 
   return (
-    <Layout title="Lab Management" showBackButton={true} backTo="/dashboard">
+    <Layout 
+      title="Lab Management" 
+      showBackButton={true} 
+      backTo={patientIdFromUrl ? `/patients/${patientIdFromUrl}` : "/dashboard"}
+    >
       <Tabs defaultValue="works" value={currentTab} onValueChange={setCurrentTab}>
         <div className="flex items-center justify-between mb-4">
           <TabsList>
