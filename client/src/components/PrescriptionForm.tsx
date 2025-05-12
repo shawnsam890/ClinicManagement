@@ -375,50 +375,6 @@ export default function PrescriptionForm({
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center space-x-4">
           <h2 className="text-sm font-medium">Prescription Details</h2>
-          {!readOnly && (
-            <div className="flex items-center">
-              <span className="text-xs text-muted-foreground mr-2">Date:</span>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={cn(
-                      "w-[130px] justify-start text-left font-normal",
-                      !prescriptions[0]?.prescriptionDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {prescriptions[0]?.prescriptionDate ? (
-                      format(new Date(prescriptions[0].prescriptionDate), "dd MMM yyyy")
-                    ) : (
-                      "Select date"
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={prescriptions[0]?.prescriptionDate ? new Date(prescriptions[0].prescriptionDate) : undefined}
-                    onSelect={(date) => {
-                      // Update prescription date for all prescriptions in this visit
-                      const updatedPrescriptions = prescriptions.map(p => ({
-                        ...p,
-                        prescriptionDate: date
-                      }));
-                      setPrescriptions(updatedPrescriptions);
-                      
-                      // If onSave callback is provided, invoke it
-                      if (onSave) {
-                        onSave(updatedPrescriptions);
-                      }
-                    }}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-          )}
           {readOnly && prescriptions[0]?.prescriptionDate && (
             <div className="text-xs text-muted-foreground">
               Date: {format(new Date(prescriptions[0].prescriptionDate), "dd MMM yyyy")}
