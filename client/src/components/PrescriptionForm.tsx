@@ -19,7 +19,7 @@ interface PrescriptionItem {
   visitId: number;
   medicationId: number;
   medicationName?: string;
-  prescriptionDate?: Date | string | null;
+  prescriptionDate: string;
   timing: string | null;
   days?: number | null;
   notes?: string | null;
@@ -112,10 +112,13 @@ export default function PrescriptionForm({
       console.log("PrescriptionForm - Creating default prescription row");
       // If no prescriptions, start with an empty row
       if (!readOnly) {
+        const today = new Date();
+        const dateStr = today.toISOString().split('T')[0];
+        
         setPrescriptions([{
           visitId: visitId,
           medicationId: 0,
-          prescriptionDate: new Date(),
+          prescriptionDate: dateStr,
           timing: "0-0-0",
           days: 7, // Default to 7 days
           notes: ""
@@ -360,17 +363,11 @@ export default function PrescriptionForm({
           };
           
           // Format the prescription date if it exists
-          if (prescription.prescriptionDate) {
-            if (prescription.prescriptionDate instanceof Date) {
-              prescriptionToSave.prescriptionDate = prescription.prescriptionDate.toISOString().split('T')[0];
-            } else {
-              prescriptionToSave.prescriptionDate = prescription.prescriptionDate;
-            }
-          } else {
-            // Use today's date if not specified
-            const today = new Date();
-            prescriptionToSave.prescriptionDate = today.toISOString().split('T')[0];
-          }
+          const today = new Date();
+          const dateStr = today.toISOString().split('T')[0];
+          
+          // Add prescriptionDate to the object
+          prescriptionToSave.prescriptionDate = dateStr;
           
           console.log("About to save prescription:", prescriptionToSave);
           
@@ -699,9 +696,9 @@ export default function PrescriptionForm({
               size="sm"
               onClick={saveAllPrescriptions}
               disabled={prescriptions.some(p => !p.medicationId || p.medicationId === 0)}
-              className="bg-primary hover:bg-primary/90 text-white font-semibold px-6"
+              className="bg-green-600 hover:bg-green-700 text-white font-semibold px-4"
             >
-              <Save className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4 mr-2" />
               Save All Prescriptions
             </Button>
           </div>
