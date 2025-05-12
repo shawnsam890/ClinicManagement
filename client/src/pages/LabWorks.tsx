@@ -682,14 +682,22 @@ export default function LabWorks() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="crown">Crown</SelectItem>
-                            <SelectItem value="bridge">Bridge</SelectItem>
-                            <SelectItem value="denture">Denture</SelectItem>
-                            <SelectItem value="implant">Implant</SelectItem>
-                            <SelectItem value="veneer">Veneer</SelectItem>
-                            <SelectItem value="retainer">Retainer</SelectItem>
-                            <SelectItem value="night_guard">Night Guard</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
+                            {(dropdownOptions?.settingValue?.workTypes || []).map((workType: string) => (
+                              <SelectItem key={workType} value={workType}>
+                                {workType}
+                              </SelectItem>
+                            )) || (
+                              <>
+                                <SelectItem value="crown">Crown</SelectItem>
+                                <SelectItem value="bridge">Bridge</SelectItem>
+                                <SelectItem value="denture">Denture</SelectItem>
+                                <SelectItem value="implant">Implant</SelectItem>
+                                <SelectItem value="veneer">Veneer</SelectItem>
+                                <SelectItem value="retainer">Retainer</SelectItem>
+                                <SelectItem value="night_guard">Night Guard</SelectItem>
+                                <SelectItem value="other">Other</SelectItem>
+                              </>
+                            )}
                           </SelectContent>
                         </Select>
                         <FormMessage />
