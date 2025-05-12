@@ -5,13 +5,13 @@ import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { LabWork, LabInventoryItem } from "@shared/schema";
 
-export function useLabWorks() {
+export function useLabWorks(patientId?: string) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Get all lab works
+  // Get all lab works or patient-specific lab works if patientId is provided
   const { data: labWorks, isLoading: isLoadingLabWorks } = useQuery<LabWork[]>({
-    queryKey: ["/api/lab-works"],
+    queryKey: patientId ? [`/api/patients/${patientId}/lab-works`] : ["/api/lab-works"],
   });
 
   // Get lab work by ID

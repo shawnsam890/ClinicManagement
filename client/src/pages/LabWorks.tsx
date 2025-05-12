@@ -9,6 +9,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { useLabWorks } from "@/hooks/useLabWorks";
 
 // Define types for better TypeScript support
 type LabWork = {
@@ -150,10 +151,11 @@ export default function LabWorks() {
   const searchParams = new URLSearchParams(queryParamsStr);
   const patientIdFromUrl = searchParams.get('patientId');
 
-  // Fetch all lab works - but if patientId is provided, fetch only for that patient
-  const { data: labWorks = [], isLoading: isLoadingLabWorks } = useQuery<LabWork[]>({
-    queryKey: patientIdFromUrl ? [`/api/patients/${patientIdFromUrl}/lab-works`] : ["/api/lab-works"],
-  });
+  // Use the custom hook that automatically handles patient-specific lab works
+  const { 
+    labWorks = [], 
+    isLoadingLabWorks 
+  } = useLabWorks(patientIdFromUrl || undefined);
 
   // Fetch all patients for the dropdown
   const { data: patients = [] } = useQuery<Patient[]>({
@@ -562,9 +564,13 @@ export default function LabWorks() {
         <TabsContent value="works" className="mt-0">
           <Card>
             <CardHeader>
-              <CardTitle>Lab Works</CardTitle>
+              <CardTitle>
+                {patientIdFromUrl ? "Patient Lab Works" : "All Lab Works"}
+              </CardTitle>
               <CardDescription>
-                Manage dental laboratory work orders and track their progress
+                {patientIdFromUrl 
+                  ? `Viewing lab orders for patient ID: ${patientIdFromUrl}`
+                  : "Manage dental laboratory work orders and track their progress"}
               </CardDescription>
             </CardHeader>
             <CardContent>
