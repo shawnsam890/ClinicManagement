@@ -55,6 +55,7 @@ export interface IStorage {
   getLabWorkCosts(): Promise<LabWorkCost[]>;
   getLabWorkCostById(id: number): Promise<LabWorkCost | undefined>;
   getLabWorkCostByWorkType(workType: string): Promise<LabWorkCost | undefined>;
+  getLabWorkCostByWorkTypeAndTechnician(workType: string, labTechnician: string): Promise<LabWorkCost | undefined>;
   createLabWorkCost(labWorkCost: InsertLabWorkCost): Promise<LabWorkCost>;
   updateLabWorkCost(id: number, labWorkCost: Partial<InsertLabWorkCost>): Promise<LabWorkCost | undefined>;
   deleteLabWorkCost(id: number): Promise<boolean>;
@@ -784,6 +785,15 @@ export class DatabaseStorage implements IStorage {
   
   async getLabWorkCostByWorkType(workType: string): Promise<LabWorkCost | undefined> {
     const result = await db.select().from(labWorkCosts).where(eq(labWorkCosts.workType, workType));
+    return result[0];
+  }
+  
+  async getLabWorkCostByWorkTypeAndTechnician(workType: string, labTechnician: string): Promise<LabWorkCost | undefined> {
+    const result = await db.select().from(labWorkCosts)
+      .where(and(
+        eq(labWorkCosts.workType, workType),
+        eq(labWorkCosts.labTechnician, labTechnician)
+      ));
     return result[0];
   }
   

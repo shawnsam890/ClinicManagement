@@ -537,6 +537,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // New endpoint to get lab work costs by work type and technician
+  app.get('/api/lab-work-costs/lookup', async (req, res) => {
+    try {
+      const { workType, labTechnician } = req.query;
+      
+      if (!workType || !labTechnician) {
+        return res.status(400).json({ message: 'Work type and lab technician are required' });
+      }
+      
+      const labWorkCost = await storage.getLabWorkCostByWorkTypeAndTechnician(
+        workType as string, 
+        labTechnician as string
+      );
+      
+      if (!labWorkCost) {
+        return res.status(404).json({ message: 'Lab work cost not found for this type and technician' });
+      }
+      
+      res.json(labWorkCost);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
   app.post('/api/lab-work-costs', async (req, res) => {
     try {
       const labWorkCost = await storage.createLabWorkCost(req.body);
