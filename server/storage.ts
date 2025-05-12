@@ -627,7 +627,7 @@ import connectPg from "connect-pg-simple";
 import { db } from "./db";
 import { eq, and, asc } from "drizzle-orm";
 import { pool } from "./db";
-import { users, patients, patientVisits, appointments, labWorks, labInventory, staff, 
+import { users, patients, patientVisits, appointments, labWorks, labInventory, labWorkCosts, staff, 
   staffAttendance, staffSalary, invoices, invoiceItems, settings,
   medications, prescriptions, toothFindings, generalizedFindings, 
   investigations, followUps } from "@shared/schema";
@@ -769,6 +769,39 @@ export class DatabaseStorage implements IStorage {
   
   async deleteLabWork(id: number): Promise<boolean> {
     await db.delete(labWorks).where(eq(labWorks.id, id));
+    return true;
+  }
+  
+  // Lab work costs
+  async getLabWorkCosts(): Promise<LabWorkCost[]> {
+    return await db.select().from(labWorkCosts);
+  }
+  
+  async getLabWorkCostById(id: number): Promise<LabWorkCost | undefined> {
+    const result = await db.select().from(labWorkCosts).where(eq(labWorkCosts.id, id));
+    return result[0];
+  }
+
+  async getLabWorkCostByWorkType(workType: string): Promise<LabWorkCost | undefined> {
+    const result = await db.select().from(labWorkCosts).where(eq(labWorkCosts.workType, workType));
+    return result[0];
+  }
+  
+  async createLabWorkCost(labWorkCost: InsertLabWorkCost): Promise<LabWorkCost> {
+    const result = await db.insert(labWorkCosts).values(labWorkCost).returning();
+    return result[0];
+  }
+  
+  async updateLabWorkCost(id: number, labWorkCost: Partial<InsertLabWorkCost>): Promise<LabWorkCost | undefined> {
+    const result = await db.update(labWorkCosts)
+      .set(labWorkCost)
+      .where(eq(labWorkCosts.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  async deleteLabWorkCost(id: number): Promise<boolean> {
+    await db.delete(labWorkCosts).where(eq(labWorkCosts.id, id));
     return true;
   }
   
