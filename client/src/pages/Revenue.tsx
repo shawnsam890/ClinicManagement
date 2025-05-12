@@ -285,20 +285,20 @@ export default function Revenue() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-primary">
-                ₹{filteredInvoices.length ? Math.round(totalRevenue / filteredInvoices.length).toLocaleString() : 0}
+                ₹{filteredInvoices.length ? Math.round(invoiceRevenue / filteredInvoices.length).toLocaleString() : 0}
               </div>
             </CardContent>
           </Card>
         </div>
-
-        {/* Filters */}
+        
+        {/* Common Date Filters */}
         <Card>
           <CardHeader>
-            <CardTitle>Revenue Analysis</CardTitle>
-            <CardDescription>Filter and analyze your revenue data</CardDescription>
+            <CardTitle>Date Range</CardTitle>
+            <CardDescription>Filter data by date period</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1 space-y-2">
                 <label className="text-sm font-medium">Financial Year</label>
                 <Select
@@ -354,7 +354,7 @@ export default function Revenue() {
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-neutral-500" />
                   <Input
                     type="search"
-                    placeholder="Search invoices..."
+                    placeholder={activeTab === "invoices" ? "Search invoices..." : "Search lab works..."}
                     className="pl-8"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -362,140 +362,273 @@ export default function Revenue() {
                 </div>
               </div>
             </div>
-
-            {/* Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-              <div className="h-80">
-                <h3 className="text-lg font-semibold mb-2">Revenue by Payment Method</h3>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={chartData}
-                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip
-                      formatter={(value: any) => [`₹${value.toLocaleString()}`, "Amount"]}
-                    />
-                    <Legend />
-                    <Bar dataKey="amount" fill="#0077B6" name="Amount" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              
-              <div className="h-80">
-                <h3 className="text-lg font-semibold mb-2">Revenue by Treatment Type</h3>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={treatmentData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {treatmentData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(value: any) => [`₹${value.toLocaleString()}`, "Amount"]}
-                    />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {/* Invoices Table */}
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold">Invoices</h3>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
-                    <Printer className="h-4 w-4 mr-2" />
-                    Print
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Download className="h-4 w-4 mr-2" />
-                    Export
-                  </Button>
-                </div>
-              </div>
-              
-              {isLoadingInvoices ? (
-                <div className="flex justify-center py-10">
-                  <p>Loading invoices...</p>
-                </div>
-              ) : filteredInvoices.length === 0 ? (
-                <div className="text-center py-10">
-                  <p className="text-neutral-600">No invoices found for the selected period.</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Invoice ID</TableHead>
-                        <TableHead>Patient ID</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Payment Method</TableHead>
-                        <TableHead className="text-right">Amount</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredInvoices.map((invoice: any) => (
-                        <TableRow key={invoice.id}>
-                          <TableCell className="font-medium">{invoice.id}</TableCell>
-                          <TableCell>{invoice.patientId}</TableCell>
-                          <TableCell>{invoice.date}</TableCell>
-                          <TableCell>
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              invoice.status === "paid"
-                                ? "bg-green-100 text-green-800"
-                                : invoice.status === "pending"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-red-100 text-red-800"
-                            }`}>
-                              {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-                            </span>
-                          </TableCell>
-                          <TableCell>{invoice.paymentMethod || "—"}</TableCell>
-                          <TableCell className="text-right">₹{invoice.totalAmount.toLocaleString()}</TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                if (window.confirm(`Are you sure you want to delete invoice #${invoice.id}?`)) {
-                                  deleteInvoiceMutation.mutate(invoice.id);
-                                }
-                              }}
-                              disabled={deleteInvoiceMutation.isPending}
-                              title="Delete Invoice"
-                            >
-                              {deleteInvoiceMutation.isPending && deleteInvoiceMutation.variables === invoice.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin text-destructive" />
-                              ) : (
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              )}
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </div>
           </CardContent>
         </Card>
+        
+        {/* Tabs for different revenue types */}
+        <Tabs defaultValue="invoices" value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="mb-4">
+            <TabsTrigger value="invoices">Treatment Revenue</TabsTrigger>
+            <TabsTrigger value="lab">Lab Revenue</TabsTrigger>
+          </TabsList>
+
+          {/* Treatment Revenue Tab */}
+          <TabsContent value="invoices">
+            {/* Treatment Revenue Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <Card>
+                <CardContent className="pt-6">
+                  <h3 className="text-lg font-semibold mb-2">Revenue by Payment Method</h3>
+                  <div className="h-72">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={chartData}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip
+                          formatter={(value: any) => [`₹${value.toLocaleString()}`, "Amount"]}
+                        />
+                        <Legend />
+                        <Bar dataKey="amount" fill="#0077B6" name="Amount" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="pt-6">
+                  <h3 className="text-lg font-semibold mb-2">Revenue by Treatment Type</h3>
+                  <div className="h-72">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={treatmentData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                          nameKey="name"
+                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        >
+                          {treatmentData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          formatter={(value: any) => [`₹${value.toLocaleString()}`, "Amount"]}
+                        />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* Invoices Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Invoices</CardTitle>
+                <CardDescription>
+                  View and manage financial transactions
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {isLoadingInvoices ? (
+                    <div className="flex justify-center py-10">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      <p className="ml-2">Loading invoices...</p>
+                    </div>
+                  ) : filteredInvoices.length === 0 ? (
+                    <div className="text-center py-10">
+                      <p className="text-neutral-600">No invoices found</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Invoice ID</TableHead>
+                            <TableHead>Patient</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Payment Method</TableHead>
+                            <TableHead className="text-right">Amount</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredInvoices.map((invoice: any) => (
+                            <TableRow key={invoice.id}>
+                              <TableCell>#{invoice.id}</TableCell>
+                              <TableCell>{invoice.patientId}</TableCell>
+                              <TableCell>{format(new Date(invoice.date), "yyyy-MM-dd")}</TableCell>
+                              <TableCell>
+                                <span
+                                  className={`px-2 py-1 rounded-full text-xs ${
+                                    invoice.status === "paid"
+                                      ? "bg-green-100 text-green-800"
+                                      : invoice.status === "pending"
+                                      ? "bg-amber-100 text-amber-800"
+                                      : "bg-red-100 text-red-800"
+                                  }`}
+                                >
+                                  {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                                </span>
+                              </TableCell>
+                              <TableCell>{invoice.paymentMethod || "—"}</TableCell>
+                              <TableCell className="text-right">₹{invoice.totalAmount?.toLocaleString() || 0}</TableCell>
+                              <TableCell className="text-right">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => {
+                                    if (window.confirm(`Are you sure you want to delete invoice #${invoice.id}?`)) {
+                                      deleteInvoiceMutation.mutate(invoice.id);
+                                    }
+                                  }}
+                                  disabled={deleteInvoiceMutation.isPending}
+                                  title="Delete Invoice"
+                                >
+                                  {deleteInvoiceMutation.isPending && deleteInvoiceMutation.variables === invoice.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin text-destructive" />
+                                  ) : (
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                  )}
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          {/* Lab Revenue Tab */}
+          <TabsContent value="lab">
+            {/* Lab Revenue Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg">Lab Revenue</CardTitle>
+                  <CardDescription>Current period</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-primary">₹{labRevenue.toLocaleString()}</div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg">Lab Costs</CardTitle>
+                  <CardDescription>Current period</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-amber-600">₹{labCostTotal.toLocaleString()}</div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg">Lab Profit</CardTitle>
+                  <CardDescription>Current period</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-green-600">₹{labProfit.toLocaleString()}</div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* Lab Works Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Lab Works</CardTitle>
+                <CardDescription>
+                  View lab work financial details
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {isLoadingLabWorks ? (
+                    <div className="flex justify-center py-10">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      <p className="ml-2">Loading lab works...</p>
+                    </div>
+                  ) : filteredLabWorks.length === 0 ? (
+                    <div className="text-center py-10">
+                      <p className="text-neutral-600">No lab works found</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Patient ID</TableHead>
+                            <TableHead>Work Type</TableHead>
+                            <TableHead>Technician</TableHead>
+                            <TableHead className="text-center">Units</TableHead>
+                            <TableHead className="text-right">Lab Cost</TableHead>
+                            <TableHead className="text-right">Clinic Cost</TableHead>
+                            <TableHead className="text-right">Profit</TableHead>
+                            <TableHead>Status</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredLabWorks.map((work: any) => {
+                            const units = work.units || 1;
+                            const labCost = work.labCost ? work.labCost * units : 0;
+                            const clinicCost = work.clinicCost ? work.clinicCost * units : 0;
+                            const profit = clinicCost - labCost;
+                            
+                            return (
+                              <TableRow key={work.id}>
+                                <TableCell>{work.patientId}</TableCell>
+                                <TableCell>{work.workType}</TableCell>
+                                <TableCell>{work.technician || "-"}</TableCell>
+                                <TableCell className="text-center">{units}</TableCell>
+                                <TableCell className="text-right">₹{labCost.toLocaleString()}</TableCell>
+                                <TableCell className="text-right">₹{clinicCost.toLocaleString()}</TableCell>
+                                <TableCell className="text-right">
+                                  <span className={profit >= 0 ? "text-green-600" : "text-red-600"}>
+                                    ₹{profit.toLocaleString()}
+                                  </span>
+                                </TableCell>
+                                <TableCell>
+                                  <span
+                                    className={`px-2 py-1 rounded-full text-xs ${
+                                      work.status === "completed"
+                                        ? "bg-green-100 text-green-800"
+                                        : work.status === "in progress"
+                                        ? "bg-amber-100 text-amber-800"
+                                        : "bg-blue-100 text-blue-800"
+                                    }`}
+                                  >
+                                    {work.status?.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
+                                  </span>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </Layout>
   );
