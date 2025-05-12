@@ -130,15 +130,21 @@ export default function PrescriptionForm({
 
   // Add new prescription row
   const addPrescriptionRow = () => {
-    // Use the same prescription date as the first prescription if available
-    const prescriptionDate = prescriptions[0]?.prescriptionDate || new Date();
+    // Use the same prescription date as the first prescription if available, or today's date
+    let dateStr = prescriptions[0]?.prescriptionDate;
+    
+    // If no date is available, generate today's date as a string
+    if (!dateStr) {
+      const today = new Date();
+      dateStr = today.toISOString().split('T')[0];
+    }
     
     setPrescriptions([
       ...prescriptions,
       {
         visitId: visitId,
         medicationId: 0,
-        prescriptionDate,
+        prescriptionDate: dateStr,
         timing: "0-0-0",
         days: 7, // Default to 7 days
         notes: ""
@@ -357,17 +363,18 @@ export default function PrescriptionForm({
             visitId: visitId,
             medicationId: prescription.medicationId,
             medicationName: prescription.medicationName,
+            prescriptionDate: prescription.prescriptionDate,
             timing: prescription.timing || "0-0-0",
             days: prescription.days || 7,
             notes: prescription.notes || null
           };
           
-          // Format the prescription date if it exists
-          const today = new Date();
-          const dateStr = today.toISOString().split('T')[0];
-          
-          // Add prescriptionDate to the object
-          prescriptionToSave.prescriptionDate = dateStr;
+          // If prescription date is not already set, use today's date
+          if (!prescriptionToSave.prescriptionDate) {
+            const today = new Date();
+            const dateStr = today.toISOString().split('T')[0];
+            prescriptionToSave.prescriptionDate = dateStr;
+          }
           
           console.log("About to save prescription:", prescriptionToSave);
           
@@ -473,14 +480,22 @@ export default function PrescriptionForm({
                     selected={prescriptions[0]?.prescriptionDate ? new Date(prescriptions[0].prescriptionDate) : undefined}
                     onSelect={(date) => {
                       // Update prescription date for all prescriptions in this visit
-                      const updatedPrescriptions = prescriptions.map(p => ({
-                        ...p,
-                        prescriptionDate: date
-                      }));
-                      setPrescriptions(updatedPrescriptions);
+                      if (date) {
+                        const dateStr = date.toISOString().split('T')[0];
+                        const updatedPrescriptions = prescriptions.map(p => ({
+                          ...p,
+                          prescriptionDate: dateStr
+                        }));
+                        setPrescriptions(updatedPrescriptions);
+                      }
                       
                       // If onSave callback is provided, invoke it
-                      if (onSave) {
+                      if (onSave && date) {
+                        const dateStr = date.toISOString().split('T')[0];
+                        const updatedPrescriptions = prescriptions.map(p => ({
+                          ...p,
+                          prescriptionDate: dateStr
+                        }));
                         onSave(updatedPrescriptions);
                       }
                     }}
