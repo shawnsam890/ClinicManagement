@@ -116,6 +116,7 @@ import {
   AlertCircle,
   Edit,
   Trash2,
+  ChevronLeft,
 } from "lucide-react";
 
 // Modify the lab work schema for the form
@@ -167,13 +168,31 @@ export default function LabWorks() {
   console.log("🔑 PATIENT ID DETECTION:", { location, patientIdFromUrl, returnPath });
   
   // Set the page title to indicate patient-specific view
+  // Also setup a handler for browser back button to avoid 404 errors
   useEffect(() => {
     if (patientIdFromUrl) {
       document.title = `Lab Orders for ${patientIdFromUrl}`;
+      
+      // Set up a handler for the 'popstate' event (browser back/forward buttons)
+      const handlePopState = () => {
+        // If we don't have a valid returnPath in state, navigate to a safe default
+        if (!window.history.state?.state?.returnPath) {
+          // Navigate to either patient record or dashboard instead of showing 404
+          navigate(`/patients/record/${patientIdFromUrl}`);
+        }
+      };
+      
+      // Add the event listener
+      window.addEventListener('popstate', handlePopState);
+      
+      // Clean up when component unmounts
+      return () => {
+        window.removeEventListener('popstate', handlePopState);
+      };
     } else {
       document.title = 'All Lab Works';
     }
-  }, [patientIdFromUrl]);
+  }, [patientIdFromUrl, navigate]);
   
   // Debug output with more prominent logging
   console.log("▶️ PATIENT ID FROM URL:", patientIdFromUrl);
