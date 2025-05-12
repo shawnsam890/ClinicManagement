@@ -147,6 +147,10 @@ export default function LabWorks() {
   // Get patientId from URL path parameter if it exists
   const [location, navigate] = useLocation();
   
+  // Get location state if available (for proper back navigation)
+  const locationState = window.history.state?.state || {};
+  const returnPath = locationState.returnPath;
+  
   // First check if we're on the /lab-works/patient/:patientId route
   const pathMatch = /^\/lab-works\/patient\/([^\/]+)/.exec(location);
   
@@ -160,7 +164,7 @@ export default function LabWorks() {
     patientIdFromUrl = searchParams.get('patientId');
   }
   
-  console.log("🔑 PATIENT ID DETECTION:", { location, patientIdFromUrl });
+  console.log("🔑 PATIENT ID DETECTION:", { location, patientIdFromUrl, returnPath });
   
   // Set the page title to indicate patient-specific view
   useEffect(() => {
@@ -655,7 +659,16 @@ export default function LabWorks() {
                     <span className="block">
                       Patient Name: {patients.find(p => p.patientId === patientIdFromUrl)?.name || 'Unknown'}
                     </span>
-                    <div className="mt-2">
+                    <div className="mt-2 flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => navigate(returnPath || `/patients/record/${patientIdFromUrl}`)}
+                        className="text-xs border-purple-300 text-purple-700 hover:bg-purple-100"
+                      >
+                        <ChevronLeft className="h-3 w-3 mr-1" />
+                        Back to Patient
+                      </Button>
                       <Button 
                         variant="outline" 
                         size="sm" 
