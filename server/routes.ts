@@ -1534,6 +1534,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  app.post('/api/visits/:visitId/prescriptions', async (req, res) => {
+    try {
+      const visitId = parseInt(req.params.visitId);
+      if (isNaN(visitId)) {
+        return res.status(400).json({ message: 'Invalid visit ID' });
+      }
+      
+      // Ensure the visit ID in the URL matches the one in the request body
+      const prescriptionData = {
+        ...req.body,
+        visitId
+      };
+      
+      // Ensure prescription date is never null
+      if (!prescriptionData.prescriptionDate) {
+        prescriptionData.prescriptionDate = new Date().toISOString().split('T')[0];
+      }
+      
+      // Ensure timing is never null
+      if (!prescriptionData.timing) {
+        prescriptionData.timing = "0-0-0";
+      }
+      
+      const prescription = await storage.createPrescription(prescriptionData);
+      res.status(201).json(prescription);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Validation error', errors: error.errors });
+      }
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
   app.get('/api/prescriptions/:id', async (req, res) => {
     try {
       const id = parseInt(req.params.id);

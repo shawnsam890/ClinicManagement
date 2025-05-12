@@ -412,7 +412,7 @@ export default function PrescriptionForm({
             if (onAddPrescription) {
               await onAddPrescription(prescriptionToSave);
             } else {
-              const response = await fetch('/api/prescriptions', {
+              const response = await fetch(`/api/visits/${visitId}/prescriptions`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(prescriptionToSave)
