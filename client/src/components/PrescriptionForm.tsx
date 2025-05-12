@@ -119,7 +119,7 @@ export default function PrescriptionForm({
           visitId: visitId,
           medicationId: 0,
           prescriptionDate: dateStr,
-          timing: "0-0-0",
+          timing: "",
           days: 7, // Default to 7 days
           notes: ""
         }]);
@@ -145,7 +145,7 @@ export default function PrescriptionForm({
         visitId: visitId,
         medicationId: 0,
         prescriptionDate: dateStr,
-        timing: "0-0-0",
+        timing: "",
         days: 7, // Default to 7 days
         notes: ""
       }
@@ -199,18 +199,22 @@ export default function PrescriptionForm({
       value = 'S';
     }
 
-    // Handle backspace (empty value) - set to 0
-    const finalValue = value === "" ? "0" : value;
+    // Handle backspace - allow empty value
+    const finalValue = value;
     
     const updatedPrescriptions = [...prescriptions];
     const prescription = {...updatedPrescriptions[index]};
     
-    // Initialize timing if it's null
+    // Initialize timing if it's null or empty
     if (!prescription.timing) {
-      prescription.timing = "0-0-0";
+      prescription.timing = "--";
     }
     
-    const timingParts = prescription.timing.split('-');
+    // Split by hyphens, padding array if needed
+    let timingParts = prescription.timing.split('-');
+    while (timingParts.length < 3) {
+      timingParts.push('');
+    }
     timingParts[position] = finalValue;
     
     // Create the new timing value
@@ -598,14 +602,14 @@ export default function PrescriptionForm({
                       <>
                         <input
                           type="text"
-                          value={prescription.timing ? prescription.timing.split('-')[0] : '0'}
+                          value={prescription.timing ? prescription.timing.split('-')[0] : ''}
                           onChange={(e) => updateTimingDigit(index, 0, e.target.value)}
                           className="w-8 h-8 text-center p-0 border rounded"
                           maxLength={1}
                           onClick={(e) => (e.target as HTMLInputElement).select()}
                           onKeyDown={(e) => {
                             if (e.key === 'Backspace') {
-                              updateTimingDigit(index, 0, '0');
+                              updateTimingDigit(index, 0, '');
                               e.preventDefault();
                             } else if (e.key >= '0' && e.key <= '9') {
                               updateTimingDigit(index, 0, e.key);
@@ -619,7 +623,7 @@ export default function PrescriptionForm({
                         <span>-</span>
                         <input
                           type="text"
-                          value={prescription.timing ? prescription.timing.split('-')[1] : '0'}
+                          value={prescription.timing ? prescription.timing.split('-')[1] : ''}
                           onChange={(e) => updateTimingDigit(index, 1, e.target.value)}
                           className="w-8 h-8 text-center p-0 border rounded"
                           maxLength={1}
@@ -640,7 +644,7 @@ export default function PrescriptionForm({
                         <span>-</span>
                         <input
                           type="text"
-                          value={prescription.timing ? prescription.timing.split('-')[2] : '0'}
+                          value={prescription.timing ? prescription.timing.split('-')[2] : ''}
                           onChange={(e) => updateTimingDigit(index, 2, e.target.value)}
                           className="w-8 h-8 text-center p-0 border rounded"
                           maxLength={1}
