@@ -796,22 +796,24 @@ export default function LabWorks() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {(dropdownOptions?.settingValue?.workTypes || []).map((workType: string) => (
-                              <SelectItem key={workType} value={workType}>
-                                {workType}
-                              </SelectItem>
-                            )) || (
-                              <>
-                                <SelectItem value="crown">Crown</SelectItem>
-                                <SelectItem value="bridge">Bridge</SelectItem>
-                                <SelectItem value="denture">Denture</SelectItem>
-                                <SelectItem value="implant">Implant</SelectItem>
-                                <SelectItem value="veneer">Veneer</SelectItem>
-                                <SelectItem value="retainer">Retainer</SelectItem>
-                                <SelectItem value="night_guard">Night Guard</SelectItem>
-                                <SelectItem value="other">Other</SelectItem>
-                              </>
-                            )}
+                            {dropdownOptions?.settingValue?.workTypes ? 
+                              dropdownOptions.settingValue.workTypes.map((workType: string) => (
+                                <SelectItem key={workType} value={workType}>
+                                  {workType}
+                                </SelectItem>
+                              )) : (
+                                <>
+                                  <SelectItem value="crown">Crown</SelectItem>
+                                  <SelectItem value="bridge">Bridge</SelectItem>
+                                  <SelectItem value="denture">Denture</SelectItem>
+                                  <SelectItem value="implant">Implant</SelectItem>
+                                  <SelectItem value="veneer">Veneer</SelectItem>
+                                  <SelectItem value="retainer">Retainer</SelectItem>
+                                  <SelectItem value="night_guard">Night Guard</SelectItem>
+                                  <SelectItem value="other">Other</SelectItem>
+                                </>
+                              )
+                            }
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -866,15 +868,17 @@ export default function LabWorks() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {(dropdownOptions?.settingValue?.labTechnicians || []).map((technician: string) => (
-                              <SelectItem key={technician} value={technician}>
-                                {technician}
-                              </SelectItem>
-                            )) || (
-                              <SelectItem value="no-technician" disabled>
-                                No technicians found
-                              </SelectItem>
-                            )}
+                            {dropdownOptions?.settingValue?.labTechnicians ? 
+                              dropdownOptions.settingValue.labTechnicians.map((technician: string) => (
+                                <SelectItem key={technician} value={technician}>
+                                  {technician}
+                                </SelectItem>
+                              )) : (
+                                <SelectItem value="no-technician" disabled>
+                                  No technicians found
+                                </SelectItem>
+                              )
+                            }
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -901,15 +905,17 @@ export default function LabWorks() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {(dropdownOptions?.settingValue?.crownShades || []).map((shade: string) => (
-                                <SelectItem key={shade} value={shade}>
-                                  {shade}
-                                </SelectItem>
-                              )) || (
-                                <SelectItem value="no-shade" disabled>
-                                  No shades found
-                                </SelectItem>
-                              )}
+                              {dropdownOptions?.settingValue?.crownShades ? 
+                                dropdownOptions.settingValue.crownShades.map((shade: string) => (
+                                  <SelectItem key={shade} value={shade}>
+                                    {shade}
+                                  </SelectItem>
+                                )) : (
+                                  <SelectItem value="no-shade" disabled>
+                                    No shades found
+                                  </SelectItem>
+                                )
+                              }
                             </SelectContent>
                           </Select>
                           <FormMessage />
