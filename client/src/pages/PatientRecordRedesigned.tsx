@@ -1147,20 +1147,8 @@ export default function PatientRecord() {
                                         placeholder="Enter tooth number"
                                         defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.toothNumber || ""}
                                         className="mt-1"
-                                        onChange={(e) => setVisitDetails({...visitDetails, toothNumber: e.target.value})}
                                       />
                                     </div>
-                                  </div>
-                                  <div>
-                                    <Label htmlFor="toothNumber">Tooth Number</Label>
-                                    <Input
-                                      id="toothNumber"
-                                      name="toothNumber"
-                                      type="text"
-                                      placeholder="e.g. 18, 36, 41"
-                                      defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.toothNumber || ""}
-                                      className="mt-1"
-                                    />
                                   </div>
                                   <div>
                                     <Label htmlFor="investigation">Investigation</Label>
