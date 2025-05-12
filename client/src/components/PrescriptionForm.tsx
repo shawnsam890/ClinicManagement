@@ -189,16 +189,6 @@ export default function PrescriptionForm({
 
   // Update timing digit
   const updateTimingDigit = (index: number, position: number, value: string) => {
-    const updatedPrescriptions = [...prescriptions];
-    const prescription = updatedPrescriptions[index];
-    
-    // Initialize timing if it's null
-    if (!prescription.timing) {
-      prescription.timing = "0-0-0";
-    }
-    
-    const timingParts = prescription.timing.split('-');
-    
     // Allow only digits 0-9 and 'S' character
     if (value !== "" && !/^[0-9Ss]?$/.test(value)) {
       return;
@@ -208,24 +198,37 @@ export default function PrescriptionForm({
     if (value.toLowerCase() === 's') {
       value = 'S';
     }
-    
+
     // Handle backspace (empty value) - set to 0
-    timingParts[position] = value === "" ? "0" : value;
+    const finalValue = value === "" ? "0" : value;
+    
+    const updatedPrescriptions = [...prescriptions];
+    const prescription = {...updatedPrescriptions[index]};
+    
+    // Initialize timing if it's null
+    if (!prescription.timing) {
+      prescription.timing = "0-0-0";
+    }
+    
+    const timingParts = prescription.timing.split('-');
+    timingParts[position] = finalValue;
     
     // Create the new timing value
     const newTiming = timingParts.join('-');
     console.log("Updated timing:", newTiming);
     
-    // Set the timing directly in the prescription object
+    // Create a new prescription object with the updated timing
     updatedPrescriptions[index] = {
-      ...updatedPrescriptions[index],
+      ...prescription,
       timing: newTiming
     };
+    
+    console.log("Updated prescription:", updatedPrescriptions[index]);
     
     // Update the state with the new prescriptions array
     setPrescriptions(updatedPrescriptions);
     
-    // If onSave callback is provided, invoke it
+    // If onSave callback is provided, invoke it with entire updated array
     if (onSave) {
       onSave(updatedPrescriptions);
     }
@@ -599,8 +602,8 @@ export default function PrescriptionForm({
                           onChange={(e) => updateTimingDigit(index, 0, e.target.value)}
                           className="w-8 h-8 text-center p-0 border rounded"
                           maxLength={1}
+                          onClick={(e) => (e.target as HTMLInputElement).select()}
                           onKeyDown={(e) => {
-                            // Handle backspace specifically
                             if (e.key === 'Backspace') {
                               updateTimingDigit(index, 0, '0');
                               e.preventDefault();
@@ -614,8 +617,8 @@ export default function PrescriptionForm({
                           onChange={(e) => updateTimingDigit(index, 1, e.target.value)}
                           className="w-8 h-8 text-center p-0 border rounded"
                           maxLength={1}
+                          onClick={(e) => (e.target as HTMLInputElement).select()}
                           onKeyDown={(e) => {
-                            // Handle backspace specifically
                             if (e.key === 'Backspace') {
                               updateTimingDigit(index, 1, '0');
                               e.preventDefault();
@@ -629,8 +632,8 @@ export default function PrescriptionForm({
                           onChange={(e) => updateTimingDigit(index, 2, e.target.value)}
                           className="w-8 h-8 text-center p-0 border rounded"
                           maxLength={1}
+                          onClick={(e) => (e.target as HTMLInputElement).select()}
                           onKeyDown={(e) => {
-                            // Handle backspace specifically
                             if (e.key === 'Backspace') {
                               updateTimingDigit(index, 2, '0');
                               e.preventDefault();
