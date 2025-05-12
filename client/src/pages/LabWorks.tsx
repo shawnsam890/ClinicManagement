@@ -144,12 +144,23 @@ export default function LabWorks() {
   const [selectedLabWork, setSelectedLabWork] = useState<any | null>(null);
   const [currentTab, setCurrentTab] = useState("works");
   
-  // Get patientId from URL query parameter if it exists
-  const [location] = useLocation();
-  // Extract query params from location
-  const queryParamsStr = location.split('?')[1] || '';
-  const searchParams = new URLSearchParams(queryParamsStr);
-  const patientIdFromUrl = searchParams.get('patientId');
+  // Get patientId from URL path parameter if it exists
+  const [location, navigate] = useLocation();
+  
+  // First check if we're on the /lab-works/patient/:patientId route
+  const pathMatch = /^\/lab-works\/patient\/([^\/]+)/.exec(location);
+  
+  // If we have a path match, use that patientId
+  let patientIdFromUrl = pathMatch ? pathMatch[1] : null;
+  
+  // If not, check for query parameter (legacy support)
+  if (!patientIdFromUrl) {
+    const queryParamsStr = location.split('?')[1] || '';
+    const searchParams = new URLSearchParams(queryParamsStr);
+    patientIdFromUrl = searchParams.get('patientId');
+  }
+  
+  console.log("🔑 PATIENT ID DETECTION:", { location, patientIdFromUrl });
   
   // Set the page title to indicate patient-specific view
   useEffect(() => {
@@ -630,12 +641,34 @@ export default function LabWorks() {
           <Card>
             <CardHeader>
               <CardTitle>
-                {isPatientSpecificMode ? `Lab Orders for Patient ${patientIdFromUrl}` : "All Lab Works"}
+                {isPatientSpecificMode ? (
+                  <span className="flex items-center">
+                    <span className="text-purple-600 mr-2">Patient-Specific</span>
+                    Lab Orders
+                  </span>
+                ) : "All Lab Works"}
               </CardTitle>
               <CardDescription>
-                {isPatientSpecificMode 
-                  ? <span className="font-semibold text-purple-600">Showing lab works ONLY for patient ID: {patientIdFromUrl}</span>
-                  : "Manage dental laboratory work orders and track their progress"}
+                {isPatientSpecificMode ? (
+                  <div className="font-semibold text-purple-700 bg-purple-50 p-2 rounded-md border border-purple-200">
+                    <span className="block">Patient ID: {patientIdFromUrl}</span>
+                    <span className="block">
+                      Patient Name: {patients.find(p => p.patientId === patientIdFromUrl)?.name || 'Unknown'}
+                    </span>
+                    <div className="mt-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => navigate('/lab-works')}
+                        className="text-xs border-purple-300 text-purple-700 hover:bg-purple-100"
+                      >
+                        Show All Lab Works
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  "Manage dental laboratory work orders and track their progress"
+                )}
               </CardDescription>
             </CardHeader>
             <CardContent>

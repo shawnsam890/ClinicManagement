@@ -30,6 +30,7 @@ function Router() {
       <ProtectedRoute path="/patients/record/:patientId" component={PatientRecord} />
       <ProtectedRoute path="/patients/list" component={ExistingPatients} />
       <ProtectedRoute path="/lab-works" component={LabWorks} />
+      <ProtectedRoute path="/lab-works/patient/:patientId" component={LabWorks} />
       <ProtectedRoute path="/revenue" component={Revenue} />
       <ProtectedRoute path="/staff" component={StaffManagement} />
       <ProtectedRoute path="/settings" component={Settings} />
