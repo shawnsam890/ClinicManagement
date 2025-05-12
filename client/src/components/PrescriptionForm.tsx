@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Label } from "@/components/ui/label";
-import { Trash2, Plus, AlertCircle, Calendar as CalendarIcon } from "lucide-react";
+import { Trash2, Plus, AlertCircle, Calendar as CalendarIcon, Save } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -313,6 +313,8 @@ export default function PrescriptionForm({
 
   // Save all prescriptions
   const saveAllPrescriptions = async () => {
+    console.log("Save All Prescriptions clicked - prescriptions:", prescriptions);
+    
     // Check that we have at least one prescription
     if (prescriptions.length === 0) {
       toast({
@@ -347,32 +349,58 @@ export default function PrescriptionForm({
       for (const prescription of prescriptions) {
         try {
           // Make a copy to avoid mutating the original
-          const prescriptionToSave = { ...prescription };
+          const prescriptionToSave = { 
+            id: prescription.id,
+            visitId: visitId,
+            medicationId: prescription.medicationId,
+            medicationName: prescription.medicationName,
+            timing: prescription.timing || "0-0-0",
+            days: prescription.days || 7,
+            notes: prescription.notes || null
+          };
           
-          // Format the prescription data properly
-          if (prescriptionToSave.prescriptionDate instanceof Date) {
-            prescriptionToSave.prescriptionDate = prescriptionToSave.prescriptionDate.toISOString().split('T')[0];
+          // Format the prescription date if it exists
+          if (prescription.prescriptionDate) {
+            if (prescription.prescriptionDate instanceof Date) {
+              prescriptionToSave.prescriptionDate = prescription.prescriptionDate.toISOString().split('T')[0];
+            } else {
+              prescriptionToSave.prescriptionDate = prescription.prescriptionDate;
+            }
+          } else {
+            // Use today's date if not specified
+            const today = new Date();
+            prescriptionToSave.prescriptionDate = today.toISOString().split('T')[0];
           }
           
-          // Ensure timing exists
-          if (!prescriptionToSave.timing) {
-            prescriptionToSave.timing = "0-0-0";
-          }
-          
-          // Ensure visitId is set
-          prescriptionToSave.visitId = visitId;
-          
-          console.log("Saving prescription:", prescriptionToSave);
+          console.log("About to save prescription:", prescriptionToSave);
           
           if (prescriptionToSave.id) {
             // Update existing prescription
-            await apiRequest('PUT', `/api/prescriptions/${prescriptionToSave.id}`, prescriptionToSave);
+            console.log("Updating prescription:", prescriptionToSave.id);
+            const response = await fetch(`/api/prescriptions/${prescriptionToSave.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(prescriptionToSave)
+            });
+            
+            if (!response.ok) {
+              throw new Error(`Failed to update prescription: ${response.status}`);
+            }
           } else {
             // Create new prescription
+            console.log("Creating new prescription");
             if (onAddPrescription) {
               await onAddPrescription(prescriptionToSave);
             } else {
-              await apiRequest('POST', '/api/prescriptions', prescriptionToSave);
+              const response = await fetch('/api/prescriptions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(prescriptionToSave)
+              });
+              
+              if (!response.ok) {
+                throw new Error(`Failed to create prescription: ${response.status}`);
+              }
             }
           }
           savedCount++;
@@ -540,44 +568,47 @@ export default function PrescriptionForm({
                       <div className="text-center">{prescription.timing}</div>
                     ) : (
                       <>
-                        <Input
+                        <input
                           type="text"
                           value={prescription.timing ? prescription.timing.split('-')[0] : '0'}
                           onChange={(e) => updateTimingDigit(index, 0, e.target.value)}
-                          className="w-8 h-8 text-center p-0"
+                          className="w-8 h-8 text-center p-0 border rounded"
                           maxLength={1}
                           onKeyDown={(e) => {
                             // Handle backspace specifically
                             if (e.key === 'Backspace') {
                               updateTimingDigit(index, 0, '0');
+                              e.preventDefault();
                             }
                           }}
                         />
                         <span>-</span>
-                        <Input
+                        <input
                           type="text"
                           value={prescription.timing ? prescription.timing.split('-')[1] : '0'}
                           onChange={(e) => updateTimingDigit(index, 1, e.target.value)}
-                          className="w-8 h-8 text-center p-0"
+                          className="w-8 h-8 text-center p-0 border rounded"
                           maxLength={1}
                           onKeyDown={(e) => {
                             // Handle backspace specifically
                             if (e.key === 'Backspace') {
                               updateTimingDigit(index, 1, '0');
+                              e.preventDefault();
                             }
                           }}
                         />
                         <span>-</span>
-                        <Input
+                        <input
                           type="text"
                           value={prescription.timing ? prescription.timing.split('-')[2] : '0'}
                           onChange={(e) => updateTimingDigit(index, 2, e.target.value)}
-                          className="w-8 h-8 text-center p-0"
+                          className="w-8 h-8 text-center p-0 border rounded"
                           maxLength={1}
                           onKeyDown={(e) => {
                             // Handle backspace specifically
                             if (e.key === 'Backspace') {
                               updateTimingDigit(index, 2, '0');
+                              e.preventDefault();
                             }
                           }}
                         />
@@ -668,7 +699,9 @@ export default function PrescriptionForm({
               size="sm"
               onClick={saveAllPrescriptions}
               disabled={prescriptions.some(p => !p.medicationId || p.medicationId === 0)}
+              className="bg-primary hover:bg-primary/90 text-white font-semibold px-6"
             >
+              <Save className="h-4 w-4 mr-2" />
               Save All Prescriptions
             </Button>
           </div>
