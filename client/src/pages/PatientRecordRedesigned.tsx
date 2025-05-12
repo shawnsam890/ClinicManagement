@@ -406,6 +406,47 @@ export default function PatientRecord() {
                       )}
                     />
                     
+                    {/* Prescription Date */}
+                    <div className="col-span-3">
+                      <div className="flex items-center mb-4">
+                        <div className="flex flex-col space-y-1">
+                          <h3 className="text-sm font-medium">Prescription Date</h3>
+                          <div className="flex items-center">
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className={cn(
+                                    "w-[180px] justify-start text-left font-normal",
+                                    "text-muted-foreground"
+                                  )}
+                                >
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  Select prescription date
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0">
+                                <Calendar
+                                  mode="single"
+                                  onSelect={(date) => {
+                                    if (date && visitId) {
+                                      const formattedDate = format(date, 'yyyy-MM-dd');
+                                      updatePrescriptionDate(formattedDate);
+                                    }
+                                  }}
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <p className="text-xs text-muted-foreground ml-2">
+                              This date will be used for all prescriptions in this visit
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
                     {/* Medical History */}
                     <FormField
                       control={form.control}
