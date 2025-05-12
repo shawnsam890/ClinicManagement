@@ -395,7 +395,18 @@ export default function LabWorks() {
   };
 
   const onLabWorkSubmit = (values: LabWorkFormValues) => {
-    labWorkMutation.mutate(values);
+    // Calculate total costs based on per-unit costs and number of units
+    const totalLabCost = values.labCost && values.units ? values.labCost * values.units : null;
+    const totalClinicCost = values.clinicCost && values.units ? values.clinicCost * values.units : null;
+    
+    // Update the values with calculated totals
+    const updatedValues = {
+      ...values,
+      totalLabCost,
+      totalClinicCost
+    };
+    
+    labWorkMutation.mutate(updatedValues);
   };
 
   const onInventorySubmit = (values: any) => {
@@ -886,13 +897,56 @@ export default function LabWorks() {
                     )}
                   />
 
-                  {/* Cost */}
+                  {/* Units (for all lab works) */}
                   <FormField
                     control={form.control}
-                    name="cost"
+                    name="units"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Cost (₹)</FormLabel>
+                        <FormLabel>Units</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min={1}
+                            step="1"
+                            {...field}
+                            value={field.value === null || isNaN(field.value) ? '1' : field.value.toString()}
+                            onChange={(e) => {
+                              const value = e.target.value === '' ? 1 : parseInt(e.target.value);
+                              field.onChange(isNaN(value) ? 1 : value);
+                            }}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Number of units (e.g., 2 crowns)
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  {/* Lab Name */}
+                  <FormField
+                    control={form.control}
+                    name="labName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Lab Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Enter lab name" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Lab Cost (per unit) */}
+                  <FormField
+                    control={form.control}
+                    name="labCost"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Lab Cost (₹ per unit)</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -901,8 +955,33 @@ export default function LabWorks() {
                             {...field}
                             value={field.value === null || isNaN(field.value) ? '' : field.value.toString()}
                             onChange={(e) => {
-                              const value = e.target.value === '' ? 0 : parseFloat(e.target.value);
-                              field.onChange(isNaN(value) ? 0 : value);
+                              const value = e.target.value === '' ? null : parseFloat(e.target.value);
+                              field.onChange(isNaN(value) ? null : value);
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  {/* Clinic Cost (per unit) */}
+                  <FormField
+                    control={form.control}
+                    name="clinicCost"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Clinic Cost (₹ per unit)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            {...field}
+                            value={field.value === null || isNaN(field.value) ? '' : field.value.toString()}
+                            onChange={(e) => {
+                              const value = e.target.value === '' ? null : parseFloat(e.target.value);
+                              field.onChange(isNaN(value) ? null : value);
                             }}
                           />
                         </FormControl>
