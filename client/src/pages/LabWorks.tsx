@@ -150,9 +150,9 @@ export default function LabWorks() {
   const searchParams = new URLSearchParams(queryParamsStr);
   const patientIdFromUrl = searchParams.get('patientId');
 
-  // Fetch all lab works
+  // Fetch all lab works - but if patientId is provided, fetch only for that patient
   const { data: labWorks = [], isLoading: isLoadingLabWorks } = useQuery<LabWork[]>({
-    queryKey: ["/api/lab-works"],
+    queryKey: patientIdFromUrl ? [`/api/patients/${patientIdFromUrl}/lab-works`] : ["/api/lab-works"],
   });
 
   // Fetch all patients for the dropdown

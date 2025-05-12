@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -53,6 +54,7 @@ const COLORS = ["#0077B6", "#FF8C42", "#00C49F", "#FFBB28", "#FF8042"];
 export default function Revenue() {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("invoices");
   const [financialYear, setFinancialYear] = useState<string>(financialYears[0].value);
   const [dateRange, setDateRange] = useState<{
     startDate: string;
@@ -126,6 +128,16 @@ export default function Revenue() {
     queryKey: ["/api/invoices"],
   });
   
+  // Fetch lab works data
+  const { data: labWorks = [], isLoading: isLoadingLabWorks } = useQuery<any[]>({
+    queryKey: ["/api/lab-works"],
+  });
+  
+  // Fetch lab costs data
+  const { data: labCosts = [], isLoading: isLoadingLabCosts } = useQuery<any[]>({
+    queryKey: ["/api/lab-work-costs"],
+  });
+  
   // Filter out duplicate invoices by ID
   const invoices = useMemo(() => {
     if (!rawInvoices) return [];
@@ -167,11 +179,38 @@ export default function Revenue() {
       })
     : [];
 
-  // Calculate total revenue
-  const totalRevenue = filteredInvoices.reduce(
+  // Filter lab works based on date range
+  const filteredLabWorks = labWorks.filter((work: any) => {
+    if (!work.startDate) return false;
+    const labWorkDate = parseISO(work.startDate);
+    return isWithinInterval(labWorkDate, {
+      start: parseISO(dateRange.startDate),
+      end: parseISO(dateRange.endDate),
+    });
+  });
+  
+  // Calculate lab revenues and profits
+  const labRevenue = filteredLabWorks.reduce((sum, work: any) => {
+    const units = work.units || 1;
+    const clinicCost = (work.clinicCost || 0) * units;
+    return sum + clinicCost;
+  }, 0);
+  
+  const labCostTotal = filteredLabWorks.reduce((sum, work: any) => {
+    const units = work.units || 1;
+    const labCost = (work.labCost || 0) * units;
+    return sum + labCost;
+  }, 0);
+  
+  const labProfit = labRevenue - labCostTotal;
+  
+  // Calculate total revenue (invoices + lab)
+  const invoiceRevenue = filteredInvoices.reduce(
     (sum: number, invoice: any) => sum + (invoice.totalAmount || 0),
     0
   );
+  
+  const totalRevenue = invoiceRevenue + labRevenue;
 
   // Prepare data for charts
   const prepareChartData = () => {
