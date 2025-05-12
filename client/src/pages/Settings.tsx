@@ -540,9 +540,15 @@ export default function Settings() {
     }
 
     const currentOptions = { ...dropdownOptions };
-    if (!currentOptions[newOptionCategory].includes(newOptionValue)) {
+    
+    // Initialize the category if it doesn't exist
+    if (!currentOptions[newOptionCategory]) {
+      currentOptions[newOptionCategory] = [];
+    }
+    
+    if (!currentOptions[newOptionCategory]?.includes(newOptionValue)) {
       currentOptions[newOptionCategory] = [
-        ...currentOptions[newOptionCategory],
+        ...(currentOptions[newOptionCategory] || []),
         newOptionValue,
       ];
       updateDropdownOptions(currentOptions);
@@ -573,7 +579,13 @@ export default function Settings() {
     }
 
     const currentOptions = { ...dropdownOptions };
-    const index = currentOptions[category].indexOf(oldValue);
+    
+    // Initialize the category if it doesn't exist
+    if (!currentOptions[category]) {
+      currentOptions[category] = [];
+    }
+    
+    const index = currentOptions[category]?.indexOf(oldValue);
     if (index !== -1) {
       currentOptions[category][index] = newValue;
       updateDropdownOptions(currentOptions);
@@ -788,6 +800,22 @@ export default function Settings() {
                         {getCategoryLabel(category)}
                       </SelectItem>
                     ))}
+                    {/* Ensure lab categories are always available */}
+                    {!dropdownOptions?.workTypes && (
+                      <SelectItem key="workTypes" value="workTypes">
+                        {getCategoryLabel("workTypes")}
+                      </SelectItem>
+                    )}
+                    {!dropdownOptions?.labTechnicians && (
+                      <SelectItem key="labTechnicians" value="labTechnicians">
+                        {getCategoryLabel("labTechnicians")}
+                      </SelectItem>
+                    )}
+                    {!dropdownOptions?.crownShades && (
+                      <SelectItem key="crownShades" value="crownShades">
+                        {getCategoryLabel("crownShades")}
+                      </SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
