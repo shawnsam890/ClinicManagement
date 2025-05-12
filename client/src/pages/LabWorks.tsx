@@ -189,9 +189,15 @@ export default function LabWorks() {
   console.log('🔍 DATA SOURCE:', patientIdFromUrl ? 'PATIENT SPECIFIC' : 'ALL LAB WORKS');
   console.log('📌 LAB WORKS COUNT:', labWorks?.length || 0);
 
-  // Fetch all patients for the dropdown
+  // Fetch all patients for the dropdown and for name lookup
   const { data: patients = [] } = useQuery<Patient[]>({
     queryKey: ["/api/patients"],
+  });
+  
+  // Create a patient name lookup map for search functionality
+  const patientNameMap: Record<string, string> = {};
+  patients.forEach(patient => {
+    patientNameMap[patient.patientId] = patient.name.toLowerCase();
   });
 
   // Fetch lab inventory
@@ -527,11 +533,13 @@ export default function LabWorks() {
   
   // Then apply the regular search and status filters
   const filteredLabWorks = patientFilteredWorks.filter((work: any) => {
-    // Apply search filter
+    // Apply search filter (including patient name)
+    const patientName = patientNameMap[work.patientId] || '';
     const matchesSearch =
       work.patientId.toLowerCase().includes(searchQuery.toLowerCase()) ||
       work.workType.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (work.technician && work.technician.toLowerCase().includes(searchQuery.toLowerCase()));
+      (work.technician && work.technician.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      patientName.includes(searchQuery.toLowerCase()); // Search by patient name
     
     // Apply status filter
     const matchesStatus = statusFilter === "all" || work.status === statusFilter;
