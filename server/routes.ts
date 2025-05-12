@@ -495,6 +495,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Lab Work Costs API Routes
+  app.get('/api/lab-work-costs', async (req, res) => {
+    try {
+      const labWorkCosts = await storage.getLabWorkCosts();
+      res.json(labWorkCosts);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.get('/api/lab-work-costs/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid ID' });
+      }
+      
+      const labWorkCost = await storage.getLabWorkCostById(id);
+      if (!labWorkCost) {
+        return res.status(404).json({ message: 'Lab work cost not found' });
+      }
+      
+      res.json(labWorkCost);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.get('/api/lab-work-costs/work-type/:workType', async (req, res) => {
+    try {
+      const workType = req.params.workType;
+      const labWorkCost = await storage.getLabWorkCostByWorkType(workType);
+      if (!labWorkCost) {
+        return res.status(404).json({ message: 'Lab work cost not found for this type' });
+      }
+      
+      res.json(labWorkCost);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.post('/api/lab-work-costs', async (req, res) => {
+    try {
+      const labWorkCost = await storage.createLabWorkCost(req.body);
+      res.status(201).json(labWorkCost);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.put('/api/lab-work-costs/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid ID' });
+      }
+      
+      const updatedLabWorkCost = await storage.updateLabWorkCost(id, req.body);
+      if (!updatedLabWorkCost) {
+        return res.status(404).json({ message: 'Lab work cost not found' });
+      }
+      
+      res.json(updatedLabWorkCost);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.delete('/api/lab-work-costs/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid ID' });
+      }
+      
+      const success = await storage.deleteLabWorkCost(id);
+      if (!success) {
+        return res.status(404).json({ message: 'Lab work cost not found' });
+      }
+      
+      res.status(204).end();
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
   // Lab inventory routes
   app.get('/api/lab-inventory', async (req, res) => {
     try {

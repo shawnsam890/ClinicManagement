@@ -747,6 +747,10 @@ export default function Settings() {
             </svg>
             Medications
           </TabsTrigger>
+          <TabsTrigger value="labcosts" className="flex items-center gap-2">
+            <Calculator className="h-4 w-4" />
+            Lab Costs
+          </TabsTrigger>
           <TabsTrigger value="signatures" className="flex items-center gap-2">
             <Pen className="h-4 w-4" />
             Doctor Signatures
@@ -1263,6 +1267,189 @@ export default function Settings() {
                   </div>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="labcosts">
+          <Card>
+            <CardHeader>
+              <CardTitle>Lab Work Cost Management</CardTitle>
+              <CardDescription>
+                Define default costs for each lab work type to track expenses and calculate profits.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div>
+                <div className="flex flex-col space-y-4 mb-6">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="labWorkType">Lab Work Type</Label>
+                      <Select
+                        value={newLabWorkCost.workType || ''}
+                        onValueChange={(value) => setNewLabWorkCost({...newLabWorkCost, workType: value})}
+                      >
+                        <SelectTrigger id="labWorkType">
+                          <SelectValue placeholder="Select lab work type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {labWorkTypeOptions.map((option) => (
+                            <SelectItem key={option} value={option}>
+                              {option}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="defaultCost">Default Cost</Label>
+                      <Input
+                        id="defaultCost"
+                        type="number"
+                        placeholder="Enter default cost"
+                        value={newLabWorkCost.defaultCost || ''}
+                        onChange={(e) => setNewLabWorkCost({...newLabWorkCost, defaultCost: parseFloat(e.target.value) || 0})}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="defaultClinicPrice">Default Clinic Price</Label>
+                      <Input
+                        id="defaultClinicPrice"
+                        type="number"
+                        placeholder="Enter default clinic price"
+                        value={newLabWorkCost.defaultClinicPrice || ''}
+                        onChange={(e) => setNewLabWorkCost({...newLabWorkCost, defaultClinicPrice: parseFloat(e.target.value) || 0})}
+                      />
+                    </div>
+                  </div>
+                  <Button
+                    onClick={handleAddLabWorkCost}
+                    disabled={!newLabWorkCost.workType || !newLabWorkCost.defaultCost}
+                    className="self-start"
+                  >
+                    Add Lab Work Cost
+                  </Button>
+                </div>
+
+                <div className="border rounded-md">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Work Type</TableHead>
+                        <TableHead>Lab Cost</TableHead>
+                        <TableHead>Clinic Price</TableHead>
+                        <TableHead>Profit Margin</TableHead>
+                        <TableHead className="w-[100px]">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {labWorkCosts.length > 0 ? (
+                        labWorkCosts.map((cost) => (
+                          <TableRow key={cost.id}>
+                            <TableCell>
+                              {editingLabWorkCostId === cost.id ? (
+                                <Select
+                                  value={editingLabWorkCost.workType || ''}
+                                  onValueChange={(value) => setEditingLabWorkCost({...editingLabWorkCost, workType: value})}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {labWorkTypeOptions.map((option) => (
+                                      <SelectItem key={option} value={option}>
+                                        {option}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              ) : (
+                                cost.workType
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {editingLabWorkCostId === cost.id ? (
+                                <Input
+                                  type="number"
+                                  value={editingLabWorkCost.defaultCost || ''}
+                                  onChange={(e) => setEditingLabWorkCost({...editingLabWorkCost, defaultCost: parseFloat(e.target.value) || 0})}
+                                />
+                              ) : (
+                                cost.defaultCost
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {editingLabWorkCostId === cost.id ? (
+                                <Input
+                                  type="number"
+                                  value={editingLabWorkCost.defaultClinicPrice || ''}
+                                  onChange={(e) => setEditingLabWorkCost({...editingLabWorkCost, defaultClinicPrice: parseFloat(e.target.value) || 0})}
+                                />
+                              ) : (
+                                cost.defaultClinicPrice
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {cost.defaultClinicPrice && cost.defaultCost
+                                ? `${((cost.defaultClinicPrice - cost.defaultCost) / cost.defaultCost * 100).toFixed(0)}%`
+                                : 'N/A'}
+                            </TableCell>
+                            <TableCell>
+                              {editingLabWorkCostId === cost.id ? (
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleSaveLabWorkCost(cost.id)}
+                                  >
+                                    Save
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      setEditingLabWorkCostId(null);
+                                      setEditingLabWorkCost({});
+                                    }}
+                                  >
+                                    Cancel
+                                  </Button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      setEditingLabWorkCostId(cost.id);
+                                      setEditingLabWorkCost(cost);
+                                    }}
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDeleteLabWorkCost(cost.id)}
+                                  >
+                                    <Trash className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center">
+                            No lab work costs defined yet.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
