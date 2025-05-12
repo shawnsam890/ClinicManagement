@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -281,20 +281,17 @@ export default function Settings() {
   });
   
   // Lab Work Costs mutations
-  const fetchLabWorkCosts = useQuery({
+  const { data: labWorkCostsData } = useQuery({
     queryKey: ["/api/lab-work-costs"],
-    queryFn: () => fetch("/api/lab-work-costs").then(res => res.json()),
-    onSuccess: (data) => {
-      setLabWorkCosts(data);
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to fetch lab work costs",
-        variant: "destructive",
-      });
-    }
+    queryFn: () => fetch("/api/lab-work-costs").then(res => res.json())
   });
+  
+  // Update labWorkCosts state when data changes
+  useEffect(() => {
+    if (labWorkCostsData) {
+      setLabWorkCosts(labWorkCostsData);
+    }
+  }, [labWorkCostsData]);
   
   const createLabWorkCostMutation = useMutation({
     mutationFn: async (values: any) => {
@@ -491,6 +488,53 @@ export default function Settings() {
     setMedicationThreshold(10);
     setMedicationNotes("");
   };
+  
+  // Lab Work Cost operations
+  const handleAddLabWorkCost = () => {
+    if (!newLabWorkCost.workType || !newLabWorkCost.defaultCost) {
+      toast({
+        title: "Error",
+        description: "Please fill in work type and default cost",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    createLabWorkCostMutation.mutate({
+      workType: newLabWorkCost.workType,
+      defaultCost: newLabWorkCost.defaultCost,
+      defaultClinicPrice: newLabWorkCost.defaultClinicPrice || newLabWorkCost.defaultCost
+    });
+  };
+  
+  const handleSaveLabWorkCost = (id: number) => {
+    if (!editingLabWorkCost.workType || !editingLabWorkCost.defaultCost) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    updateLabWorkCostMutation.mutate({
+      id,
+      values: {
+        workType: editingLabWorkCost.workType,
+        defaultCost: editingLabWorkCost.defaultCost,
+        defaultClinicPrice: editingLabWorkCost.defaultClinicPrice || editingLabWorkCost.defaultCost
+      }
+    });
+  };
+  
+  const handleDeleteLabWorkCost = (id: number) => {
+    if (confirm("Are you sure you want to delete this lab work cost?")) {
+      deleteLabWorkCostMutation.mutate(id);
+    }
+  };
+  
+  // Get lab work types from dropdowns for the select list
+  const labWorkTypeOptions = dropdownOptions?.labWorkType || [];
   
   // Signature operations
   const handleAddSignature = () => {
