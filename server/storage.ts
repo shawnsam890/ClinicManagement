@@ -107,7 +107,6 @@ export interface IStorage {
   createPrescription(prescription: InsertPrescription): Promise<Prescription>;
   updatePrescription(id: number, prescription: Partial<InsertPrescription>): Promise<Prescription | undefined>;
   deletePrescription(id: number): Promise<boolean>;
-  updatePrescriptionDates(visitId: number, date: string): Promise<Prescription[]>;
   
   // Settings
   getSettings(): Promise<Setting[]>;
@@ -1049,21 +1048,6 @@ export class DatabaseStorage implements IStorage {
   async deletePrescription(id: number): Promise<boolean> {
     await db.delete(prescriptions).where(eq(prescriptions.id, id));
     return true;
-  }
-  
-  async updatePrescriptionDates(visitId: number, date: string): Promise<Prescription[]> {
-    // First get all prescriptions for this visit
-    const allPrescriptions = await this.getPrescriptions(visitId);
-    
-    // Update each prescription with the new date
-    for (const prescription of allPrescriptions) {
-      await db.update(prescriptions)
-        .set({ prescriptionDate: date })
-        .where(eq(prescriptions.id, prescription.id));
-    }
-    
-    // Return the updated prescriptions
-    return await this.getPrescriptions(visitId);
   }
 
   // Tooth findings
