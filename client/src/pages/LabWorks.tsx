@@ -158,7 +158,7 @@ export default function LabWorks() {
   const { 
     labWorks = [], 
     isLoadingLabWorks 
-  } = useLabWorks(patientIdFromUrl || undefined);
+  } = useLabWorks(patientIdFromUrl ? patientIdFromUrl : undefined);
 
   // Fetch all patients for the dropdown
   const { data: patients = [] } = useQuery<Patient[]>({
@@ -480,7 +480,12 @@ export default function LabWorks() {
   };
 
   // Filter lab works based on search query and status filter
+  console.log('Filtering lab works. Initial count:', labWorks?.length);
+  console.log('Patient ID from URL for filtering:', patientIdFromUrl);
+
   const filteredLabWorks = labWorks.filter((work: any) => {
+    // We've already filtered by patientId in the API call if patientIdFromUrl is provided
+    // So we only need to filter by search and status here
     const matchesSearch =
       work.patientId.toLowerCase().includes(searchQuery.toLowerCase()) ||
       work.workType.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -490,6 +495,8 @@ export default function LabWorks() {
     
     return matchesSearch && matchesStatus;
   });
+  
+  console.log('After filtering. Final count:', filteredLabWorks.length);
 
   // Filter inventory based on search query
   const filteredInventory = inventory.filter((item: any) =>
