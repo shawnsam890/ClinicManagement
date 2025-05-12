@@ -1534,6 +1534,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Update prescription date for all prescriptions in a visit
+  app.patch('/api/visits/:visitId/prescriptions/date', async (req, res) => {
+    try {
+      const visitId = parseInt(req.params.visitId);
+      if (isNaN(visitId)) {
+        return res.status(400).json({ message: 'Invalid visit ID' });
+      }
+      
+      const { prescriptionDate } = req.body;
+      if (!prescriptionDate) {
+        return res.status(400).json({ message: 'Prescription date is required' });
+      }
+      
+      // Update all prescriptions for this visit to have the same date
+      const updatedPrescriptions = await storage.updatePrescriptionDates(visitId, prescriptionDate);
+      res.json(updatedPrescriptions);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
   app.get('/api/prescriptions/:id', async (req, res) => {
     try {
       const id = parseInt(req.params.id);

@@ -75,36 +75,7 @@ export default function PatientRecord() {
     },
   });
 
-  // Function to update prescription date for all prescriptions in a visit
-  const updatePrescriptionDate = async (date: string) => {
-    if (!visitId) return;
-    
-    // Fetch existing prescriptions for this visit
-    const prescriptionsResponse = await fetch(`/api/visits/${visitId}/prescriptions`);
-    const prescriptions = await prescriptionsResponse.json();
-    
-    // If no prescriptions exist yet for this visit, return
-    if (!prescriptions || prescriptions.length === 0) {
-      return;
-    }
-    
-    // Update each prescription with the new date
-    for (const prescription of prescriptions) {
-      const updatedPrescription = {
-        ...prescription,
-        prescriptionDate: date
-      };
-      
-      try {
-        await apiRequest('PUT', `/api/prescriptions/${prescription.id}`, updatedPrescription);
-      } catch (error) {
-        console.error(`Error updating prescription ${prescription.id}:`, error);
-      }
-    }
-    
-    // Refresh prescriptions data if needed
-    queryClient.invalidateQueries({ queryKey: [`/api/visits/${visitId}/prescriptions`] });
-  };
+  // Function removed - using updatePrescriptionDateMutation instead
 
   // Create mutation for saving the visit
   const saveMutation = useMutation({
