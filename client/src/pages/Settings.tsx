@@ -74,8 +74,8 @@ export default function Settings() {
   const [labWorkCosts, setLabWorkCosts] = useState<any[]>([]);
   const [newLabWorkCost, setNewLabWorkCost] = useState<{
     workType?: string;
-    defaultCost?: number;
-    defaultClinicPrice?: number;
+    labTechnician?: string;
+    cost?: number;
   }>({});
   const [editingLabWorkCostId, setEditingLabWorkCostId] = useState<number | null>(null);
   const [editingLabWorkCost, setEditingLabWorkCost] = useState<any>({});
@@ -491,10 +491,10 @@ export default function Settings() {
   
   // Lab Work Cost operations
   const handleAddLabWorkCost = () => {
-    if (!newLabWorkCost.workType || !newLabWorkCost.defaultCost) {
+    if (!newLabWorkCost.workType || !newLabWorkCost.labTechnician || !newLabWorkCost.cost) {
       toast({
         title: "Error",
-        description: "Please fill in work type and default cost",
+        description: "Please fill in work type, lab technician and cost",
         variant: "destructive",
       });
       return;
@@ -502,12 +502,13 @@ export default function Settings() {
     
     createLabWorkCostMutation.mutate({
       workType: newLabWorkCost.workType,
-      defaultCost: newLabWorkCost.defaultCost
+      labTechnician: newLabWorkCost.labTechnician,
+      cost: newLabWorkCost.cost
     });
   };
   
   const handleSaveLabWorkCost = (id: number) => {
-    if (!editingLabWorkCost.workType || !editingLabWorkCost.defaultCost) {
+    if (!editingLabWorkCost.workType || !editingLabWorkCost.labTechnician || !editingLabWorkCost.cost) {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
@@ -520,7 +521,8 @@ export default function Settings() {
       id,
       values: {
         workType: editingLabWorkCost.workType,
-        defaultCost: editingLabWorkCost.defaultCost
+        labTechnician: editingLabWorkCost.labTechnician,
+        cost: editingLabWorkCost.cost
       }
     });
   };
@@ -1415,7 +1417,7 @@ export default function Settings() {
             <CardContent>
               <div>
                 <div className="flex flex-col space-y-4 mb-6">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <div>
                       <Label htmlFor="labWorkType">Lab Work Type</Label>
                       <Select
@@ -1435,13 +1437,31 @@ export default function Settings() {
                       </Select>
                     </div>
                     <div>
-                      <Label htmlFor="defaultCost">Lab Cost</Label>
+                      <Label htmlFor="labTechnician">Lab Technician</Label>
+                      <Select
+                        value={newLabWorkCost.labTechnician || ''}
+                        onValueChange={(value) => setNewLabWorkCost({...newLabWorkCost, labTechnician: value})}
+                      >
+                        <SelectTrigger id="labTechnician">
+                          <SelectValue placeholder="Select lab technician" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {dropdownOptions?.settingValue?.labTechnicians?.map((option: string) => (
+                            <SelectItem key={option} value={option}>
+                              {option}
+                            </SelectItem>
+                          )) || []}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="cost">Lab Cost</Label>
                       <Input
-                        id="defaultCost"
+                        id="cost"
                         type="number"
                         placeholder="Enter lab cost"
-                        value={newLabWorkCost.defaultCost || ''}
-                        onChange={(e) => setNewLabWorkCost({...newLabWorkCost, defaultCost: parseFloat(e.target.value) || 0})}
+                        value={newLabWorkCost.cost || ''}
+                        onChange={(e) => setNewLabWorkCost({...newLabWorkCost, cost: parseFloat(e.target.value) || 0})}
                       />
                     </div>
                   </div>
