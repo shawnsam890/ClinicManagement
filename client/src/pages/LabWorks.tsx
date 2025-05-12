@@ -49,11 +49,15 @@ type InventoryItem = {
 };
 
 type DropdownOptions = {
+  id: number;
+  settingKey: string;
   settingValue: {
-    labTechnicians?: string[];
+    labTechnicians: string[];
     crownShades?: string[];
-    workTypes?: string[];
+    workTypes: string[];
+    [key: string]: any;
   };
+  category: string;
 };
 
 import {
@@ -162,13 +166,8 @@ export default function LabWorks() {
   });
 
   // Fetch dropdown options from settings
-  const { data: dropdownOptions = { settingValue: {} } } = useQuery<DropdownOptions>({
+  const { data: dropdownOptions } = useQuery<DropdownOptions>({
     queryKey: ["/api/settings/key/dropdown_options"],
-    onSuccess: (data) => {
-      console.log("Dropdown options loaded:", data);
-      console.log("Lab technicians:", data?.settingValue?.labTechnicians);
-      console.log("Work types:", data?.settingValue?.workTypes);
-    },
   });
 
   // Query to fetch lab costs
@@ -801,24 +800,15 @@ export default function LabWorks() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {dropdownOptions?.settingValue?.workTypes ? 
-                              dropdownOptions.settingValue.workTypes.map((workType: string) => (
-                                <SelectItem key={workType} value={workType}>
-                                  {workType}
-                                </SelectItem>
-                              )) : (
-                                <>
-                                  <SelectItem value="crown">Crown</SelectItem>
-                                  <SelectItem value="bridge">Bridge</SelectItem>
-                                  <SelectItem value="denture">Denture</SelectItem>
-                                  <SelectItem value="implant">Implant</SelectItem>
-                                  <SelectItem value="veneer">Veneer</SelectItem>
-                                  <SelectItem value="retainer">Retainer</SelectItem>
-                                  <SelectItem value="night_guard">Night Guard</SelectItem>
-                                  <SelectItem value="other">Other</SelectItem>
-                                </>
-                              )
-                            }
+                            <SelectItem value="PFM Ceramic crown">PFM Ceramic crown</SelectItem>
+                            <SelectItem value="Metal Crown">Metal Crown</SelectItem>
+                            <SelectItem value="bridge">Bridge</SelectItem>
+                            <SelectItem value="denture">Denture</SelectItem>
+                            <SelectItem value="implant">Implant</SelectItem>
+                            <SelectItem value="veneer">Veneer</SelectItem>
+                            <SelectItem value="retainer">Retainer</SelectItem>
+                            <SelectItem value="night_guard">Night Guard</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -873,17 +863,8 @@ export default function LabWorks() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {dropdownOptions?.settingValue?.labTechnicians ? 
-                              dropdownOptions.settingValue.labTechnicians.map((technician: string) => (
-                                <SelectItem key={technician} value={technician}>
-                                  {technician}
-                                </SelectItem>
-                              )) : (
-                                <SelectItem value="no-technician" disabled>
-                                  No technicians found
-                                </SelectItem>
-                              )
-                            }
+                            <SelectItem value="Nirmal">Nirmal</SelectItem>
+                            <SelectItem value="Ace Dental Lab">Ace Dental Lab</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -910,17 +891,22 @@ export default function LabWorks() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {dropdownOptions?.settingValue?.crownShades ? 
-                                dropdownOptions.settingValue.crownShades.map((shade: string) => (
-                                  <SelectItem key={shade} value={shade}>
-                                    {shade}
-                                  </SelectItem>
-                                )) : (
-                                  <SelectItem value="no-shade" disabled>
-                                    No shades found
-                                  </SelectItem>
-                                )
-                              }
+                              <SelectItem value="A1">A1</SelectItem>
+                              <SelectItem value="A2">A2</SelectItem>
+                              <SelectItem value="A3">A3</SelectItem>
+                              <SelectItem value="A3.5">A3.5</SelectItem>
+                              <SelectItem value="A4">A4</SelectItem>
+                              <SelectItem value="B1">B1</SelectItem>
+                              <SelectItem value="B2">B2</SelectItem>
+                              <SelectItem value="B3">B3</SelectItem>
+                              <SelectItem value="B4">B4</SelectItem>
+                              <SelectItem value="C1">C1</SelectItem>
+                              <SelectItem value="C2">C2</SelectItem>
+                              <SelectItem value="C3">C3</SelectItem>
+                              <SelectItem value="C4">C4</SelectItem>
+                              <SelectItem value="D2">D2</SelectItem>
+                              <SelectItem value="D3">D3</SelectItem>
+                              <SelectItem value="D4">D4</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
