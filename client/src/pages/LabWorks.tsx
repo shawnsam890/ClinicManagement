@@ -480,24 +480,35 @@ export default function LabWorks() {
     }
   };
 
-  // Filter lab works based on search query and status filter
+  // Filter lab works based on search query, status filter, and patient ID
   console.log('Filtering lab works. Initial count:', labWorks?.length);
   console.log('Patient ID from URL for filtering:', patientIdFromUrl);
 
   const filteredLabWorks = labWorks.filter((work: any) => {
-    // We've already filtered by patientId in the API call if patientIdFromUrl is provided
-    // So we only need to filter by search and status here
+    // First check: If we have a patient ID from URL, only show lab works for that patient
+    if (patientIdFromUrl && work.patientId !== patientIdFromUrl) {
+      return false;
+    }
+    
+    // Second check: Apply search filter
     const matchesSearch =
       work.patientId.toLowerCase().includes(searchQuery.toLowerCase()) ||
       work.workType.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (work.technician && work.technician.toLowerCase().includes(searchQuery.toLowerCase()));
     
+    // Third check: Apply status filter
     const matchesStatus = statusFilter === "all" || work.status === statusFilter;
     
     return matchesSearch && matchesStatus;
   });
   
   console.log('After filtering. Final count:', filteredLabWorks.length);
+  
+  // Extra logging to see if our patient filter is working
+  if (patientIdFromUrl) {
+    console.log('Lab works for patient ' + patientIdFromUrl + ':', 
+      filteredLabWorks.map(work => work.id + ' - ' + work.patientId));
+  }
 
   // Filter inventory based on search query
   const filteredInventory = inventory.filter((item: any) =>

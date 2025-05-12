@@ -13,16 +13,10 @@ export function useLabWorks(patientId?: string | null) {
   // Add extra console logging to debug
   console.log(`useLabWorks hook called with patientId: ${patientId}`);
   
-  // Only use patient-specific endpoint when patientId is a non-empty string
-  const usePatientSpecific = patientId !== undefined && patientId !== null && patientId !== "";
-  const queryPath = usePatientSpecific 
-    ? `/api/patients/${patientId}/lab-works` 
-    : "/api/lab-works";
-    
-  console.log(`Using query path: ${queryPath}`);
-  
+  // For this component, we'll always use the general endpoint
+  // and filter the results in the component for more control
   const { data: labWorks, isLoading: isLoadingLabWorks } = useQuery<LabWork[]>({
-    queryKey: [queryPath],
+    queryKey: ["/api/lab-works"],
   });
 
   // Get lab work by ID
