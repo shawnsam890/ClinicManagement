@@ -1114,28 +1114,42 @@ export default function PatientRecord() {
                                       </SelectContent>
                                     </Select>
                                   </div>
-                                  <div>
-                                    <Label htmlFor="oralExamination">Oral Examination</Label>
-                                    <Select 
-                                      name="oralExamination" 
-                                      defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.oralExamination || ""}
-                                    >
-                                      <SelectTrigger className="mt-1">
-                                        <SelectValue placeholder="Select finding" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="Caries">Caries</SelectItem>
-                                        <SelectItem value="Pulpitis">Pulpitis</SelectItem>
-                                        <SelectItem value="Periodontitis">Periodontitis</SelectItem>
-                                        <SelectItem value="Gingivitis">Gingivitis</SelectItem>
-                                        <SelectItem value="Dental Abscess">Dental Abscess</SelectItem>
-                                        <SelectItem value="Impacted Tooth">Impacted Tooth</SelectItem>
-                                        <SelectItem value="Malocclusion">Malocclusion</SelectItem>
-                                        <SelectItem value="Missing Teeth">Missing Teeth</SelectItem>
-                                        <SelectItem value="Fractured Tooth">Fractured Tooth</SelectItem>
-                                        <SelectItem value="Normal">Normal</SelectItem>
-                                      </SelectContent>
-                                    </Select>
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                      <Label htmlFor="oralExamination">Oral Examination</Label>
+                                      <Select 
+                                        name="oralExamination" 
+                                        defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.oralExamination || ""}
+                                      >
+                                        <SelectTrigger className="mt-1">
+                                          <SelectValue placeholder="Select finding" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="Caries">Caries</SelectItem>
+                                          <SelectItem value="Pulpitis">Pulpitis</SelectItem>
+                                          <SelectItem value="Periodontitis">Periodontitis</SelectItem>
+                                          <SelectItem value="Gingivitis">Gingivitis</SelectItem>
+                                          <SelectItem value="Dental Abscess">Dental Abscess</SelectItem>
+                                          <SelectItem value="Impacted Tooth">Impacted Tooth</SelectItem>
+                                          <SelectItem value="Malocclusion">Malocclusion</SelectItem>
+                                          <SelectItem value="Missing Teeth">Missing Teeth</SelectItem>
+                                          <SelectItem value="Fractured Tooth">Fractured Tooth</SelectItem>
+                                          <SelectItem value="Normal">Normal</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                    
+                                    <div>
+                                      <Label htmlFor="toothNumber">Tooth Number</Label>
+                                      <Input
+                                        id="toothNumber"
+                                        name="toothNumber"
+                                        placeholder="Enter tooth number"
+                                        defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.toothNumber || ""}
+                                        className="mt-1"
+                                        onChange={(e) => setVisitDetails({...visitDetails, toothNumber: e.target.value})}
+                                      />
+                                    </div>
                                   </div>
                                   <div>
                                     <Label htmlFor="toothNumber">Tooth Number</Label>

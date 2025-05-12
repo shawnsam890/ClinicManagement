@@ -190,7 +190,7 @@ export default function PrescriptionForm({
     
     const timingParts = prescription.timing.split('-');
     
-    // Always allow empty string (backspace) and validate numbers or S
+    // Allow only digits 0-9 and 'S' character
     if (value !== "" && !/^[0-9Ss]?$/.test(value)) {
       return;
     }
@@ -204,6 +204,8 @@ export default function PrescriptionForm({
     timingParts[position] = value === "" ? "0" : value;
     prescription.timing = timingParts.join('-');
     
+    // We removed the auto-move functionality as requested
+    
     setPrescriptions(updatedPrescriptions);
     
     // If this is a new unsaved prescription, just update the state
@@ -212,7 +214,10 @@ export default function PrescriptionForm({
     }
     
     // Auto-save this prescription after timing update if it already exists
-    savePrescription.mutate(prescription);
+    savePrescription.mutate({
+      ...prescription,
+      timing: timingParts.join('-')
+    });
     
     // If onSave callback is provided, invoke it
     if (onSave) {
@@ -308,6 +313,16 @@ export default function PrescriptionForm({
 
   // Save all prescriptions
   const saveAllPrescriptions = async () => {
+    // Check that we have at least one prescription
+    if (prescriptions.length === 0) {
+      toast({
+        title: "No prescriptions",
+        description: "There are no prescriptions to save",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // Validate that medications are selected
     const invalidPrescriptions = prescriptions.filter(p => !p.medicationId || p.medicationId === 0);
     if (invalidPrescriptions.length > 0) {
@@ -326,41 +341,72 @@ export default function PrescriptionForm({
         description: "Saving all prescriptions"
       });
 
-      // Save all prescriptions
       let savedCount = 0;
+      
+      // Process each prescription
       for (const prescription of prescriptions) {
-        if (prescription.id) {
-          // Update existing prescription
-          await savePrescription.mutateAsync(prescription);
-        } else {
-          // New prescription - use onAddPrescription callback if available
-          if (onAddPrescription) {
-            await onAddPrescription(prescription);
-          } else {
-            await savePrescription.mutateAsync(prescription);
+        try {
+          // Make a copy to avoid mutating the original
+          const prescriptionToSave = { ...prescription };
+          
+          // Format the prescription data properly
+          if (prescriptionToSave.prescriptionDate instanceof Date) {
+            prescriptionToSave.prescriptionDate = prescriptionToSave.prescriptionDate.toISOString().split('T')[0];
           }
+          
+          // Ensure timing exists
+          if (!prescriptionToSave.timing) {
+            prescriptionToSave.timing = "0-0-0";
+          }
+          
+          // Ensure visitId is set
+          prescriptionToSave.visitId = visitId;
+          
+          console.log("Saving prescription:", prescriptionToSave);
+          
+          if (prescriptionToSave.id) {
+            // Update existing prescription
+            await apiRequest('PUT', `/api/prescriptions/${prescriptionToSave.id}`, prescriptionToSave);
+          } else {
+            // Create new prescription
+            if (onAddPrescription) {
+              await onAddPrescription(prescriptionToSave);
+            } else {
+              await apiRequest('POST', '/api/prescriptions', prescriptionToSave);
+            }
+          }
+          savedCount++;
+        } catch (err) {
+          console.error("Error saving prescription:", err);
         }
-        savedCount++;
       }
 
       // Show success toast after all prescriptions are saved
-      toast({
-        title: "Success",
-        description: `${savedCount} prescription${savedCount !== 1 ? 's' : ''} saved successfully`
-      });
-
-      // Trigger the onSave callback if provided
-      if (onSave) {
-        onSave(prescriptions);
+      if (savedCount > 0) {
+        toast({
+          title: "Success",
+          description: `${savedCount} prescription${savedCount !== 1 ? 's' : ''} saved successfully`
+        });
+        
+        // Refresh the prescriptions list
+        queryClient.invalidateQueries({ queryKey: [`/api/visits/${visitId}/prescriptions`] });
+        
+        // Trigger the onSave callback if provided
+        if (onSave) {
+          onSave(prescriptions);
+        }
+      } else {
+        toast({
+          title: "Warning",
+          description: "No prescriptions were saved",
+          variant: "destructive"
+        });
       }
-
-      // Refresh the prescriptions list
-      queryClient.invalidateQueries({ queryKey: [`/api/visits/${visitId}/prescriptions`] });
     } catch (error) {
       console.error("Error saving prescriptions:", error);
       toast({
         title: "Error",
-        description: "Failed to save some prescriptions",
+        description: "Failed to save prescriptions",
         variant: "destructive"
       });
     }
