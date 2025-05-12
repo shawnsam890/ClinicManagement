@@ -53,6 +53,10 @@ import {
   Check,
   Edit,
   Pen,
+  Eye,
+  Upload,
+  Plus,
+  Pencil
 } from "lucide-react";
 
 export default function Settings() {
@@ -635,6 +639,85 @@ export default function Settings() {
     const year = yearInFormat ? new Date().getFullYear() : "";
     const number = "0".repeat(digitCount);
     return `${prefix}${year}${separator}${number}`;
+  };
+  
+  const renderOptionsList = () => {
+    if (!dropdownOptions) {
+      return (
+        <TableRow>
+          <TableCell colSpan={3} className="text-center">Loading options...</TableCell>
+        </TableRow>
+      );
+    }
+    
+    if (!dropdownOptions[newOptionCategory] || !Array.isArray(dropdownOptions[newOptionCategory]) || dropdownOptions[newOptionCategory].length === 0) {
+      return (
+        <TableRow>
+          <TableCell colSpan={3} className="text-center">
+            No options found for {getCategoryLabel(newOptionCategory)}. Click "Add Option" to create the first one.
+          </TableCell>
+        </TableRow>
+      );
+    }
+    
+    return dropdownOptions[newOptionCategory].map((option: string, index: number) => (
+      <TableRow key={`${newOptionCategory}-${index}`}>
+        <TableCell>{getCategoryLabel(newOptionCategory)}</TableCell>
+        <TableCell>
+          {editingOption === `${newOptionCategory}-${option}` ? (
+            <Input
+              value={newOptionValue}
+              onChange={(e) => setNewOptionValue(e.target.value)}
+              autoFocus
+            />
+          ) : (
+            option
+          )}
+        </TableCell>
+        <TableCell className="text-right">
+          {editingOption === `${newOptionCategory}-${option}` ? (
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  handleUpdateOption(newOptionCategory, option, newOptionValue);
+                }}
+              >
+                <Check className="h-4 w-4 text-green-500" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setEditingOption(null)}
+              >
+                <X className="h-4 w-4 text-red-500" />
+              </Button>
+            </div>
+          ) : (
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setEditingOption(`${newOptionCategory}-${option}`);
+                  setNewOptionValue(option);
+                }}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDeleteOption(newOptionCategory, option)}
+              >
+                <Trash2 className="h-4 w-4 text-red-500" />
+              </Button>
+            </div>
+          )}
+        </TableCell>
+      </TableRow>
+    ));
   };
 
   return (
