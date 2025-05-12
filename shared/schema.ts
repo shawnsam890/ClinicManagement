@@ -83,7 +83,13 @@ export const labWorks = pgTable("lab_works", {
   completedDate: date("completed_date"),
   technician: text("technician"),
   shade: text("shade"),
-  cost: real("cost"),
+  units: integer("units").default(1).notNull(),  // Number of units (e.g., 2 crowns)
+  labCost: real("lab_cost"),                     // Cost paid to the lab (per unit)
+  clinicCost: real("clinic_cost"),               // Cost charged to patient (per unit)
+  totalLabCost: real("total_lab_cost"),          // Total lab cost (labCost * units)
+  totalClinicCost: real("total_clinic_cost"),    // Total clinic cost (clinicCost * units)
+  paymentStatus: text("payment_status").default("pending").notNull(), // "paid" or "pending"
+  paymentDate: date("payment_date"),             // When the lab was paid
   notes: text("notes"),
 });
 
@@ -95,6 +101,15 @@ export const labInventory = pgTable("lab_inventory", {
   unitCost: real("unit_cost"),
   supplier: text("supplier"),
   lastRestock: date("last_restock"),
+});
+
+// Table to store default costs for lab work types
+export const labWorkCosts = pgTable("lab_work_costs", {
+  id: serial("id").primaryKey(),
+  workType: text("work_type").notNull().unique(),  // The type of lab work (e.g., "Crown", "Bridge")
+  defaultLabCost: real("default_lab_cost").notNull(),  // Default cost paid to lab
+  defaultClinicCost: real("default_clinic_cost").notNull(),  // Default cost charged to patient
+  notes: text("notes"),
 });
 
 // Staff related schemas
@@ -223,6 +238,7 @@ export const insertPatientSchema = createInsertSchema(patients).omit({ id: true,
 export const insertPatientVisitSchema = createInsertSchema(patientVisits).omit({ id: true });
 export const insertLabWorkSchema = createInsertSchema(labWorks).omit({ id: true });
 export const insertLabInventorySchema = createInsertSchema(labInventory).omit({ id: true });
+export const insertLabWorkCostSchema = createInsertSchema(labWorkCosts).omit({ id: true });
 export const insertStaffSchema = createInsertSchema(staff).omit({ id: true });
 export const insertStaffAttendanceSchema = createInsertSchema(staffAttendance).omit({ id: true });
 export const insertStaffSalarySchema = createInsertSchema(staffSalary).omit({ id: true });
@@ -253,6 +269,9 @@ export type InsertLabWork = z.infer<typeof insertLabWorkSchema>;
 
 export type LabInventoryItem = typeof labInventory.$inferSelect;
 export type InsertLabInventoryItem = z.infer<typeof insertLabInventorySchema>;
+
+export type LabWorkCost = typeof labWorkCosts.$inferSelect;
+export type InsertLabWorkCost = z.infer<typeof insertLabWorkCostSchema>;
 
 export type Staff = typeof staff.$inferSelect;
 export type InsertStaff = z.infer<typeof insertStaffSchema>;
