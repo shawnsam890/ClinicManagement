@@ -426,6 +426,25 @@ export default function LabWorks() {
     
     return matchingCost ? matchingCost.cost : null;
   };
+  
+  // Custom hook to fetch lab cost by technician and work type
+  const useLabWorkCost = (workType: string | null, labTechnician: string | null) => {
+    return useQuery<any>({
+      queryKey: ["/api/lab-work-costs/lookup", workType, labTechnician],
+      queryFn: async () => {
+        if (!workType || !labTechnician) return null;
+        const response = await fetch(`/api/lab-work-costs/lookup?workType=${encodeURIComponent(workType)}&labTechnician=${encodeURIComponent(labTechnician)}`);
+        if (!response.ok) {
+          if (response.status === 404) {
+            return null; // No cost found for this combination
+          }
+          throw new Error('Failed to fetch lab work cost');
+        }
+        return response.json();
+      },
+      enabled: !!workType && !!labTechnician,
+    });
+  };
 
   const onInventorySubmit = (values: any) => {
     inventoryMutation.mutate(values);

@@ -18,7 +18,6 @@ import {
   Investigation, InsertInvestigation,
   FollowUp, InsertFollowUp
 } from "@shared/schema";
-
 export interface IStorage {
   // Patient management
   getPatients(): Promise<Patient[]>;
