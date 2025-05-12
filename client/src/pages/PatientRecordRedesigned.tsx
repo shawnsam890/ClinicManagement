@@ -1153,6 +1153,13 @@ export default function PatientRecord() {
                                     <Select 
                                       name="investigation" 
                                       defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.investigation || ""}
+                                      onValueChange={(value) => {
+                                        // If value is not "None", show the investigationalDiagnosis field
+                                        const investigationalDiagnosisField = document.getElementById('investigationalDiagnosisContainer');
+                                        if (investigationalDiagnosisField) {
+                                          investigationalDiagnosisField.style.display = value && value !== "None" ? "block" : "none";
+                                        }
+                                      }}
                                     >
                                       <SelectTrigger className="mt-1">
                                         <SelectValue placeholder="Select investigation" />
@@ -1167,6 +1174,22 @@ export default function PatientRecord() {
                                         <SelectItem value="None">None</SelectItem>
                                       </SelectContent>
                                     </Select>
+                                  </div>
+                                  <div 
+                                    id="investigationalDiagnosisContainer" 
+                                    style={{ 
+                                      display: visits.find((v: any) => v.id === selectedVisitId)?.investigation && 
+                                              visits.find((v: any) => v.id === selectedVisitId)?.investigation !== "None" ? "block" : "none" 
+                                    }}
+                                  >
+                                    <Label htmlFor="investigationalDiagnosis">Investigational Diagnosis</Label>
+                                    <Textarea 
+                                      id="investigationalDiagnosis"
+                                      name="investigationalDiagnosis"
+                                      placeholder="Enter investigation findings or diagnosis"
+                                      defaultValue={visits.find((v: any) => v.id === selectedVisitId)?.investigationalDiagnosis || ""}
+                                      className="mt-1"
+                                    />
                                   </div>
                                   <div>
                                     <Label htmlFor="treatmentPlan">Treatment Plan</Label>
