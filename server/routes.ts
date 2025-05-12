@@ -572,16 +572,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Determine lab name from technician
+      let labName = "";
+      if (labTechnician === "Ace Dental Lab") {
+        labName = "Ace Dental Lab";
+      } else {
+        labName = "Default Lab";
+      }
+      
       // Create with validated data
       const labWorkCost = await storage.createLabWorkCost({
         workType,
         labTechnician,
         cost: Number(cost),
+        defaultLabCost: Number(cost), // Use the same cost as default
+        labName,
         notes: req.body.notes || null
       });
       
       res.status(201).json(labWorkCost);
     } catch (error: any) {
+      console.error("Error creating lab work cost:", error);
       res.status(500).json({ message: error.message });
     }
   });
@@ -601,11 +612,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Determine lab name from technician
+      let labName = "";
+      if (values.labTechnician === "Ace Dental Lab") {
+        labName = "Ace Dental Lab";
+      } else {
+        labName = "Default Lab";
+      }
+      
       // Create with validated data
       const updatedLabWorkCost = await storage.updateLabWorkCost(id, {
         workType: values.workType,
         labTechnician: values.labTechnician,
         cost: Number(values.cost),
+        defaultLabCost: Number(values.cost), // Use the same cost as default
+        labName,
         notes: values.notes || null
       });
       
@@ -615,6 +636,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(updatedLabWorkCost);
     } catch (error: any) {
+      console.error("Error updating lab work cost:", error);
       res.status(500).json({ message: error.message });
     }
   });

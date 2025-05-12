@@ -109,6 +109,8 @@ export const labWorkCosts = pgTable("lab_work_costs", {
   workType: text("work_type").notNull(),  // The type of lab work (e.g., "Crown", "Bridge")
   labTechnician: text("lab_technician").notNull(),  // The name of the technician
   cost: real("cost").notNull(),  // Cost charged by this technician for this work type
+  defaultLabCost: real("default_lab_cost").notNull().default(0),  // Default lab cost
+  labName: text("lab_name").notNull().default(""),  // Name of the lab
   notes: text("notes"),
 });
 
