@@ -491,7 +491,7 @@ export default function Settings() {
   
   // Lab Work Cost operations
   const handleAddLabWorkCost = () => {
-    if (!newLabWorkCost.workType || !newLabWorkCost.labTechnician || !newLabWorkCost.cost) {
+    if (!newLabWorkCost.workType || !newLabWorkCost.labTechnician || newLabWorkCost.cost === undefined || newLabWorkCost.cost === null) {
       toast({
         title: "Error",
         description: "Please fill in work type, lab technician and cost",
@@ -500,15 +500,23 @@ export default function Settings() {
       return;
     }
     
+    console.log("Submitting lab work cost:", {
+      workType: newLabWorkCost.workType,
+      labTechnician: newLabWorkCost.labTechnician,
+      cost: Number(newLabWorkCost.cost)
+    });
+    
     createLabWorkCostMutation.mutate({
       workType: newLabWorkCost.workType,
       labTechnician: newLabWorkCost.labTechnician,
-      cost: newLabWorkCost.cost
+      cost: Number(newLabWorkCost.cost),
+      notes: null
     });
   };
   
   const handleSaveLabWorkCost = (id: number) => {
-    if (!editingLabWorkCost.workType || !editingLabWorkCost.labTechnician || !editingLabWorkCost.cost) {
+    if (!editingLabWorkCost.workType || !editingLabWorkCost.labTechnician || 
+        editingLabWorkCost.cost === undefined || editingLabWorkCost.cost === null) {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
@@ -517,12 +525,23 @@ export default function Settings() {
       return;
     }
     
+    console.log("Updating lab work cost:", {
+      id,
+      values: {
+        workType: editingLabWorkCost.workType,
+        labTechnician: editingLabWorkCost.labTechnician,
+        cost: Number(editingLabWorkCost.cost),
+        notes: editingLabWorkCost.notes || null
+      }
+    });
+    
     updateLabWorkCostMutation.mutate({
       id,
       values: {
         workType: editingLabWorkCost.workType,
         labTechnician: editingLabWorkCost.labTechnician,
-        cost: editingLabWorkCost.cost
+        cost: Number(editingLabWorkCost.cost),
+        notes: editingLabWorkCost.notes || null
       }
     });
   };
@@ -533,8 +552,9 @@ export default function Settings() {
     }
   };
   
-  // Hardcoded lab work types
+  // Hardcoded lab work types and technicians
   const labWorkTypeOptions = ["PFM Ceramic crown", "Metal Crown", "bridge", "denture", "implant", "veneer", "retainer", "night_guard", "other"];
+  const labTechnicianOptions = ["Nirmal", "Ace Dental Lab"];
   
   // Signature operations
   const handleAddSignature = () => {

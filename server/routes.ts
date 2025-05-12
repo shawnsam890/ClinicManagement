@@ -563,7 +563,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post('/api/lab-work-costs', async (req, res) => {
     try {
-      const labWorkCost = await storage.createLabWorkCost(req.body);
+      // Make sure all required fields are present
+      const { workType, labTechnician, cost } = req.body;
+      
+      if (!workType || !labTechnician || cost === undefined || cost === null) {
+        return res.status(400).json({ 
+          message: 'Work type, lab technician, and cost are required fields'
+        });
+      }
+      
+      // Create with validated data
+      const labWorkCost = await storage.createLabWorkCost({
+        workType,
+        labTechnician,
+        cost: Number(cost),
+        notes: req.body.notes || null
+      });
+      
       res.status(201).json(labWorkCost);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -577,7 +593,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Invalid ID' });
       }
       
-      const updatedLabWorkCost = await storage.updateLabWorkCost(id, req.body);
+      // Extract values from the request
+      const { values } = req.body;
+      if (!values || !values.workType || !values.labTechnician || values.cost === undefined || values.cost === null) {
+        return res.status(400).json({ 
+          message: 'Work type, lab technician, and cost are required fields'
+        });
+      }
+      
+      // Create with validated data
+      const updatedLabWorkCost = await storage.updateLabWorkCost(id, {
+        workType: values.workType,
+        labTechnician: values.labTechnician,
+        cost: Number(values.cost),
+        notes: values.notes || null
+      });
+      
       if (!updatedLabWorkCost) {
         return res.status(404).json({ message: 'Lab work cost not found' });
       }
