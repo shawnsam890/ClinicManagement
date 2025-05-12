@@ -533,8 +533,8 @@ export default function Settings() {
     }
   };
   
-  // Get lab work types from dropdowns for the select list
-  const labWorkTypeOptions = dropdownOptions?.workTypes || [];
+  // Hardcoded lab work types
+  const labWorkTypeOptions = ["PFM Ceramic crown", "Metal Crown", "bridge", "denture", "implant", "veneer", "retainer", "night_guard", "other"];
   
   // Signature operations
   const handleAddSignature = () => {
@@ -1446,11 +1446,8 @@ export default function Settings() {
                           <SelectValue placeholder="Select lab technician" />
                         </SelectTrigger>
                         <SelectContent>
-                          {dropdownOptions?.settingValue?.labTechnicians?.map((option: string) => (
-                            <SelectItem key={option} value={option}>
-                              {option}
-                            </SelectItem>
-                          )) || []}
+                          <SelectItem value="Nirmal">Nirmal</SelectItem>
+                          <SelectItem value="Ace Dental Lab">Ace Dental Lab</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
