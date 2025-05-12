@@ -49,6 +49,7 @@ import {
   PlusCircle,
   Save,
   Trash2,
+  Trash,
   X,
   Check,
   Edit,
@@ -56,7 +57,8 @@ import {
   Eye,
   Upload,
   Plus,
-  Pencil
+  Pencil,
+  Calculator
 } from "lucide-react";
 
 export default function Settings() {
@@ -67,6 +69,16 @@ export default function Settings() {
   const [newOptionValue, setNewOptionValue] = useState("");
   const [newOptionCategory, setNewOptionCategory] = useState("medicalHistory");
   const [isAddingOption, setIsAddingOption] = useState(false);
+  
+  // Lab Work Costs states
+  const [labWorkCosts, setLabWorkCosts] = useState<any[]>([]);
+  const [newLabWorkCost, setNewLabWorkCost] = useState<{
+    workType?: string;
+    defaultCost?: number;
+    defaultClinicPrice?: number;
+  }>({});
+  const [editingLabWorkCostId, setEditingLabWorkCostId] = useState<number | null>(null);
+  const [editingLabWorkCost, setEditingLabWorkCost] = useState<any>({});
   
   // Signature states
   const signatureRef = useRef<SignatureCanvas | null>(null);
@@ -263,6 +275,85 @@ export default function Settings() {
       toast({
         title: "Error",
         description: "Failed to remove medication",
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // Lab Work Costs mutations
+  const fetchLabWorkCosts = useQuery({
+    queryKey: ["/api/lab-work-costs"],
+    queryFn: () => fetch("/api/lab-work-costs").then(res => res.json()),
+    onSuccess: (data) => {
+      setLabWorkCosts(data);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to fetch lab work costs",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  const createLabWorkCostMutation = useMutation({
+    mutationFn: async (values: any) => {
+      return apiRequest("POST", "/api/lab-work-costs", values);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/lab-work-costs"] });
+      toast({
+        title: "Success",
+        description: "Lab work cost added successfully",
+      });
+      setNewLabWorkCost({});
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to add lab work cost",
+        variant: "destructive",
+      });
+    },
+  });
+  
+  const updateLabWorkCostMutation = useMutation({
+    mutationFn: async ({ id, values }: { id: number; values: any }) => {
+      return apiRequest("PUT", `/api/lab-work-costs/${id}`, values);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/lab-work-costs"] });
+      toast({
+        title: "Success",
+        description: "Lab work cost updated successfully",
+      });
+      setEditingLabWorkCostId(null);
+      setEditingLabWorkCost({});
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update lab work cost",
+        variant: "destructive",
+      });
+    },
+  });
+  
+  const deleteLabWorkCostMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return apiRequest("DELETE", `/api/lab-work-costs/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/lab-work-costs"] });
+      toast({
+        title: "Success",
+        description: "Lab work cost removed successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to remove lab work cost",
         variant: "destructive",
       });
     },
