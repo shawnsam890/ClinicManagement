@@ -591,9 +591,6 @@ export default function LabWorks() {
                         <TableHead>Technician</TableHead>
                         <TableHead className="text-center">Units</TableHead>
                         <TableHead>Shade</TableHead>
-                        <TableHead className="text-right">Lab Cost</TableHead>
-                        <TableHead className="text-right">Clinic Cost</TableHead>
-                        <TableHead className="text-right">Profit</TableHead>
                         <TableHead className="text-right">Due Date</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
@@ -618,19 +615,6 @@ export default function LabWorks() {
                             <TableCell>{work.technician || "-"}</TableCell>
                             <TableCell className="text-center">{work.units || 1}</TableCell>
                             <TableCell>{work.workType === "crown" && work.shade ? work.shade : "-"}</TableCell>
-                            <TableCell className="text-right">
-                              {totalLabCost ? `₹${totalLabCost.toLocaleString()}` : "-"}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {totalClinicCost ? `₹${totalClinicCost.toLocaleString()}` : "-"}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {profit !== null ? (
-                                <span className={profit >= 0 ? "text-green-600" : "text-red-600"}>
-                                  ₹{profit.toLocaleString()}
-                                </span>
-                              ) : "-"}
-                            </TableCell>
                             <TableCell className="text-right">{work.dueDate}</TableCell>
                             <TableCell className="text-right">
                               <div className="flex justify-end space-x-2">

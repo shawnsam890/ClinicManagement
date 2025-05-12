@@ -496,6 +496,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get lab works by patient ID
+  app.get('/api/patients/:patientId/lab-works', async (req, res) => {
+    try {
+      const patientId = req.params.patientId;
+      if (!patientId) {
+        return res.status(400).json({ message: 'Invalid patient ID' });
+      }
+      
+      const labWorks = await storage.getLabWorksByPatientId(patientId);
+      res.json(labWorks);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
   // Lab Work Costs API Routes
   app.get('/api/lab-work-costs', async (req, res) => {
     try {
