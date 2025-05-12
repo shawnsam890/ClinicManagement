@@ -580,17 +580,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         labName = "Default Lab";
       }
       
-      // Create with validated data
-      const labWorkCost = await storage.createLabWorkCost({
-        workType,
-        labTechnician,
-        cost: Number(cost),
-        defaultLabCost: Number(cost), // Use the same cost as default
-        labName,
-        notes: req.body.notes || null
-      });
+      // Use direct SQL query instead of schema-based insert
+      const result = await db.execute(
+        `INSERT INTO lab_work_costs (work_type, lab_technician, cost, default_lab_cost, lab_name, notes)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING *`,
+        [
+          workType,
+          labTechnician,
+          Number(cost),
+          Number(cost), // default_lab_cost same as cost
+          labName,
+          req.body.notes || null
+        ]
+      );
       
-      res.status(201).json(labWorkCost);
+      // Return the first row of the result
+      res.status(201).json(result.rows[0]);
     } catch (error: any) {
       console.error("Error creating lab work cost:", error);
       res.status(500).json({ message: error.message });
@@ -620,21 +626,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         labName = "Default Lab";
       }
       
-      // Create with validated data
-      const updatedLabWorkCost = await storage.updateLabWorkCost(id, {
-        workType: values.workType,
-        labTechnician: values.labTechnician,
-        cost: Number(values.cost),
-        defaultLabCost: Number(values.cost), // Use the same cost as default
-        labName,
-        notes: values.notes || null
-      });
+      // Use direct SQL query for update
+      const result = await db.execute(
+        `UPDATE lab_work_costs 
+         SET work_type = $1, lab_technician = $2, cost = $3, default_lab_cost = $4, lab_name = $5, notes = $6
+         WHERE id = $7
+         RETURNING *`,
+        [
+          values.workType,
+          values.labTechnician,
+          Number(values.cost),
+          Number(values.cost), // default_lab_cost same as cost
+          labName,
+          values.notes || null,
+          id
+        ]
+      );
       
-      if (!updatedLabWorkCost) {
+      if (!result.rows.length) {
         return res.status(404).json({ message: 'Lab work cost not found' });
       }
       
-      res.json(updatedLabWorkCost);
+      res.json(result.rows[0]);
     } catch (error: any) {
       console.error("Error updating lab work cost:", error);
       res.status(500).json({ message: error.message });
