@@ -534,7 +534,7 @@ export default function Settings() {
   };
   
   // Get lab work types from dropdowns for the select list
-  const labWorkTypeOptions = dropdownOptions?.labWorkType || [];
+  const labWorkTypeOptions = dropdownOptions?.workTypes || [];
   
   // Signature operations
   const handleAddSignature = () => {
@@ -1417,7 +1417,7 @@ export default function Settings() {
             <CardContent>
               <div>
                 <div className="flex flex-col space-y-4 mb-6">
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="labWorkType">Lab Work Type</Label>
                       <Select
@@ -1437,23 +1437,13 @@ export default function Settings() {
                       </Select>
                     </div>
                     <div>
-                      <Label htmlFor="defaultCost">Default Cost</Label>
+                      <Label htmlFor="defaultCost">Lab Cost</Label>
                       <Input
                         id="defaultCost"
                         type="number"
-                        placeholder="Enter default cost"
+                        placeholder="Enter lab cost"
                         value={newLabWorkCost.defaultCost || ''}
                         onChange={(e) => setNewLabWorkCost({...newLabWorkCost, defaultCost: parseFloat(e.target.value) || 0})}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="defaultClinicPrice">Default Clinic Price</Label>
-                      <Input
-                        id="defaultClinicPrice"
-                        type="number"
-                        placeholder="Enter default clinic price"
-                        value={newLabWorkCost.defaultClinicPrice || ''}
-                        onChange={(e) => setNewLabWorkCost({...newLabWorkCost, defaultClinicPrice: parseFloat(e.target.value) || 0})}
                       />
                     </div>
                   </div>
