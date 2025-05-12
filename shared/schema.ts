@@ -217,6 +217,34 @@ export const doctorSignatures = pgTable("doctor_signatures", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Dental imaging system
+export const dentalImages = pgTable("dental_images", {
+  id: serial("id").primaryKey(),
+  patientId: text("patient_id").notNull().references(() => patients.patientId),
+  visitId: integer("visit_id").references(() => patientVisits.id),
+  imagePath: text("image_path").notNull(),
+  thumbnailPath: text("thumbnail_path"),
+  imageType: text("image_type").notNull(), // X-ray, intraoral, etc.
+  captureDate: date("capture_date").notNull(),
+  description: text("description"),
+  tags: jsonb("tags"), // For searchable tags
+  metadata: jsonb("metadata"), // For DICOM metadata or other format-specific data
+  toothNumbers: text("tooth_numbers"), // Comma-separated list of tooth numbers this image is related to
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Dental imaging sources/devices
+export const imagingSources = pgTable("imaging_sources", {
+  id: serial("id").primaryKey(),
+  deviceName: text("device_name").notNull(),
+  deviceType: text("device_type").notNull(), // "DICOM", "USB Camera", "Intraoral Scanner", etc.
+  connectionType: text("connection_type").notNull(), // "PACS", "Direct", "NetworkShare", etc.
+  connectionDetails: jsonb("connection_details"), // Connection parameters like IP, port, etc.
+  isActive: boolean("is_active").default(true).notNull(),
+  lastConnected: timestamp("last_connected"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Create insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
 export const insertPatientSchema = createInsertSchema(patients).omit({ id: true, createdAt: true });
