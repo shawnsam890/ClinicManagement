@@ -2,6 +2,7 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
+import { pool } from "./db";
 import { insertPatientSchema, insertPatientVisitSchema, insertLabWorkSchema, 
   insertLabInventorySchema, insertStaffSchema, insertStaffAttendanceSchema, 
   insertStaffSalarySchema, insertInvoiceSchema, insertInvoiceItemSchema, 
@@ -580,8 +581,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         labName = "Default Lab";
       }
       
-      // Use direct SQL query instead of schema-based insert
-      const result = await db.execute(
+      // Use SQL query with pool directly
+      const result = await pool.query(
         `INSERT INTO lab_work_costs (work_type, lab_technician, cost, default_lab_cost, lab_name, notes)
          VALUES ($1, $2, $3, $4, $5, $6)
          RETURNING *`,
@@ -626,8 +627,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         labName = "Default Lab";
       }
       
-      // Use direct SQL query for update
-      const result = await db.execute(
+      // Use SQL query with pool directly
+      const result = await pool.query(
         `UPDATE lab_work_costs 
          SET work_type = $1, lab_technician = $2, cost = $3, default_lab_cost = $4, lab_name = $5, notes = $6
          WHERE id = $7
