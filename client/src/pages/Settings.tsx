@@ -1466,8 +1466,11 @@ export default function Settings() {
                           <SelectValue placeholder="Select lab technician" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Nirmal">Nirmal</SelectItem>
-                          <SelectItem value="Ace Dental Lab">Ace Dental Lab</SelectItem>
+                          {labTechnicianOptions.map((option) => (
+                            <SelectItem key={option} value={option}>
+                              {option}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -1536,11 +1539,11 @@ export default function Settings() {
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {dropdownOptions?.settingValue?.labTechnicians?.map((option: string) => (
+                                    {labTechnicianOptions.map((option) => (
                                       <SelectItem key={option} value={option}>
                                         {option}
                                       </SelectItem>
-                                    )) || []}
+                                    ))}
                                   </SelectContent>
                                 </Select>
                               ) : (
