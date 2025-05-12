@@ -108,7 +108,6 @@ export const labWorkCosts = pgTable("lab_work_costs", {
   id: serial("id").primaryKey(),
   workType: text("work_type").notNull().unique(),  // The type of lab work (e.g., "Crown", "Bridge")
   defaultLabCost: real("default_lab_cost").notNull(),  // Default cost paid to lab
-  defaultClinicCost: real("default_clinic_cost").notNull(),  // Default cost charged to patient
   notes: text("notes"),
 });
 
