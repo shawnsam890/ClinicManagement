@@ -5,13 +5,24 @@ import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { LabWork, LabInventoryItem } from "@shared/schema";
 
-export function useLabWorks(patientId?: string) {
+export function useLabWorks(patientId?: string | null) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
   // Get all lab works or patient-specific lab works if patientId is provided
+  // Add extra console logging to debug
+  console.log(`useLabWorks hook called with patientId: ${patientId}`);
+  
+  // Only use patient-specific endpoint when patientId is a non-empty string
+  const usePatientSpecific = patientId !== undefined && patientId !== null && patientId !== "";
+  const queryPath = usePatientSpecific 
+    ? `/api/patients/${patientId}/lab-works` 
+    : "/api/lab-works";
+    
+  console.log(`Using query path: ${queryPath}`);
+  
   const { data: labWorks, isLoading: isLoadingLabWorks } = useQuery<LabWork[]>({
-    queryKey: patientId ? [`/api/patients/${patientId}/lab-works`] : ["/api/lab-works"],
+    queryKey: [queryPath],
   });
 
   // Get lab work by ID
@@ -23,10 +34,13 @@ export function useLabWorks(patientId?: string) {
   };
 
   // Get lab works by patient ID
-  const getLabWorksByPatientId = (patientId: string) => {
+  const getLabWorksByPatientId = (patientId: string | null) => {
+    // Only proceed if patientId is valid
+    const isValidPatientId = patientId !== undefined && patientId !== null && patientId !== "";
+    
     return useQuery<LabWork[]>({
-      queryKey: [`/api/patients/${patientId}/lab-works`],
-      enabled: !!patientId,
+      queryKey: isValidPatientId ? [`/api/patients/${patientId}/lab-works`] : ["/api/lab-works"],
+      enabled: isValidPatientId,
     });
   };
 

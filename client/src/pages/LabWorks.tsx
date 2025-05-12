@@ -155,10 +155,11 @@ export default function LabWorks() {
   console.log("Patient ID from URL:", patientIdFromUrl);
 
   // Use the custom hook that automatically handles patient-specific lab works
+  // Pass the patientId directly - the hook will handle null/undefined cases
   const { 
     labWorks = [], 
     isLoadingLabWorks 
-  } = useLabWorks(patientIdFromUrl ? patientIdFromUrl : undefined);
+  } = useLabWorks(patientIdFromUrl);
 
   // Fetch all patients for the dropdown
   const { data: patients = [] } = useQuery<Patient[]>({
